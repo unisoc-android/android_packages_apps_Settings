@@ -72,6 +72,7 @@ public final class CredentialStorage extends FragmentActivity {
 
     private final KeyStore mKeyStore = KeyStore.getInstance();
     private LockPatternUtils mUtils;
+    ResetDialog mResetDialog;
 
     /**
      * When non-null, the bundle containing credentials to install.
@@ -93,7 +94,7 @@ public final class CredentialStorage extends FragmentActivity {
         final UserManager userManager = (UserManager) getSystemService(Context.USER_SERVICE);
         if (!userManager.hasUserRestriction(UserManager.DISALLOW_CONFIG_CREDENTIALS)) {
             if (ACTION_RESET.equals(action)) {
-                new ResetDialog();
+                mResetDialog = new ResetDialog();
             } else {
                 if (ACTION_INSTALL.equals(action) && checkCallerIsCertInstallerOrSelfInProfile()) {
                     mInstallBundle = intent.getExtras();
@@ -209,6 +210,28 @@ public final class CredentialStorage extends FragmentActivity {
             }
         }
 
+        //SPRD: Bug #474464 Porting WAPI feature BEG-->
+        if (bundle.containsKey(Credentials.EXTRA_WAPI_AS_CERTIFICATES_NAME)) {
+            String caListName = bundle.getString(Credentials.EXTRA_WAPI_AS_CERTIFICATES_NAME);
+            byte[] caListData = bundle.getByteArray(Credentials.EXTRA_WAPI_AS_CERTIFICATES_DATA);
+            Log.e(TAG, "Credentials.EXTRA_WAPI_AS_CERTIFICATES_DATA ==> mKeyStore.importKey :" + caListName);
+            if (!mKeyStore.put(caListName, caListData, uid, flags)) {
+                Log.e(TAG, "############ Failed to install " + caListName);
+                return shouldFinish;
+            }
+        }
+
+        if (bundle.containsKey(Credentials.EXTRA_WAPI_USER_CERTIFICATES_NAME)) {
+            String userListName = bundle.getString(Credentials.EXTRA_WAPI_USER_CERTIFICATES_NAME);
+            byte[] userListData = bundle.getByteArray(Credentials.EXTRA_WAPI_USER_CERTIFICATES_DATA);
+            Log.e(TAG,"Credentials.EXTRA_WAPI_USER_CERTIFICATES_DATA ==> mKeyStore.importKey :"+ userListName);
+            if (!mKeyStore.put(userListName, userListData, uid, flags)) {
+                Log.e(TAG, "@@@@@@@@@@@@ Failed to install " + userListName);
+                return shouldFinish;
+            }
+        }
+        //<-- Porting WAPI feature END
+
         // Send the broadcast.
         final Intent broadcast = new Intent(KeyChain.ACTION_KEYCHAIN_CHANGED);
         sendBroadcast(broadcast);
@@ -223,16 +246,17 @@ public final class CredentialStorage extends FragmentActivity {
     private class ResetDialog
             implements DialogInterface.OnClickListener, DialogInterface.OnDismissListener {
         private boolean mResetConfirmed;
+        final AlertDialog mDialog;
 
         private ResetDialog() {
-            final AlertDialog dialog = new AlertDialog.Builder(CredentialStorage.this)
+            mDialog = new AlertDialog.Builder(CredentialStorage.this)
                     .setTitle(android.R.string.dialog_alert_title)
                     .setMessage(R.string.credentials_reset_hint)
                     .setPositiveButton(android.R.string.ok, this)
                     .setNegativeButton(android.R.string.cancel, this)
                     .create();
-            dialog.setOnDismissListener(this);
-            dialog.show();
+            mDialog.setOnDismissListener(this);
+            mDialog.show();
         }
 
         @Override
@@ -263,6 +287,11 @@ public final class CredentialStorage extends FragmentActivity {
      * Background task to handle reset of both keystore and user installed CAs.
      */
     private class ResetKeyStoreAndKeyChain extends AsyncTask<Void, Void, Boolean> {
+        private Context mContext;
+
+        ResetKeyStoreAndKeyChain() {
+            mContext = getApplicationContext();
+        }
 
         @Override
         protected Boolean doInBackground(Void... unused) {
@@ -271,7 +300,7 @@ public final class CredentialStorage extends FragmentActivity {
             mUtils.resetKeyStore(UserHandle.myUserId());
 
             try {
-                final KeyChainConnection keyChainConnection = KeyChain.bind(CredentialStorage.this);
+                final KeyChainConnection keyChainConnection = KeyChain.bind(mContext);
                 try {
                     return keyChainConnection.getService().reset();
                 } catch (RemoteException e) {
@@ -397,5 +426,13 @@ public final class CredentialStorage extends FragmentActivity {
             // failed confirmation, bail
             finish();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(mResetDialog != null && mResetDialog.mDialog.isShowing()) {
+           mResetDialog.mDialog.dismiss();
+        }
+        super.onDestroy();
     }
 }

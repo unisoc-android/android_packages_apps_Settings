@@ -33,12 +33,14 @@ import com.android.settings.widget.RadioButtonPreference;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import android.util.Slog;
 
 /**
  * This class controls the radio buttons for choosing between different USB functions.
  */
 public class UsbDetailsFunctionsController extends UsbDetailsController
         implements RadioButtonPreference.OnClickListener {
+    static final private String TAG = "UsbDetailsFunctionsController";
 
     static final Map<Long, Integer> FUNCTIONS_MAP = new LinkedHashMap<>();
 
@@ -88,6 +90,7 @@ public class UsbDetailsFunctionsController extends UsbDetailsController
 
     @Override
     protected void refresh(boolean connected, long functions, int powerRole, int dataRole) {
+        Slog.v(TAG, "connected: " + connected + "dataRole: " + dataRole);
         if (!connected || dataRole != DATA_ROLE_DEVICE) {
             mProfilesContainer.setEnabled(false);
         } else {

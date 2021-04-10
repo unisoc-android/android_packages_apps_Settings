@@ -159,13 +159,15 @@
         android:persistent="false"
         style="@style/SettingsMultiSelectListPreference"
         />
+    <!-- Bug 1104201 add support for MVNO type pnn @{ -->
     <ListPreference
         android:title="@string/mvno_type"
         android:key="mvno_type"
-        android:entries="@array/mvno_type_entries"
-        android:entryValues="@array/mvno_type_values"
+        android:entries="@array/mvno_type_entries_ex"
+        android:entryValues="@array/mvno_type_values_ex"
         android:persistent="false"
         />
+    <!-- @} -->
     <EditTextPreference
         android:title="@string/mvno_match_data"
         android:dialogTitle="@string/mvno_match_data"
@@ -174,4 +176,12 @@
         android:inputType="text"
         android:persistent="false"
         />
+    <!-- UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS @{ -->
+    <ListPreference
+        android:title="@string/traffic_class"
+        android:key="traffic_class"
+        android:entries="@array/traffic_class_entries"
+        android:entryValues="@array/traffic_class_values"
+        />
+    <!-- @} -->
 </PreferenceScreen>

@@ -508,7 +508,11 @@ public class ManageApplications extends InstrumentedFragment
         outState.putBoolean(EXTRA_SHOW_SYSTEM, mShowSystem);
         outState.putBoolean(EXTRA_HAS_ENTRIES, mApplications.mHasReceivedLoadEntries);
         outState.putBoolean(EXTRA_HAS_BRIDGE, mApplications.mHasReceivedBridgeCallback);
-        outState.putBoolean(EXTRA_EXPAND_SEARCH_VIEW, !mSearchView.isIconified());
+        /*bug 1146430 : Can not save the state of SearchView since it's not init yet @{ */
+        if (mSearchView != null) {
+            outState.putBoolean(EXTRA_EXPAND_SEARCH_VIEW, !mSearchView.isIconified());
+        }
+        /* @} */
         outState.putInt(EXTRA_FILTER_TYPE, mFilter.getFilterType());
         if (mApplications != null) {
             mApplications.onSaveInstanceState(outState);

@@ -23,6 +23,7 @@ import androidx.annotation.VisibleForTesting;
 import com.android.settings.R;
 import com.android.settings.core.BasePreferenceController;
 import com.android.settings.nfc.NfcPreferenceController;
+import com.android.settings.bluetooth.Utils;
 
 /**
  * Controller that used to show which component is available
@@ -51,6 +52,10 @@ public class AdvancedConnectedDeviceController extends BasePreferenceController 
      * diving mode are available
      */
     public static int getConnectedDevicesSummaryResourceId(Context context) {
+        if (!Utils.isBluetoothSupported(context)) {
+                return R.string.connected_devices_dashboard_title;
+        }
+
         final NfcPreferenceController nfcPreferenceController =
                 new NfcPreferenceController(context, NfcPreferenceController.KEY_TOGGLE_NFC);
 

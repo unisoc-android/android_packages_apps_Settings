@@ -16,6 +16,7 @@
 
 package com.android.settings.applications.specialaccess.pictureinpicture;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -43,7 +44,8 @@ public class PictureInPictureDetailPreferenceController extends AppInfoPreferenc
 
     @Override
     public int getAvailabilityStatus() {
-        return hasPictureInPictureActivites() ? AVAILABLE : DISABLED_FOR_USER;
+        boolean available = hasPictureInPictureActivites() && !ActivityManager.isLowRamDeviceStatic();
+        return available ? AVAILABLE : DISABLED_FOR_USER;
     }
 
     @Override

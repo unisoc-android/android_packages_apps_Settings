@@ -18,6 +18,10 @@ package com.android.settings.bluetooth;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.SystemProperties;
 import android.text.BidiFormatter;
@@ -75,6 +79,23 @@ public abstract class DeviceListPreferenceFragment extends
 
     boolean mShowDevicesWithoutNames;
 
+    private boolean mRegistered = false;
+    private final BroadcastReceiver mClassChangedReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            BluetoothDevice bd = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            if (bd != null && mFilter.matches(bd) && BluetoothDevice.ACTION_CLASS_CHANGED.equals(action)) {
+                CachedBluetoothDevice cachedDevice = mLocalManager.getCachedDeviceManager().findDevice(bd);
+                if (cachedDevice != null) {
+                    Log.d(TAG, "Receive ACTION_CLASS_CHANGED, add device: " + cachedDevice);
+                    onDeviceAdded(cachedDevice);
+                }
+            }
+        }
+    };
+
     DeviceListPreferenceFragment(String restrictedKey) {
         super(restrictedKey);
         mFilter = BluetoothDeviceFilter.ALL_FILTER;
@@ -116,6 +137,12 @@ public abstract class DeviceListPreferenceFragment extends
 
         mLocalManager.setForegroundActivity(getActivity());
         mLocalManager.getEventManager().registerCallback(this);
+
+        if (!mRegistered) {
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_CLASS_CHANGED);
+            getPrefContext().registerReceiver(mClassChangedReceiver, filter);
+            mRegistered = true;
+        }
     }
 
     @Override
@@ -128,6 +155,11 @@ public abstract class DeviceListPreferenceFragment extends
         removeAllDevices();
         mLocalManager.setForegroundActivity(null);
         mLocalManager.getEventManager().unregisterCallback(this);
+
+        if (mRegistered) {
+            getPrefContext().unregisterReceiver(mClassChangedReceiver);
+            mRegistered = false;
+        }
     }
 
     void removeAllDevices() {

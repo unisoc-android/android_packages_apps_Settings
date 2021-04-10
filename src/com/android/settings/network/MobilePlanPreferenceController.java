@@ -23,36 +23,47 @@ import static android.os.UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS;
 import static com.android.settingslib.RestrictedLockUtilsInternal.hasBaseUserRestriction;
 
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserManager;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.preference.Preference;
-
+import androidx.preference.PreferenceScreen;
+import com.android.internal.telephony.IccCardConstants;
+import com.android.internal.telephony.PhoneConstants;
+import com.android.internal.telephony.TelephonyIntents;
 import com.android.settings.R;
+import com.android.settings.SettingsPreferenceFragment;
 import com.android.settings.core.PreferenceControllerMixin;
 import com.android.settingslib.Utils;
 import com.android.settingslib.core.AbstractPreferenceController;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settingslib.core.lifecycle.events.OnCreate;
+import com.android.settingslib.core.lifecycle.events.OnDestroy;
 import com.android.settingslib.core.lifecycle.events.OnSaveInstanceState;
+import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
 
 import java.util.List;
 
 
 public class MobilePlanPreferenceController extends AbstractPreferenceController
-        implements PreferenceControllerMixin, LifecycleObserver, OnCreate, OnSaveInstanceState {
+        implements PreferenceControllerMixin, LifecycleObserver, OnCreate, OnDestroy, OnSaveInstanceState,
+        SettingsPreferenceFragment.SettingsDialogFragment.MobilePlanDialogListener {
 
     public interface MobilePlanPreferenceHost {
         void showMobilePlanMessageDialog();
+        void dismissMobilePlanMessageDialog();
     }
 
     public static final int MANAGE_MOBILE_PLAN_DIALOG_ID = 1;
@@ -69,6 +80,11 @@ public class MobilePlanPreferenceController extends AbstractPreferenceController
     private TelephonyManager mTm;
 
     private String mMobilePlanDialogMessage;
+    /* UNISOC: BUG1113271 Quick click @{ */
+    private Preference mPreference;
+    /* UNISOC:  @} */
+    private SubscriptionManager mSubMgr;
+    private int mDefaultSubId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 
     public MobilePlanPreferenceController(Context context,
             MobilePlanPreferenceHost host) {
@@ -78,11 +94,17 @@ public class MobilePlanPreferenceController extends AbstractPreferenceController
         mTm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         mUserManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
         mIsSecondaryUser = !mUserManager.isAdminUser();
+        mSubMgr = SubscriptionManager.from(context);
     }
 
     @Override
     public boolean handlePreferenceTreeClick(Preference preference) {
         if (mHost != null && KEY_MANAGE_MOBILE_PLAN.equals(preference.getKey())) {
+            /* UNISOC: BUG1113271 Quick click & 1138026@{ */
+            if (mPreference == null) {
+                mPreference = preference;
+            }
+            /* UNISOC:  @} */
             mMobilePlanDialogMessage = null;
             onManageMobilePlanClick();
         }
@@ -94,7 +116,17 @@ public class MobilePlanPreferenceController extends AbstractPreferenceController
         if (savedInstanceState != null) {
             mMobilePlanDialogMessage = savedInstanceState.getString(SAVED_MANAGE_MOBILE_PLAN_MSG);
         }
+        mDefaultSubId = mSubMgr.getDefaultVoiceSubscriptionId();
         Log.d(TAG, "onCreate: mMobilePlanDialogMessage=" + mMobilePlanDialogMessage);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(TelephonyIntents.ACTION_DEFAULT_VOICE_SUBSCRIPTION_CHANGED);
+        mContext.registerReceiver(mReceiver,filter);
+    }
+
+    @Override
+    public void onDestroy(){
+        mContext.unregisterReceiver(mReceiver);
+        mDefaultSubId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
     }
 
     @Override
@@ -131,6 +163,7 @@ public class MobilePlanPreferenceController extends AbstractPreferenceController
         NetworkInfo ni = mCm.getActiveNetworkInfo();
         if (mTm.hasIccCard() && (ni != null)) {
             // Check for carrier apps that can handle provisioning first
+            mDefaultSubId = mSubMgr.getDefaultVoiceSubscriptionId();
             Intent provisioningIntent = new Intent(Intent.ACTION_CARRIER_SETUP);
             List<String> carrierPackages =
                     mTm.getCarrierPackageNamesForIntent(provisioningIntent);
@@ -163,8 +196,11 @@ public class MobilePlanPreferenceController extends AbstractPreferenceController
                     // SPN (Service Provider Name on the SIM). Such as with T-mobile.
                     operatorName = mTm.getNetworkOperatorName();
                     if (TextUtils.isEmpty(operatorName)) {
-                        mMobilePlanDialogMessage =
-                                resources.getString(R.string.mobile_unknown_sim_operator);
+                        /*UNISOC: Bug 1106414: change default toast@{*/
+//                      mMobilePlanDialogMessage =
+//                                resources.getString(R.string.mobile_unknown_sim_operator);
+                        mMobilePlanDialogMessage = resources.getString(R.string.mobile_select_default_voice_sim);
+                        /*UNISOC: @} */
                     } else {
                         mMobilePlanDialogMessage = resources.getString(
                                 R.string.mobile_no_provisioning_url, operatorName);
@@ -190,4 +226,26 @@ public class MobilePlanPreferenceController extends AbstractPreferenceController
             }
         }
     }
+    /* UNISOC: BUG1113271 Quick click @{ */
+    public void onDialogDismiss(InstrumentedDialogFragment dialog) {
+        Log.d(TAG, "onDialogDismiss");
+        if (mPreference != null) {
+            mPreference.setEnabled(true);
+        }
+    }
+    /* UNISOC:  @} */
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver (){
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive: intent=" + intent);
+            final String action = intent.getAction();
+            if (action.equals(TelephonyIntents.ACTION_DEFAULT_VOICE_SUBSCRIPTION_CHANGED)) {
+                int voiceSubId = intent.getIntExtra(PhoneConstants.SUBSCRIPTION_KEY,-1);
+                if (voiceSubId != mDefaultSubId && mHost != null){
+                    mHost.dismissMobilePlanMessageDialog();
+                }
+            }
+        }
+     };
 }

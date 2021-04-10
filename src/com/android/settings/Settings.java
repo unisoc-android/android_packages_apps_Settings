@@ -35,7 +35,7 @@ public class Settings extends SettingsActivity {
     public static class FingerprintSettingsActivity extends SettingsActivity { /* empty */ }
     public static class SimSettingsActivity extends SettingsActivity { /* empty */ }
     public static class TetherSettingsActivity extends SettingsActivity { /* empty */ }
-    public static class WifiTetherSettingsActivity extends SettingsActivity { /* empty */ }
+    //public static class WifiTetherSettingsActivity extends SettingsActivity { /* empty */ }
     public static class VpnSettingsActivity extends SettingsActivity { /* empty */ }
     public static class DataSaverSummaryActivity extends SettingsActivity{ /* empty */ }
     public static class DateTimeSettingsActivity extends SettingsActivity { /* empty */ }
@@ -88,6 +88,7 @@ public class Settings extends SettingsActivity {
     public static class DataUsageSummaryActivity extends SettingsActivity { /* empty */ }
     public static class MobileDataUsageListActivity extends SettingsActivity { /* empty */ }
     public static class ConfigureWifiSettingsActivity extends SettingsActivity { /* empty */ }
+    public static class AdvancedWifiSettingsActivityEx extends SettingsActivity { /* empty */ }
     public static class SavedAccessPointsSettingsActivity extends SettingsActivity { /* empty */ }
     public static class TextToSpeechSettingsActivity extends SettingsActivity { /* empty */ }
     public static class AndroidBeamSettingsActivity extends SettingsActivity { /* empty */ }
@@ -166,6 +167,8 @@ public class Settings extends SettingsActivity {
     public static class BluetoothDeviceDetailActivity extends SettingsActivity { /* empty */ }
     public static class WifiCallingDisclaimerActivity extends SettingsActivity { /* empty */ }
     public static class MobileNetworkListActivity extends SettingsActivity {}
+    //sprd add for usb
+    public static class SprdUsbSettingsActivity extends SettingsActivity { /* empty */ }
     public static class GlobalActionsPanelSettingsActivity extends SettingsActivity {}
 
     // Top level categories for new IA
@@ -174,7 +177,22 @@ public class Settings extends SettingsActivity {
     public static class PowerUsageSummaryActivity extends SettingsActivity { /* empty */ }
     public static class AppAndNotificationDashboardActivity extends SettingsActivity {}
     public static class StorageDashboardActivity extends SettingsActivity {}
+    /*UNISOC: bug 1072213 Assistant touch @{*/
+    public static class AssistantHandleSettingsActivity extends SettingsActivity { /* empty */ }
+    /*@}*/
     public static class AccountDashboardActivity extends SettingsActivity {}
     public static class SystemDashboardActivity extends SettingsActivity {}
+
+    /**
+     * Add for Smart Controls
+     *@{
+     */
+    public static class SmartControlsSettingsActivity extends SettingsActivity {}
+    /*@}*/
+
+    // Add for "Scheduled power on/off"
+    public static class TimerPowerActivity extends SettingsActivity{}
+    // UNISOC: Add for bug 1224283 NavigationBarSettings
+    public static class NavigationBarSettingsActivity extends SettingsActivity{}
 
 }

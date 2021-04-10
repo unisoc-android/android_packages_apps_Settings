@@ -28,6 +28,8 @@ import android.os.AsyncResult;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -55,6 +57,11 @@ import com.android.internal.telephony.CommandException;
 import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.PhoneFactory;
 import com.android.internal.telephony.TelephonyIntents;
+import com.android.internal.telephony.ITelephony;
+import com.android.internal.telephony.PhoneConstants;
+import com.android.internal.telephony.IccCardConstants;
+import android.telephony.SubscriptionManager.OnSubscriptionsChangedListener;
+import com.android.settings.search.actionbar.SearchMenuController;
 
 /**
  * Implements the preference screen to enable/disable ICC lock and
@@ -126,19 +133,60 @@ public class IccLockSettings extends SettingsPreferenceFragment
     // @see android.widget.Toast$TN
     private static final long LONG_DURATION_TIMEOUT = 7000;
 
+    /*UNISOC: Feature porting @{ */
+    private static final String PROPERTY_PIN_REMAINTIMES = "vendor.sim.pin.remaintimes";
+    private static final int DEFAULT_REMAIN_TIMES = -1;
+
+    private int[] mRemainTimes = null;
+    private int[] mSimCardState = null;
+    private int mPhoneCount ;
+    private TelephonyManager mTelephonyManager;
+    private int mCurrentTab;
+    /*UNISOC: @} */
+
     // For replies from IccCard interface
     private Handler mHandler = new Handler() {
         public void handleMessage(Message msg) {
+            /*UNISOC: BUG1130841 phone crash when the message return later @{ */
+            if (getContext() == null) {
+                return;
+            }
+            /*UNISOC: @} */
             AsyncResult ar = (AsyncResult) msg.obj;
             switch (msg.what) {
                 case MSG_ENABLE_ICC_PIN_COMPLETE:
-                    iccLockChanged(ar.exception == null, msg.arg1, ar.exception);
+                    //iccLockChanged(ar.exception == null, msg.arg1, ar.exception);
+                    /*UNISOC: Feature porting @{ */
+                    iccLockChanged(ar.exception == null, msg.arg1, msg.arg2, ar.exception);
+                    /*UNISOC: @} */
                     break;
                 case MSG_CHANGE_ICC_PIN_COMPLETE:
                     iccPinChanged(ar.exception == null, msg.arg1);
                     break;
                 case MSG_SIM_STATE_CHANGED:
+                    /*UNISOC: Feature porting @{ */
+                    int phoneId = msg.arg1;
+                    int simState = msg.arg2;
+                    boolean isCurrentSimChanged = false;
+                    if (getCurrentTab() == phoneId && simState != mSimCardState[phoneId]) {
+                        mSimCardState[phoneId] = simState;
+                        isCurrentSimChanged = true;
+                    }
+                    if (simState == TelephonyManager.SIM_STATE_ABSENT){
+                        mRemainTimes[phoneId] = DEFAULT_REMAIN_TIMES;
+                    } else if (simState == TelephonyManager.SIM_STATE_LOADED){
+                        if (isCurrentSimChanged && (mPinDialog != null
+                                && mPinDialog.getDialog() != null
+                                && mPinDialog.getDialog().isShowing())) {
+                            mPinDialog.getDialog().dismiss();
+                        }
+                    }
+                    /*UNISOC: @} */
                     updatePreferences();
+                    /*UNISOC: Feature porting @{ */
+                    updateTabName();
+                    getRemainTimes();
+                    /*UNISOC: @} */
                     break;
             }
 
@@ -150,7 +198,20 @@ public class IccLockSettings extends SettingsPreferenceFragment
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (TelephonyIntents.ACTION_SIM_STATE_CHANGED.equals(action)) {
-                mHandler.sendMessage(mHandler.obtainMessage(MSG_SIM_STATE_CHANGED));
+                //mHandler.sendMessage(mHandler.obtainMessage(MSG_SIM_STATE_CHANGED));
+                /*UNISOC: Feature porting @{ */
+                String simState = intent.getStringExtra(IccCardConstants.INTENT_KEY_ICC_STATE);
+                int phoneId = intent.getIntExtra(PhoneConstants.PHONE_KEY,
+                        SubscriptionManager.DEFAULT_PHONE_INDEX);
+                Log.d(TAG, "simState : " + simState + " phoneId : " + phoneId);
+                if (IccCardConstants.INTENT_VALUE_ICC_ABSENT.equals(simState)) {
+                    mHandler.sendMessage(mHandler.obtainMessage(MSG_SIM_STATE_CHANGED, phoneId,
+                            TelephonyManager.SIM_STATE_ABSENT));
+                } else if(IccCardConstants.INTENT_VALUE_ICC_LOADED.equals(simState)) {
+                    mHandler.sendMessage(mHandler.obtainMessage(MSG_SIM_STATE_CHANGED, phoneId,
+                            TelephonyManager.SIM_STATE_LOADED));
+                }
+                /*UNISOC: @} */
             }
         }
     };
@@ -170,13 +231,30 @@ public class IccLockSettings extends SettingsPreferenceFragment
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        /*UNISOC: Feature porting, hide search icon @{ */
+        final Bundle args = new Bundle();
+        args.putBoolean(SearchMenuController.NEED_SEARCH_ICON_IN_ACTION_BAR, false);
+        setArguments(args);
+        /*UNISOC: @} */
         super.onCreate(savedInstanceState);
 
         if (Utils.isMonkeyRunning()) {
             finish();
             return;
         }
+        /*UNISOC: Feature porting @{ */
+        mTelephonyManager = TelephonyManager.from(getContext());
+        mPhoneCount = mTelephonyManager.getPhoneCount();
+        mRemainTimes = new int[mPhoneCount];
+        mSimCardState = new int[mPhoneCount];
+        for (int i = 0; i < mPhoneCount; i++) {
+            mRemainTimes[i] = DEFAULT_REMAIN_TIMES;
+            mSimCardState[i] = SubscriptionManager.from(getContext()).getSimStateForSlotIndex(i);
+        }
 
+        final IntentFilter filter = new IntentFilter(TelephonyIntents.ACTION_SIM_STATE_CHANGED);
+        getContext().registerReceiver(mSimStateReceiver, filter);
+        /*UNISOC: @} */
         addPreferencesFromResource(R.xml.sim_lock_settings);
 
         mPinDialog = (EditPinPreference) findPreference(PIN_DIALOG);
@@ -232,7 +310,7 @@ public class IccLockSettings extends SettingsPreferenceFragment
             mListView = (ListView) view.findViewById(android.R.id.list);
 
             mTabHost.setup();
-            mTabHost.setOnTabChangedListener(mTabListener);
+            //mTabHost.setOnTabChangedListener(mTabListener);
             mTabHost.clearAllTabs();
 
             SubscriptionManager sm = SubscriptionManager.from(getContext());
@@ -243,14 +321,23 @@ public class IccLockSettings extends SettingsPreferenceFragment
                             ? getContext().getString(R.string.sim_editor_title, i + 1)
                             : subInfo.getDisplayName())));
             }
-            final SubscriptionInfo sir = sm.getActiveSubscriptionInfoForSimSlotIndex(0);
-
-            mPhone = (sir == null) ? null
-                : PhoneFactory.getPhone(SubscriptionManager.getPhoneId(sir.getSubscriptionId()));
-
+            /*UNISOC: Feature porting  @{ */
             if (savedInstanceState != null && savedInstanceState.containsKey(CURRENT_TAB)) {
                 mTabHost.setCurrentTabByTag(savedInstanceState.getString(CURRENT_TAB));
             }
+            mCurrentTab = getCurrentTab();
+            Log.d(TAG, "mTabHost onCreateView : " + mCurrentTab);
+            mTabHost.setOnTabChangedListener(mTabListener);
+            final SubscriptionInfo sir = sm.getActiveSubscriptionInfoForSimSlotIndex(
+                    mCurrentTab);
+            /*UNISOC: @} */
+
+            mPhone = (sir == null) ? null
+                    : PhoneFactory.getPhone(SubscriptionManager.getPhoneId(sir.getSubscriptionId()));
+
+//          if (savedInstanceState != null && savedInstanceState.containsKey(CURRENT_TAB)) {
+//              mTabHost.setCurrentTabByTag(savedInstanceState.getString(CURRENT_TAB));
+//          }
             return view;
         } else {
             mPhone = PhoneFactory.getDefaultPhone();
@@ -265,16 +352,47 @@ public class IccLockSettings extends SettingsPreferenceFragment
     }
 
     private void updatePreferences() {
-        if (mPinDialog != null) {
-            mPinDialog.setEnabled(mPhone != null);
+//        if (mPinDialog != null) {
+//            mPinDialog.setEnabled(mPhone != null);
+//        }
+//        if (mPinToggle != null) {
+//            mPinToggle.setEnabled(mPhone != null);
+//
+//            if (mPhone != null) {
+//                mPinToggle.setChecked(mPhone.getIccCard().getIccLockEnabled());
+//            }
+//        }
+                /*UNISOC: Feature porting  @{ */
+        if (Utils.isMonkeyRunning() || getContext() == null) {
+            return;
         }
-        if (mPinToggle != null) {
-            mPinToggle.setEnabled(mPhone != null);
+        mCurrentTab = getCurrentTab();
+        final SubscriptionInfo subInfo = SubscriptionManager.from(getContext())
+                .getActiveSubscriptionInfoForSimSlotIndex(mCurrentTab);
+        mPhone = (subInfo == null) ? null
+                : PhoneFactory.getPhone(
+                SubscriptionManager.getPhoneId(subInfo.getSubscriptionId()));
+        Log.d(TAG, "currentTab : " + mCurrentTab + " mPhone is " + mPhone);
+        boolean pinNotAvailable = (mPhone == null
+                || !mPhone.getIccCard().hasIccCard()
+                || (SubscriptionManager.getSimStateForSlotIndex(mCurrentTab)!= TelephonyManager.SIM_STATE_LOADED
+                && mTelephonyManager.getSimState(mCurrentTab) != TelephonyManager.SIM_STATE_PERM_DISABLED));;
 
-            if (mPhone != null) {
-                mPinToggle.setChecked(mPhone.getIccCard().getIccLockEnabled());
-            }
+        mPinDialog.setEnabled(!pinNotAvailable);
+        mPinToggle.setEnabled(!pinNotAvailable);
+
+        if (pinNotAvailable) {
+            mPinToggle.setChecked(false);
         }
+        Log.d(TAG, "isDialogOpen : " + mPinDialog.isDialogOpen() + "; pinNotAvailable : "
+                + pinNotAvailable + "; sim state : " + mTelephonyManager.getSimState(mCurrentTab));
+        if (mPinDialog.isDialogOpen() && pinNotAvailable) {
+            mPinDialog.getDialog().dismiss();
+        }
+        if (mPhone != null) {
+            mPinToggle.setChecked(mPhone.getIccCard().getIccLockEnabled());
+        }
+        /*UNISOC: @} */
     }
 
     @Override
@@ -285,12 +403,16 @@ public class IccLockSettings extends SettingsPreferenceFragment
     @Override
     public void onResume() {
         super.onResume();
-
+        updatePreferences();
         // ACTION_SIM_STATE_CHANGED is sticky, so we'll receive current state after this call,
         // which will call updatePreferences().
-        final IntentFilter filter = new IntentFilter(TelephonyIntents.ACTION_SIM_STATE_CHANGED);
-        getContext().registerReceiver(mSimStateReceiver, filter);
-
+        //final IntentFilter filter = new IntentFilter(TelephonyIntents.ACTION_SIM_STATE_CHANGED);
+        //getContext().registerReceiver(mSimStateReceiver, filter);
+        /*UNISOC: Feature porting @{ */
+        SubscriptionManager.from(
+                getContext()).addOnSubscriptionsChangedListener(mSubscriptionListener);
+        getRemainTimes();
+        /*UNISOC: @} */
         if (mDialogState != OFF_MODE) {
             showPinDialog();
         } else {
@@ -302,7 +424,11 @@ public class IccLockSettings extends SettingsPreferenceFragment
     @Override
     public void onPause() {
         super.onPause();
-        getContext().unregisterReceiver(mSimStateReceiver);
+        //getContext().unregisterReceiver(mSimStateReceiver);
+        /*UNISOC: Feature porting @{ */
+        SubscriptionManager.from(getContext()).removeOnSubscriptionsChangedListener(
+                mSubscriptionListener);
+        /*UNISOC: @} */
     }
 
     @Override
@@ -343,20 +469,41 @@ public class IccLockSettings extends SettingsPreferenceFragment
             super.onSaveInstanceState(out);
         }
 
-        if (mTabHost != null) {
+        /*UNISOC: Feature porting @{ */
+        if (mPhoneCount > 1 && mTabHost != null && mTabHost.getCurrentTabTag() != null) {
             out.putString(CURRENT_TAB, mTabHost.getCurrentTabTag());
         }
+        /*UNISOC: @} */
     }
 
     private void showPinDialog() {
         if (mDialogState == OFF_MODE) {
             return;
         }
+        /*UNISOC: Feature porting @{ */
+        if (!hasActiveSub()) {
+            Log.d(TAG, "Do not show pin dialog because no active sub.");
+            return;
+        }
+        /*UNISOC: @} */
         setDialogValues();
-
+        /*UNISOC: BUG1164082 @{ */
+        if (mPhone == null || mRemainTimes[mPhone.getPhoneId()] <= 0) {
+            resetDialogState();
+            Log.d(TAG, "Do not show pin dialog because remian time is 0.");
+            return;
+        }
+        /*UNISOC: @} */
         mPinDialog.showPinDialog();
 
         final EditText editText = mPinDialog.getEditText();
+        /*UNISOC: Feature porting @{ */
+        if (editText != null) {
+            editText.setFocusable(true);
+            editText.setFocusableInTouchMode(true);
+            editText.requestFocus();
+        }
+        /*UNISOC: @} */
         if (!TextUtils.isEmpty(mPin) && editText != null) {
             editText.setSelection(mPin.length());
         }
@@ -365,6 +512,9 @@ public class IccLockSettings extends SettingsPreferenceFragment
     private void setDialogValues() {
         mPinDialog.setText(mPin);
         String message = "";
+        /*UNISOC: Feature porting @{ */
+        Log.d(TAG, "mDialogState = " + mDialogState);
+        /*UNISOC: @} */
         switch (mDialogState) {
             case ICC_LOCK_MODE:
                 message = mRes.getString(R.string.sim_enter_pin);
@@ -385,6 +535,14 @@ public class IccLockSettings extends SettingsPreferenceFragment
                 mPinDialog.setDialogTitle(mRes.getString(R.string.sim_change_pin));
                 break;
         }
+        /*UNISOC: Feature porting @{ */
+        int remainTimes = getRemainTimes();
+        if (remainTimes >= 0
+                && mDialogState != ICC_NEW_MODE && mDialogState != ICC_REENTER_MODE) {
+            message += mRes.getString((com.android.settings.R.string.
+                    attempts_remaining_times), remainTimes);
+        }
+        /*UNISOC: @} */
         if (mError != null) {
             message = mError + "\n" + message;
             mError = null;
@@ -403,6 +561,9 @@ public class IccLockSettings extends SettingsPreferenceFragment
         if (!reasonablePin(mPin)) {
             // inject error message and display dialog again
             mError = mRes.getString(R.string.sim_bad_pin);
+            /*UNISOC: Feature porting @{ */
+            mPin = null;
+            /*UNISOC: @} */
             showPinDialog();
             return;
         }
@@ -444,10 +605,27 @@ public class IccLockSettings extends SettingsPreferenceFragment
             mToState = mPinToggle.isChecked();
             // Flip it back and pop up pin dialog
             mPinToggle.setChecked(!mToState);
+            /*UNISOC: Feature porting @{ */
+            if (mDialogState != OFF_MODE) {
+                Log.d(TAG, "Wait for change sim pin done.");
+                return true;
+            }
+            mPin = null;
+            /*UNISOC: @} */
             mDialogState = ICC_LOCK_MODE;
             showPinDialog();
         } else if (preference == mPinDialog) {
+            /*UNISOC: Feature porting @{ */
+            if (mDialogState != OFF_MODE) {
+                Log.d(TAG, "Wait for enable/disable pin lock done.");
+                return false;
+            }
+            /*UNISOC: @} */
             mDialogState = ICC_OLD_MODE;
+            /*UNISOC: Feature porting @{ */
+            mPin = null;
+            setDialogValues();
+            /*UNISOC: @} */
             return false;
         }
         return true;
@@ -456,15 +634,39 @@ public class IccLockSettings extends SettingsPreferenceFragment
     private void tryChangeIccLockState() {
         // Try to change icc lock. If it succeeds, toggle the lock state and
         // reset dialog state. Else inject error message and show dialog again.
-        Message callback = Message.obtain(mHandler, MSG_ENABLE_ICC_PIN_COMPLETE);
+        // Message callback = Message.obtain(mHandler, MSG_ENABLE_ICC_PIN_COMPLETE);
+        // mPhone.getIccCard().setIccLockEnabled(mToState, mPin, callback);
+        /*UNISOC: Feature porting @{ */
+        Message callback = Message.obtain(mHandler, MSG_ENABLE_ICC_PIN_COMPLETE, -1, mCurrentTab);
+        if (mPhone == null) {
+            resetDialogState();
+            return;
+        }
         mPhone.getIccCard().setIccLockEnabled(mToState, mPin, callback);
+        /*UNISOC: @} */
         // Disable the setting till the response is received.
         mPinToggle.setEnabled(false);
     }
 
-    private void iccLockChanged(boolean success, int attemptsRemaining, Throwable exception) {
+    private void iccLockChanged(boolean success, int attemptsRemaining, int currentTab,
+                                Throwable exception) {
         if (success) {
-            mPinToggle.setChecked(mToState);
+            //BUG: 1245893
+            Log.d(TAG, " mToState:" + mToState);
+            if (currentTab == mCurrentTab) {
+                mPinToggle.setChecked(mToState);
+            }
+            /*UNISOC: Feature porting @{ */
+            if (attemptsRemaining < 0 && getContext() != null) {
+                if (mToState) {
+                    Toast.makeText(getContext(), mRes.getString(R.string.icc_pin_enabled,
+                            currentTab + 1), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getContext(), mRes.getString(R.string.icc_pin_disabled,
+                            currentTab + 1), Toast.LENGTH_LONG).show();
+                }
+            }
+            /*UNISOC: @} */
         } else {
             if (exception instanceof CommandException) {
                 CommandException.Error err = ((CommandException)(exception)).getCommandError();
@@ -481,8 +683,18 @@ public class IccLockSettings extends SettingsPreferenceFragment
                 }
             }
         }
-        mPinToggle.setEnabled(true);
-        resetDialogState();
+        /*UNISOC: Feature porting @{ */
+        if (PhoneFactory.getPhone(currentTab) == null) {
+            resetDialogState();
+            return;
+        }
+        mRemainTimes[currentTab] = attemptsRemaining;
+        /*UNISOC: @} */
+        //BUG: 1245893
+        if (currentTab == mCurrentTab) {
+            mPinToggle.setEnabled(true);
+            resetDialogState();
+        }
     }
 
     private void createCustomTextToast(CharSequence errorMessage) {
@@ -541,11 +753,24 @@ public class IccLockSettings extends SettingsPreferenceFragment
                     .show();
 
         }
+        /*UNISOC: Feature porting @{ */
+        if (mPhone == null) {
+            resetDialogState();
+            return;
+        }
+        mRemainTimes[mPhone.getPhoneId()] = attemptsRemaining;
+        /*UNISOC: @} */
         resetDialogState();
     }
 
     private void tryChangePin() {
         Message callback = Message.obtain(mHandler, MSG_CHANGE_ICC_PIN_COMPLETE);
+        /*UNISOC: Feature porting @{ */
+        if (mPhone == null) {
+            resetDialogState();
+            return;
+        }
+        /*UNISOC: @} */
         mPhone.getIccCard().changeIccLockPassword(mOldPin,
                 mNewPin, callback);
     }
@@ -562,7 +787,7 @@ public class IccLockSettings extends SettingsPreferenceFragment
         } else {
             displayMessage = mRes.getString(R.string.pin_failed);
         }
-        if (DBG) Log.d(TAG, "getPinPasswordErrorMessage:"
+        Log.d(TAG, "getPinPasswordErrorMessage:"
                 + " attemptsRemaining=" + attemptsRemaining + " displayMessage=" + displayMessage);
         return displayMessage;
     }
@@ -586,13 +811,24 @@ public class IccLockSettings extends SettingsPreferenceFragment
     private OnTabChangeListener mTabListener = new OnTabChangeListener() {
         @Override
         public void onTabChanged(String tabId) {
+            /*UNISOC: Feature porting @{ */
+            Log.d(TAG, "onTabChanged tabId = " + tabId);
+            mCurrentTab = Integer.parseInt(tabId);
+            /*UNISOC: @} */
             final int slotId = Integer.parseInt(tabId);
             final SubscriptionInfo sir = SubscriptionManager.from(getActivity().getBaseContext())
                     .getActiveSubscriptionInfoForSimSlotIndex(slotId);
 
             mPhone = (sir == null) ? null
                 : PhoneFactory.getPhone(SubscriptionManager.getPhoneId(sir.getSubscriptionId()));
-
+            /*UNISOC: Feature porting @{ */
+            if ((mPinDialog != null) && (mPinDialog.getDialog() != null)
+                    && mPinDialog.getDialog().isShowing()) {
+                Log.d(TAG, "onTabChanged dismiss old dialog");
+                mPinDialog.getDialog().dismiss();
+            }
+            resetDialogState();
+            /*UNISOC: @} */
             // The User has changed tab; update the body.
             updatePreferences();
         }
@@ -609,4 +845,92 @@ public class IccLockSettings extends SettingsPreferenceFragment
         return mTabHost.newTabSpec(tag).setIndicator(title).setContent(
                 mEmptyTabContent);
     }
+
+    /*UNISOC: Feature porting @{ */
+    private int getCurrentTab() {
+        int currentTab = 0;
+        if (mPhoneCount > 1 && mTabHost != null && mTabHost.getCurrentTabTag() != null) {
+            try {
+                currentTab = Integer.parseInt(mTabHost.getCurrentTabTag());
+            } catch (NumberFormatException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return currentTab;
+    }
+
+    private boolean hasActiveSub() {
+        if (getContext() == null) {
+            return false;
+        }
+        boolean result = SubscriptionManager.from(getContext())
+                .getActiveSubscriptionInfoForSimSlotIndex(mCurrentTab) != null;
+        Log.d(TAG, "hasActiveSub : " + result + " currentTab : " + mCurrentTab);
+        return result;
+    }
+
+    public void onDestroy() {
+        super.onDestroy();
+        if (!Utils.isMonkeyRunning() && mSimStateReceiver != null) {
+            getContext().unregisterReceiver(mSimStateReceiver);
+        }
+    }
+
+    private void updateTabName() {
+        if (getContext() == null) {
+            return;
+        }
+        if (mPhoneCount <= 1) {
+            return;
+        }
+        for (int i = 0; i < mPhoneCount; ++i) {
+            final SubscriptionInfo subInfo = SubscriptionManager.from(getContext())
+                    .getActiveSubscriptionInfoForSimSlotIndex(i);
+            TextView tabTitle = (TextView) mTabHost.getTabWidget().getChildTabViewAt(i)
+                    .findViewById(android.R.id.title);
+            if (tabTitle != null) {
+                tabTitle.setText(String.valueOf(subInfo == null
+                        ? getContext().getString(R.string.sim_editor_title, i + 1)
+                        : subInfo.getDisplayName()));
+                tabTitle.setSingleLine();
+                tabTitle.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+            }
+        }
+    }
+
+    private OnSubscriptionsChangedListener mSubscriptionListener =
+            new OnSubscriptionsChangedListener() {
+                @Override
+                public void onSubscriptionsChanged() {
+                    Log.d(TAG, "onSubscriptionsChanged updateTabName");
+                    updateTabName();
+                }
+            };
+
+    private int getRemainTimes() {
+        Log.d(TAG, "getRemainTimes start");
+        if (getContext() == null || mPhone == null) {
+            return DEFAULT_REMAIN_TIMES;
+        }
+        if (mRemainTimes[mPhone.getPhoneId()] > 0) {
+            return mRemainTimes[mPhone.getPhoneId()];
+        }
+        int remianTimes = DEFAULT_REMAIN_TIMES;
+        // Sending empty PIN here to query the number of remaining PIN attempts
+        if (SubscriptionManager.isValidSubscriptionId(mPhone.getSubId())) {
+            String propertyValue = TelephonyManager.from(getContext())
+                    .getTelephonyProperty(mPhone.getPhoneId(), PROPERTY_PIN_REMAINTIMES, "");
+            if (!TextUtils.isEmpty(propertyValue)) {
+                try {
+                    remianTimes = Integer.valueOf(propertyValue);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        Log.d(TAG, "getRemainTimes end remianTimes: " + remianTimes);
+        mRemainTimes[mPhone.getPhoneId()] = remianTimes;
+        return remianTimes;
+    }
+    /*UNISOC: @} */
 }

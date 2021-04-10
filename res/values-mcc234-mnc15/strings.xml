@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Do not translate. Wireless networks, item title to go into the WFC settings [CHAR LIMIT=30] -->
+    <string name="wifi_calling_settings_title">"Vodafone WiFi Call"</string>
+</resources>

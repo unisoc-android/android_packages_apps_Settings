@@ -18,6 +18,7 @@ package com.android.settings;
 
 import android.app.ActionBar;
 import android.app.ActivityManager;
+import android.app.settings.SettingsEnums;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -30,11 +31,13 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources.Theme;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.KeyEvent;
 import android.widget.Button;
 
 import androidx.annotation.Nullable;
@@ -65,7 +68,9 @@ import com.android.settingslib.core.instrumentation.SharedPreferencesLogger;
 import com.android.settingslib.development.DevelopmentSettingsEnabler;
 import com.android.settingslib.drawer.DashboardCategory;
 
+import com.sprd.settings.smartcontrols.SmartControlsSettings;
 import com.google.android.setupcompat.util.WizardManagerHelper;
+import com.sprd.settings.navigation.NavigationBarSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -161,6 +166,7 @@ public class SettingsActivity extends SettingsBaseActivity
             }
         }
     };
+    private SwitchBar mSlaveSwitchBar;
 
     private SwitchBar mSwitchBar;
 
@@ -173,6 +179,10 @@ public class SettingsActivity extends SettingsBaseActivity
 
     public SwitchBar getSwitchBar() {
         return mSwitchBar;
+    }
+
+    public SwitchBar getSlaveSwitchBar() {
+        return mSlaveSwitchBar;
     }
 
     @Override
@@ -280,6 +290,8 @@ public class SettingsActivity extends SettingsBaseActivity
         if (mSwitchBar != null) {
             mSwitchBar.setMetricsTag(getMetricsTag());
         }
+
+        mSlaveSwitchBar = findViewById(R.id.bt_mode_switch_bar);
 
         // see if we should show Back/Next buttons
         if (intent.getBooleanExtra(EXTRA_PREFS_SHOW_BUTTON_BAR, false)) {
@@ -585,16 +597,18 @@ public class SettingsActivity extends SettingsBaseActivity
         PackageManager pm = getPackageManager();
         final UserManager um = UserManager.get(this);
         final boolean isAdmin = um.isAdminUser();
+        final boolean disabledWifiFeature = Utils.disabledWifiFeature(this);
+        final boolean isBtSupported = com.android.settings.bluetooth.Utils.isBluetoothSupported(this);
         boolean somethingChanged = false;
         final String packageName = getPackageName();
         final StringBuilder changedList = new StringBuilder();
         somethingChanged = setTileEnabled(changedList,
                 new ComponentName(packageName, WifiSettingsActivity.class.getName()),
-                pm.hasSystemFeature(PackageManager.FEATURE_WIFI), isAdmin) || somethingChanged;
+                pm.hasSystemFeature(PackageManager.FEATURE_WIFI) && !disabledWifiFeature, isAdmin) || somethingChanged;
 
         somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
                         Settings.BluetoothSettingsActivity.class.getName()),
-                pm.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH), isAdmin)
+                pm.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH) && isBtSupported, isAdmin)
                 || somethingChanged;
 
         // Enable DataUsageSummaryActivity if the data plan feature flag is turned on otherwise
@@ -619,6 +633,7 @@ public class SettingsActivity extends SettingsBaseActivity
                 Utils.isBandwidthControlEnabled(), isAdmin)
                 || somethingChanged;
 
+        //bug 1147574：on Ultra power saving mode, do not disabled UserSettingsActivity components
         somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
                         Settings.UserSettingsActivity.class.getName()),
                 UserHandle.MU_ENABLED && UserManager.supportsMultipleUsers()
@@ -632,8 +647,10 @@ public class SettingsActivity extends SettingsBaseActivity
                 showDev, isAdmin)
                 || somethingChanged;
 
+        //Bug1146987:Hide the backup menu on non-gms versions
         somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
-                UserBackupSettingsActivity.class.getName()), true, isAdmin)
+                UserBackupSettingsActivity.class.getName()),
+                !SystemProperties.get("ro.com.google.gmsversion").isEmpty(), isAdmin)
                 || somethingChanged;
 
         somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
@@ -641,14 +658,32 @@ public class SettingsActivity extends SettingsBaseActivity
                 WifiDisplaySettings.isAvailable(this), isAdmin)
                 || somethingChanged;
 
+        /**
+         * Add for Smart Controls
+         *@{
+         */
+        somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
+                        Settings.SmartControlsSettingsActivity.class.getName()),
+                SmartControlsSettings.isSupportSmartControl(this), isAdmin)
+                || somethingChanged;
+        /* @} */
+
+        /* UNISOC: Bug 1072090,1071183 ,1111853 add the search for dynamic navigationbar @{ */
+        boolean supportDynaNaviBar = getResources().getBoolean(com.android.internal.R.bool.config_support_dynamic_navigation_bar);
+        /* UNISOC: Modify for bug 1224283 @{*/
+        boolean isNormalButtons = getResources().getInteger(
+                com.android.internal.R.integer.config_navBarInteractionMode) == 0;//0 is 3Buttons.
+        somethingChanged = setTileEnabled(changedList,new ComponentName(packageName, Settings.NavigationBarSettingsActivity.class.getName()), NavigationBarSettings.hasNavigationBar(this)
+                           && supportDynaNaviBar && isNormalButtons, isAdmin) || somethingChanged;
+        /* }@ */
+        /* }@ */
         if (UserHandle.MU_ENABLED && !isAdmin) {
 
             // When on restricted users, disable all extra categories (but only the settings ones).
             final List<DashboardCategory> categories = mDashboardFeatureProvider.getAllCategories();
             synchronized (categories) {
                 for (DashboardCategory category : categories) {
-                    final int tileCount = category.getTilesCount();
-                    for (int i = 0; i < tileCount; i++) {
+                    for (int i = 0; i < category.getTilesCount(); i++) {
                         final ComponentName component = category.getTile(i)
                                 .getIntent().getComponent();
                         final String name = component.getClassName();
@@ -712,4 +747,21 @@ public class SettingsActivity extends SettingsBaseActivity
     public Button getNextButton() {
         return mNextButton;
     }
+
+    /* Bug1108548:Can't use setting assistant search in Settings. @{ */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_SEARCH:
+                final Intent intent = new Intent(android.provider.Settings.ACTION_APP_SEARCH_SETTINGS);
+                intent.setPackage(FeatureFactory.getFactory(getApplicationContext())
+                        .getSearchFeatureProvider().getSettingsIntelligencePkgName(this));
+                startActivityForResult(intent, 0 /* requestCode */);
+                return true;
+            default:
+                break;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+    /* @} */
 }

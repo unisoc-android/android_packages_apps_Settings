@@ -170,13 +170,14 @@ public class DashboardFeatureProviderImpl implements DashboardFeatureProvider {
 
     private void bindSummary(Preference preference, Tile tile) {
         final CharSequence summary = tile.getSummary(mContext);
-        if (summary != null) {
+        if (summary != null && !TextUtils.isEmpty(summary)) {
             preference.setSummary(summary);
         } else if (tile.getMetaData() != null
                 && tile.getMetaData().containsKey(META_DATA_PREFERENCE_SUMMARY_URI)) {
             // Set a placeholder summary before  starting to fetch real summary, this is necessary
             // to avoid preference height change.
-            preference.setSummary(R.string.summary_placeholder);
+            // Remove for bug1155677, The summary will be set below.
+            //preference.setSummary(R.string.summary_placeholder);
 
             ThreadUtils.postOnBackgroundThread(() -> {
                 final Map<String, IContentProvider> providerMap = new ArrayMap<>();

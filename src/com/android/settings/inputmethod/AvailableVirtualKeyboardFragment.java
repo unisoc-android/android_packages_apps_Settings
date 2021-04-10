@@ -67,6 +67,14 @@ public final class AvailableVirtualKeyboardFragment extends SettingsPreferenceFr
     }
 
     @Override
+    public void onDestroy() {
+        for (final InputMethodPreference a : mInputMethodPreferenceList) {
+            a.dismissDialog();
+        }
+        super.onDestroy();
+    }
+
+    @Override
     public void onSaveInputMethodPreference(final InputMethodPreference pref) {
         final boolean hasHardwareKeyboard = getResources().getConfiguration().keyboard
                 == Configuration.KEYBOARD_QWERTY;

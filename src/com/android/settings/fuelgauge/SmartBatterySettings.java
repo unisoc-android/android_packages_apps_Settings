@@ -39,12 +39,25 @@ import java.util.List;
 @SearchIndexable(forTarget = SearchIndexable.ALL & ~SearchIndexable.ARC)
 public class SmartBatterySettings extends DashboardFragment {
     public static final String TAG = "SmartBatterySettings";
+    public static final String KEY_AUT0_AWESOME_BATTERY = "auto_awesome_battery";
+    public static SmartBatteryPreferenceController mSmartBatteryPreferenceController;
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         mFooterPreferenceMixin.createFooterPreference().setTitle(R.string.smart_battery_footer);
     }
+
+    /* bug 1110929: remove video preference when google smartBattery is not supported. @{*/
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mSmartBatteryPreferenceController != null
+                && mSmartBatteryPreferenceController.isAvailable() == false) {
+            removePreference(KEY_AUT0_AWESOME_BATTERY);
+        }
+    }
+    /* @} */
 
     @Override
     public int getMetricsCategory() {
@@ -75,7 +88,9 @@ public class SmartBatterySettings extends DashboardFragment {
             Context context, SettingsActivity settingsActivity,
             InstrumentedPreferenceFragment fragment) {
         final List<AbstractPreferenceController> controllers = new ArrayList<>();
-        controllers.add(new SmartBatteryPreferenceController(context));
+        //bug 1110929: remove video preference when google smartBattery is not supported
+        mSmartBatteryPreferenceController = new SmartBatteryPreferenceController(context);
+        controllers.add(mSmartBatteryPreferenceController);
         if (settingsActivity != null && fragment != null) {
             controllers.add(
                     new RestrictAppPreferenceController(fragment));

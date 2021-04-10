@@ -112,18 +112,19 @@ final class SetNewPasswordController {
     public void dispatchSetNewPasswordIntent() {
         final Bundle extras;
         // TODO: handle the case with multiple biometrics, perhaps take an arg for biometric type?
-        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_FACE)
-                && mFaceManager != null
-                && mFaceManager.isHardwareDetected()
-                && !mFaceManager.hasEnrolledTemplates(mTargetUserId)
-                && !isFaceDisabledByAdmin()) {
-            extras = getFaceChooseLockExtras();
-        } else if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
+        // UNSOC: fix for bug 1187761
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
                 && mFingerprintManager != null
                 && mFingerprintManager.isHardwareDetected()
                 && !mFingerprintManager.hasEnrolledFingerprints(mTargetUserId)
                 && !isFingerprintDisabledByAdmin()) {
             extras = getFingerprintChooseLockExtras();
+        } else if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_FACE)
+                && mFaceManager != null
+                && mFaceManager.isHardwareDetected()
+                && !mFaceManager.hasEnrolledTemplates(mTargetUserId)
+                && !isFaceDisabledByAdmin()) {
+            extras = getFaceChooseLockExtras();
         } else {
             extras = new Bundle();
         }

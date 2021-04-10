@@ -67,6 +67,7 @@
         android:title="@string/manage_mobile_plan_title"
         android:persistent="false"
         android:order="0"
+        android:icon="@drawable/ic_mobile_plan"
         settings:userRestriction="no_config_mobile_networks"
         settings:useAdminDisabledSummary="true" />
 

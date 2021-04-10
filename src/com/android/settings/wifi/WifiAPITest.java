@@ -24,6 +24,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
@@ -120,7 +121,12 @@ public class WifiAPITest extends SettingsPreferenceFragment implements
                         netid = Integer.parseInt(value.toString());
                     } catch (NumberFormatException e) {
                         // Invalid netid
-                        e.printStackTrace();
+                        /* UNISOC: Fix a crash with NumberFormatException @{ */
+                        //e.printStackTrace();
+                        Toast.makeText(getContext(),
+                                R.string.network_id_illegal_character, Toast.LENGTH_SHORT)
+                                .show();
+                        /* @} */
                         return;
                     }
                     mWifiManager.disableNetwork(netid);
@@ -142,7 +148,16 @@ public class WifiAPITest extends SettingsPreferenceFragment implements
             alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                     Editable value = input.getText();
-                    netid =  Integer.parseInt(value.toString());
+                    /* UNISOC: Fix a crash with NumberFormatException @{ */
+                    try {
+                        netid =  Integer.parseInt(value.toString());
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(),
+                                R.string.network_id_illegal_character, Toast.LENGTH_SHORT)
+                                .show();
+                        return;
+                    }
+                    /* @} */
                     mWifiManager.enableNetwork(netid, false);
                     }
                     });

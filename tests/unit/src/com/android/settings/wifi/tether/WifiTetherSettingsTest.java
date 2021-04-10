@@ -69,7 +69,7 @@ public class WifiTetherSettingsTest {
     public void launchTetherSettings_shouldHaveAllFields() {
         launchWifiTetherActivity();
         onView(withText("Hotspot name")).check(matches(isDisplayed()));
-        onView(withText("Hotspot password")).check(matches(isDisplayed()));
+        //onView(withText("Hotspot password")).check(matches(isDisplayed()));
     }
 
     private void launchWifiTetherActivity() {

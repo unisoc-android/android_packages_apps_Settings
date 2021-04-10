@@ -61,7 +61,7 @@ public class LocaleListEditor extends RestrictedSettingsFragment {
     private boolean mRemoveMode;
     private boolean mShowingRemoveDialog;
     private boolean mIsUiRestricted;
-
+    private AlertDialog mAlertDialog;
     public LocaleListEditor() {
         super(DISALLOW_CONFIG_LOCALE);
     }
@@ -107,6 +107,14 @@ public class LocaleListEditor extends RestrictedSettingsFragment {
             emptyView.setVisibility(View.GONE);
             updateVisibilityOfRemoveMenu();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mAlertDialog != null && mAlertDialog.isShowing()) {
+            mAlertDialog.dismiss();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -178,7 +186,10 @@ public class LocaleListEditor extends RestrictedSettingsFragment {
     // a "regular" warning otherwise.
     private void showRemoveLocaleWarningDialog() {
         int checkedCount = mAdapter.getCheckedCount();
-
+        final Activity activity = getActivity();
+        if (activity == null || activity.isFinishing()) {
+            return;
+        }
         // Nothing checked, just exit remove mode without a warning dialog
         if (checkedCount == 0) {
             setRemoveMode(!mRemoveMode);
@@ -188,7 +199,7 @@ public class LocaleListEditor extends RestrictedSettingsFragment {
         // All locales selected, warning dialog, can't remove them all
         if (checkedCount == mAdapter.getItemCount()) {
             mShowingRemoveDialog = true;
-            new AlertDialog.Builder(getActivity())
+            mAlertDialog = new AlertDialog.Builder(activity)
                     .setTitle(R.string.dlg_remove_locales_error_title)
                     .setMessage(R.string.dlg_remove_locales_error_message)
                     .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -202,15 +213,15 @@ public class LocaleListEditor extends RestrictedSettingsFragment {
                             mShowingRemoveDialog = false;
                         }
                     })
-                    .create()
-                    .show();
+                    .create();
+            mAlertDialog.show();
             return;
         }
 
         final String title = getResources().getQuantityString(R.plurals.dlg_remove_locales_title,
                 checkedCount);
         mShowingRemoveDialog = true;
-        new AlertDialog.Builder(getActivity())
+        mAlertDialog = new AlertDialog.Builder(activity)
                 .setTitle(title)
                 .setMessage(R.string.dlg_remove_locales_message)
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -243,8 +254,8 @@ public class LocaleListEditor extends RestrictedSettingsFragment {
                         mShowingRemoveDialog = false;
                     }
                 })
-                .create()
-                .show();
+                .create();
+        mAlertDialog.show();
     }
 
     @Override

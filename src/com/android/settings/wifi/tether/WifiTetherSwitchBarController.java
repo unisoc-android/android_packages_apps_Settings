@@ -54,7 +54,7 @@ public class WifiTetherSwitchBarController implements SwitchWidgetController.OnS
                 @Override
                 public void onTetheringFailed() {
                     super.onTetheringFailed();
-                    mSwitchBar.setChecked(false);
+                    setSwitchBarChecked(false);
                     updateWifiSwitch();
                 }
             };
@@ -62,6 +62,8 @@ public class WifiTetherSwitchBarController implements SwitchWidgetController.OnS
     static {
         WIFI_INTENT_FILTER = new IntentFilter(WifiManager.WIFI_AP_STATE_CHANGED_ACTION);
     }
+
+    private boolean isIgnoreSwitchChecked;
 
     WifiTetherSwitchBarController(Context context, SwitchWidgetController switchBar) {
         mContext = context;
@@ -91,9 +93,13 @@ public class WifiTetherSwitchBarController implements SwitchWidgetController.OnS
 
     @Override
     public boolean onSwitchToggled(boolean isChecked) {
-        if (!isChecked) {
+        if (isIgnoreSwitchChecked) {
+            return true;
+        }
+
+        if (!isChecked && mWifiManager.getWifiApState() == WifiManager.WIFI_AP_STATE_ENABLED) {
             stopTether();
-        } else if (!mWifiManager.isWifiApEnabled()) {
+        } else if (isChecked && mWifiManager.getWifiApState() == WifiManager.WIFI_AP_STATE_DISABLED) {
             startTether();
         }
         return true;
@@ -123,31 +129,28 @@ public class WifiTetherSwitchBarController implements SwitchWidgetController.OnS
     };
 
     private void handleWifiApStateChanged(int state) {
+        if (state == WifiManager.WIFI_AP_STATE_ENABLING || state == WifiManager.WIFI_AP_STATE_ENABLED) {
+            setSwitchBarChecked(true);
+        } else {
+            setSwitchBarChecked(false);
+        }
         switch (state) {
             case WifiManager.WIFI_AP_STATE_ENABLING:
+            case WifiManager.WIFI_AP_STATE_DISABLING:
                 mSwitchBar.setEnabled(false);
                 break;
             case WifiManager.WIFI_AP_STATE_ENABLED:
-                if (!mSwitchBar.isChecked()) {
-                    mSwitchBar.setChecked(true);
-                }
-                updateWifiSwitch();
-                break;
-            case WifiManager.WIFI_AP_STATE_DISABLING:
-                if (mSwitchBar.isChecked()) {
-                    mSwitchBar.setChecked(false);
-                }
-                mSwitchBar.setEnabled(false);
-                break;
             case WifiManager.WIFI_AP_STATE_DISABLED:
-                mSwitchBar.setChecked(false);
-                updateWifiSwitch();
-                break;
             default:
-                mSwitchBar.setChecked(false);
                 updateWifiSwitch();
                 break;
         }
+    }
+
+    private void setSwitchBarChecked(boolean checked) {
+        isIgnoreSwitchChecked = true;
+        mSwitchBar.setChecked(checked);
+        isIgnoreSwitchChecked = false;
     }
 
     private void updateWifiSwitch() {

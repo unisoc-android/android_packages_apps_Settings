@@ -30,6 +30,7 @@ import android.hardware.display.WifiDisplayStatus;
 import android.media.MediaRouter;
 import android.media.MediaRouter.RouteInfo;
 import android.net.Uri;
+import android.net.wifi.WifiFeaturesUtils;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
@@ -225,6 +226,7 @@ public final class WifiDisplaySettings extends SettingsPreferenceFragment implem
     public static boolean isAvailable(Context context) {
         return context.getSystemService(Context.DISPLAY_SERVICE) != null
                 && context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_DIRECT)
+                && WifiFeaturesUtils.getInstance(context).isSupportP2pFeature()
                 && context.getSystemService(Context.WIFI_P2P_SERVICE) != null;
     }
 

@@ -124,10 +124,8 @@ public class ZenRulePreference extends TwoTargetPreference {
             setTitle(mName);
         }
 
-        if (mRule.isEnabled() != rule.isEnabled()) {
-            setChecked(mRule.isEnabled());
-            setSummary(computeRuleSummary(mRule));
-        }
+        setChecked(mRule.isEnabled());
+        setSummary(computeRuleSummary(mRule));
 
         mRule = rule;
     }

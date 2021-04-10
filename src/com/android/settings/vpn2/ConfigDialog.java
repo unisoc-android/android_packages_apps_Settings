@@ -236,7 +236,8 @@ class ConfigDialog extends AlertDialog implements TextWatcher,
 
         // Visibility isn't restored by super.onRestoreInstanceState, so re-show the advanced
         // options here if they were already revealed or set.
-        if (mShowOptions.isChecked()) {
+        // Avoid NPE
+        if (mShowOptions != null && mShowOptions.isChecked()) {
             showAdvancedOptions();
         }
     }

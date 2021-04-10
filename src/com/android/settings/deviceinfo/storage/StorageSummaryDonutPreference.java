@@ -16,14 +16,19 @@
 
 package com.android.settings.deviceinfo.storage;
 
+import android.app.AppOpsManager;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Typeface;
 import android.os.storage.StorageManager;
 import android.text.TextPaint;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -31,6 +36,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
 import com.android.settings.R;
+import com.android.settings.Utils;
 import com.android.settings.overlay.FeatureFactory;
 import com.android.settings.widget.DonutView;
 
@@ -39,6 +45,13 @@ import com.android.settings.widget.DonutView;
  * on a given storage volume. It is visualized with a donut graphing the % used.
  */
 public class StorageSummaryDonutPreference extends Preference implements View.OnClickListener {
+    /* Bug1106941: no need to startActivity if StorageManager application is disabled @{ */
+    private static final String TAG = "StorageSummaryDonutPreference";
+    private static final String STORAGE_MANAGER_PACKAGE_NAME = "com.android.storagemanager";
+    private AppOpsManager mAppOpsManager;
+    private PackageInfo mPackageInfo;
+    /* @} */
+
     private double mPercent = -1;
 
     public StorageSummaryDonutPreference(Context context) {
@@ -50,6 +63,18 @@ public class StorageSummaryDonutPreference extends Preference implements View.On
 
         setLayoutResource(R.layout.storage_summary_donut);
         setEnabled(false);
+        /* Bug1106941: no need to startActivity if StorageManager application is disabled @{ */
+        mAppOpsManager = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+        try {
+            mPackageInfo = context.getPackageManager().getPackageInfo(STORAGE_MANAGER_PACKAGE_NAME,
+                    PackageManager.MATCH_DISABLED_COMPONENTS |
+                    PackageManager.MATCH_ANY_USER |
+                    PackageManager.GET_SIGNATURES |
+                    PackageManager.GET_PERMISSIONS);
+        } catch (NameNotFoundException e) {
+            Log.e(TAG, STORAGE_MANAGER_PACKAGE_NAME + " not found!");
+        }
+        /* @} */
     }
 
     public void setPercent(long usedBytes, long totalBytes) {
@@ -83,9 +108,24 @@ public class StorageSummaryDonutPreference extends Preference implements View.On
             FeatureFactory.getFactory(context).getMetricsFeatureProvider().action(
                     context, SettingsEnums.STORAGE_FREE_UP_SPACE_NOW);
             Intent intent = new Intent(StorageManager.ACTION_MANAGE_STORAGE);
-            getContext().startActivity(intent);
+            /* Bug1106941: no need to startActivity if StorageManager application is disabled @{ */
+            if (Utils.isIntentCanBeResolved(getContext(), intent) && isAppOpsModeAllowed()) {
+                getContext().startActivity(intent);
+            }
+            /* @} */
         }
     }
+
+    /* Bug1106941: no need to startActivity if StorageManager application is disabled @{ */
+    private boolean isAppOpsModeAllowed(){
+        if (mPackageInfo == null) {
+            return false;
+        }
+        int mode = mAppOpsManager.checkOpNoThrow(AppOpsManager.OP_GET_USAGE_STATS,
+                mPackageInfo.applicationInfo.uid, STORAGE_MANAGER_PACKAGE_NAME);
+        return mode == AppOpsManager.MODE_ALLOWED || mode == AppOpsManager.MODE_DEFAULT;
+    }
+    /* @} */
 
     private static class BoldLinkSpan extends StyleSpan {
         public BoldLinkSpan() {

@@ -17,11 +17,14 @@
 package com.android.settings.applications.specialaccess;
 
 import android.content.Context;
+import android.os.SystemProperties;
 
 import com.android.settings.R;
 import com.android.settings.core.BasePreferenceController;
 
 public class HighPowerAppsController extends BasePreferenceController {
+    //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp high power app
+    private final boolean isSupportSprdPowerManager = (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1));
 
     public HighPowerAppsController(Context context, String key) {
         super(context, key);
@@ -29,7 +32,9 @@ public class HighPowerAppsController extends BasePreferenceController {
 
     @AvailabilityStatus
     public int getAvailabilityStatus() {
+        //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp high power app
         return mContext.getResources().getBoolean(R.bool.config_show_high_power_apps)
+                && !isSupportSprdPowerManager
                 ? AVAILABLE
                 : UNSUPPORTED_ON_DEVICE;
     }

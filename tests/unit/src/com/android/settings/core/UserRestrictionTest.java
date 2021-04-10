@@ -67,7 +67,12 @@ public class UserRestrictionTest {
             UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
             UserManager.DISALLOW_AIRPLANE_MODE,
             UserManager.DISALLOW_CONFIG_BRIGHTNESS,
-            UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT
+            UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT,
+            UserManager.DISALLOW_CONFIG_BLUETOOTH,
+            UserManager.DISALLOW_DATA_ROAMING,
+            UserManager.DISALLOW_AMBIENT_DISPLAY,
+            UserManager.DISALLOW_REMOVE_USER,
+            UserManager.DISALLOW_APPS_CONTROL
     );
 
     @Before

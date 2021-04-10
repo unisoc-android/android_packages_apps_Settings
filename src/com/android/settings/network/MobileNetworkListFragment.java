@@ -16,6 +16,7 @@
 
 package com.android.settings.network;
 
+import android.app.Activity;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.os.UserManager;
@@ -32,6 +33,7 @@ import java.util.List;
 
 @SearchIndexable(forTarget = SearchIndexable.ALL & ~SearchIndexable.ARC)
 public class MobileNetworkListFragment extends DashboardFragment {
+
     private static final String LOG_TAG = "NetworkListFragment";
 
     @Override
@@ -52,7 +54,9 @@ public class MobileNetworkListFragment extends DashboardFragment {
     @Override
     protected List<AbstractPreferenceController> createPreferenceControllers(Context context) {
         final List<AbstractPreferenceController> controllers = new ArrayList<>();
-        controllers.add(new MobileNetworkListController(getContext(), getLifecycle()));
+//        controllers.add(new MobileNetworkListController(getContext(), getLifecycle()));
+        // UNISOC: Bug1117246
+        controllers.add(new MobileNetworkListController(getContext(), getLifecycle(), this));
         return controllers;
     }
 
@@ -73,4 +77,18 @@ public class MobileNetworkListFragment extends DashboardFragment {
                     return context.getSystemService(UserManager.class).isAdminUser();
                 }
             };
+
+    /**
+     * UNISOC: Bug1117246
+     */
+    public void finishActivity(){
+        Activity activity = getActivity();
+        if (activity == null) {
+            return;
+        }
+        activity.finish();
+    }
+    /**
+     * @}
+     * */
 }

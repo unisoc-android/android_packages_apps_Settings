@@ -17,6 +17,7 @@
 package com.android.settings.users;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -48,6 +49,7 @@ import android.widget.ImageView;
 import android.widget.ListPopupWindow;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
@@ -92,6 +94,8 @@ public class EditUserPhotoController {
     private Bitmap mNewUserPhotoBitmap;
     private Drawable mNewUserPhotoDrawable;
 
+    private AlertDialog mEditUserInfoDialog;
+
     public EditUserPhotoController(Fragment fragment, ImageView view,
             Bitmap bitmap, Drawable drawable, boolean waiting) {
         mContext = view.getContext();
@@ -112,6 +116,7 @@ public class EditUserPhotoController {
 
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode != Activity.RESULT_OK) {
+            setUserInfoDialogEnabled(true);
             return false;
         }
         final Uri pictureUri = data != null && data.getData() != null
@@ -119,6 +124,7 @@ public class EditUserPhotoController {
         switch (requestCode) {
             case REQUEST_CODE_CROP_PHOTO:
                 onPhotoCropped(pictureUri, true);
+                setUserInfoDialogEnabled(true);
                 return true;
             case REQUEST_CODE_TAKE_PHOTO:
             case REQUEST_CODE_CHOOSE_PHOTO:
@@ -129,8 +135,31 @@ public class EditUserPhotoController {
                 }
                 return true;
         }
+        setUserInfoDialogEnabled(true);
         return false;
     }
+
+    /*bug 1121052 : disable dialog button if need crop photo @{ */
+    public void setUserInfoDialog(Dialog dialog) {
+        if (dialog != null && dialog instanceof AlertDialog) {
+            mEditUserInfoDialog = (AlertDialog)dialog;
+        }
+    }
+
+    private void setUserInfoDialogEnabled(boolean enable) {
+        mEditUserInfoDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(enable);
+        mEditUserInfoDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(enable);
+    }
+
+    public void startingActivityForResult(Intent intent, int requestCode) {
+        setUserInfoDialogEnabled(false);
+        //bug 1193620: click listPopupWindow when activity has been relaunched but fragment has not added to activity.
+        if (!mFragment.isAdded()) {
+            return;
+        }
+        mFragment.startActivityForResult(intent, requestCode);
+    }
+    /* @} */
 
     public Bitmap getNewUserPhotoBitmap() {
         return mNewUserPhotoBitmap;
@@ -216,14 +245,14 @@ public class EditUserPhotoController {
     private void takePhoto() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         appendOutputExtra(intent, mTakePictureUri);
-        mFragment.startActivityForResult(intent, REQUEST_CODE_TAKE_PHOTO);
+        startingActivityForResult(intent, REQUEST_CODE_TAKE_PHOTO);
     }
 
     private void choosePhoto() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT, null);
         intent.setType("image/*");
         appendOutputExtra(intent, mTakePictureUri);
-        mFragment.startActivityForResult(intent, REQUEST_CODE_CHOOSE_PHOTO);
+        startingActivityForResult(intent, REQUEST_CODE_CHOOSE_PHOTO);
     }
 
     private void copyAndCropPhoto(final Uri pictureUri) {
@@ -257,7 +286,9 @@ public class EditUserPhotoController {
         if (intent.resolveActivity(mContext.getPackageManager()) != null) {
             try {
                 StrictMode.disableDeathOnFileUriExposure();
-                mFragment.startActivityForResult(intent, REQUEST_CODE_CROP_PHOTO);
+                startingActivityForResult(intent, REQUEST_CODE_CROP_PHOTO);
+            } catch (Exception e) {
+                setUserInfoDialogEnabled(true);
             } finally {
                 StrictMode.enableDeathOnFileUriExposure();
             }

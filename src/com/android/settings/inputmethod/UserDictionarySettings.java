@@ -21,6 +21,7 @@ import android.app.ActionBar;
 import android.app.settings.SettingsEnums;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.IContentProvider;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -162,6 +163,13 @@ public class UserDictionarySettings extends ListFragment implements Instrumentab
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == OPTIONS_MENU_ADD) {
+            /*bug 1141325 : Can not add a word if UserDictionary provider disable @{ */
+            IContentProvider iprovider = getContext().getContentResolver()
+                    .acquireProvider(UserDictionary.Words.CONTENT_URI);
+            if (iprovider == null) {
+                return false;
+            }
+            /* @} */
             showAddOrEditDialog(null, null);
             return true;
         }

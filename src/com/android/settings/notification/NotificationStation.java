@@ -579,7 +579,7 @@ public class NotificationStation extends SettingsPreferenceFragment {
     private Drawable loadIconDrawable(String pkg, int userId, int resId) {
         Resources r = getResourcesForUserPackage(pkg, userId);
 
-        if (resId == 0) {
+        if (r == null || resId == 0) {
             return null;
         }
 

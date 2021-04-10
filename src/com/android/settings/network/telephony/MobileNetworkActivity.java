@@ -21,12 +21,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
+import android.widget.Toast;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
@@ -41,6 +45,8 @@ import com.android.settings.core.FeatureFlags;
 import com.android.settings.core.SettingsBaseActivity;
 import com.android.settings.development.featureflags.FeatureFlagPersistent;
 import com.android.settings.network.SubscriptionUtil;
+import com.android.settings.Utils;
+import com.android.settings.overlay.FeatureFactory;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -62,7 +68,7 @@ public class MobileNetworkActivity extends SettingsBaseActivity {
     int mCurSubscriptionId;
     @VisibleForTesting
     List<SubscriptionInfo> mSubscriptionInfos = new ArrayList<>();
-    private PhoneChangeReceiver mPhoneChangeReceiver;
+//    private PhoneChangeReceiver mPhoneChangeReceiver;
 
     private final SubscriptionManager.OnSubscriptionsChangedListener
             mOnSubscriptionsChangeListener
@@ -80,20 +86,31 @@ public class MobileNetworkActivity extends SettingsBaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /* UNISOC: Bug 978574 Mobile network does not support screen-split @{*/
+        if (isInMultiWindowMode()){
+            Toast.makeText(getApplicationContext(), R.string.screen_split_not_support,
+                    Toast.LENGTH_SHORT).show();
+            finish();
+        }
+        /* @} */
+
         if (FeatureFlagPersistent.isEnabled(this, FeatureFlags.NETWORK_INTERNET_V2)) {
             setContentView(R.layout.mobile_network_settings_container_v2);
         } else {
             setContentView(R.layout.mobile_network_settings_container);
         }
         setActionBar(findViewById(R.id.mobile_action_bar));
-        mPhoneChangeReceiver = new PhoneChangeReceiver(this, () -> {
-            if (mCurSubscriptionId != SUB_ID_NULL) {
-                // When the radio changes (ex: CDMA->GSM), refresh the fragment.
-                // This is very rare.
-                switchFragment(new MobileNetworkSettings(), mCurSubscriptionId,
-                        true /* forceUpdate */);
-            }
-        });
+        // UNISOC: Bug 1177350
+//        mPhoneChangeReceiver = new PhoneChangeReceiver(this, (subId) -> {
+//            Log.d(TAG, "onPhoneChange subid = " + subId + " mCurSubscriptionId = " + mCurSubscriptionId);
+//            if (mCurSubscriptionId != SUB_ID_NULL
+//                    && (mCurSubscriptionId == subId || subId == SUB_ID_NULL)) {
+//                // When the radio changes (ex: CDMA->GSM), refresh the fragment.
+//                // This is very rare.
+//                switchFragment(new MobileNetworkSettings(), mCurSubscriptionId,
+//                        true /* forceUpdate */);
+//            }
+//        });
         mSubscriptionManager = getSystemService(SubscriptionManager.class);
         mSubscriptionInfos = mSubscriptionManager.getActiveSubscriptionInfoList(true);
         mCurSubscriptionId = savedInstanceState != null
@@ -106,20 +123,29 @@ public class MobileNetworkActivity extends SettingsBaseActivity {
         }
 
         updateSubscriptions(savedInstanceState);
+        // UNISOC: Bug 1177350
+//        mPhoneChangeReceiver.register();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        mPhoneChangeReceiver.register();
         mSubscriptionManager.addOnSubscriptionsChangedListener(mOnSubscriptionsChangeListener);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mPhoneChangeReceiver.unregister();
         mSubscriptionManager.removeOnSubscriptionsChangedListener(mOnSubscriptionsChangeListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // UNISOC: Bug 1177350
+//        if (mPhoneChangeReceiver != null) {
+//            mPhoneChangeReceiver.unregister();
+//        }
     }
 
     @Override
@@ -138,12 +164,16 @@ public class MobileNetworkActivity extends SettingsBaseActivity {
         // Set the title to the name of the subscription. If we don't have subscription info, the
         // title will just default to the label for this activity that's already specified in
         // AndroidManifest.xml.
+        mSubscriptionInfos = mSubscriptionManager.getActiveSubscriptionInfoList(true);
         final SubscriptionInfo subscription = getSubscription();
+        if (CollectionUtils.isEmpty(mSubscriptionInfos) || (mCurSubscriptionId != SUB_ID_NULL
+                && getSubscriptionId() != mCurSubscriptionId)) {
+            finish();
+            return;
+        }
         if (subscription != null) {
             setTitle(subscription.getDisplayName());
         }
-
-        mSubscriptionInfos = mSubscriptionManager.getActiveSubscriptionInfoList(true);
 
         if (!FeatureFlagPersistent.isEnabled(this, FeatureFlags.NETWORK_INTERNET_V2)) {
             updateBottomNavigationView();
@@ -250,7 +280,7 @@ public class MobileNetworkActivity extends SettingsBaseActivity {
         private Client mClient;
 
         interface Client {
-            void onPhoneChange();
+            void onPhoneChange(int subId);
         }
 
         public PhoneChangeReceiver(Context context, Client client) {
@@ -269,8 +299,31 @@ public class MobileNetworkActivity extends SettingsBaseActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (!isInitialStickyBroadcast()) {
-                mClient.onPhoneChange();
+                int subId = intent.getIntExtra(SubscriptionManager.EXTRA_SUBSCRIPTION_INDEX, SUB_ID_NULL);
+                Log.d(TAG, "onReceive subid = " + subId);
+                mClient.onPhoneChange(subId);
             }
         }
     }
+
+    /** Bug1193673: Support Touch assistant search @{ */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+         switch (keyCode) {
+             case KeyEvent.KEYCODE_SEARCH:
+                 final Intent intent = new Intent(android.provider.Settings.ACTION_APP_SEARCH_SETTINGS);
+                 intent.setPackage(FeatureFactory.getFactory(getApplicationContext())
+                         .getSearchFeatureProvider().getSettingsIntelligencePkgName(this));
+                 ResolveInfo result = this.getPackageManager().resolveActivity(intent, 0);
+                 if (result != null) {
+                     startActivityForResult(intent, 0 /* requestCode */);
+                 }
+                 return true;
+             default:
+                 break;
+         }
+         return super.onKeyDown(keyCode, event);
+     }
+     /**
+      * @} */
 }

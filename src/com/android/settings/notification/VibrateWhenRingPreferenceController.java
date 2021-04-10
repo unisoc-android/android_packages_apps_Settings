@@ -23,6 +23,7 @@ import android.content.Context;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -84,6 +85,10 @@ public class VibrateWhenRingPreferenceController extends TogglePreferenceControl
         if (preference != null) {
             mSettingObserver = new SettingObserver(preference);
             preference.setPersistent(false);
+            //bug 1229626 Vibrate for calls doesn't work in new user
+            if (UserHandle.myUserId() != UserHandle.USER_OWNER){
+                preference.setVisible(false);
+            }
         }
     }
 

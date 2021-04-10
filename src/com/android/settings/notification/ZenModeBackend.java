@@ -91,7 +91,12 @@ public class ZenModeBackend {
     }
 
     protected boolean updateZenRule(String id, AutomaticZenRule rule) {
-        return NotificationManager.from(mContext).updateAutomaticZenRule(id, rule);
+        /*UNISOC:1147457 Settings crashed in monkey test @{ */
+        if (id != null && getAutomaticZenRule(id) != null) {
+            return NotificationManager.from(mContext).updateAutomaticZenRule(id, rule);
+        }
+        return false;
+        /* @} */
     }
 
     protected void setZenMode(int zenMode) {

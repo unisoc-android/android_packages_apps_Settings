@@ -23,6 +23,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceScreen;
 
+import com.android.settings.bluetooth.Utils;
 import com.android.settings.bluetooth.BluetoothDeviceUpdater;
 import com.android.settings.bluetooth.SavedBluetoothDeviceUpdater;
 import com.android.settings.connecteddevice.dock.DockUpdater;
@@ -87,6 +88,9 @@ public class SavedDeviceGroupController extends BasePreferenceController
 
     @Override
     public int getAvailabilityStatus() {
+        if (!Utils.isBluetoothSupported(mContext)) {
+           return UNSUPPORTED_ON_DEVICE;
+        }
         return (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
                 || mSavedDockUpdater != null)
                 ? AVAILABLE

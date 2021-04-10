@@ -30,6 +30,7 @@ import androidx.preference.PreferenceScreen;
 
 import com.android.settings.core.BasePreferenceController;
 import com.android.settings.network.SubscriptionsChangeListener;
+import com.android.settingslib.WirelessUtils;
 
 public class DisabledSubscriptionController extends BasePreferenceController implements
         SubscriptionsChangeListener.SubscriptionsChangeListenerClient, LifecycleObserver {
@@ -74,6 +75,8 @@ public class DisabledSubscriptionController extends BasePreferenceController imp
         }
         // TODO b/135222940: re-evaluate whether to use mSubscriptionManager#isSubscriptionEnabled
         mCategory.setVisible(mSubscriptionManager.isActiveSubId(mSubId));
+        // UNISOC: Disable all preferences if airplane mode is on
+        mCategory.setEnabled(!WirelessUtils.isAirplaneModeOn(mContext));
     }
 
     @Override
@@ -83,6 +86,10 @@ public class DisabledSubscriptionController extends BasePreferenceController imp
 
     @Override
     public void onAirplaneModeChanged(boolean airplaneModeEnabled) {
+        // UNISOC: Refresh all preferences if airplane mode is changed
+        if (mCategory != null){
+            mCategory.setEnabled(!airplaneModeEnabled);
+        }
     }
 
     @Override

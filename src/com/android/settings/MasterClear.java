@@ -24,6 +24,13 @@ import android.accounts.AuthenticatorDescription;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.settings.SettingsEnums;
+/* UNISOC:1072218 Support "Low Battery FactoryReset Prompt" @{ */
+import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
+import android.content.IntentFilter;
+/* @} */
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -34,6 +41,7 @@ import android.content.pm.UserInfo;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemProperties;
@@ -93,8 +101,18 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
     private static final String KEY_SHOW_ESIM_RESET_CHECKBOX
             = "masterclear.allow_retain_esim_profiles_after_fdr";
 
+    // Add for bug1185063, No need to show the sprd type accounts
+    private static final String[] SPRD_ACCOUNTS = {"sprd.com.android.account.usim",
+        "sprd.com.android.account.phone",
+        "sprd.com.android.account.sim"};
+
     static final String ERASE_EXTERNAL_EXTRA = "erase_sd";
     static final String ERASE_ESIMS_EXTRA = "erase_esim";
+
+    /* UNISOC:1072218 Support "Low Battery FactoryReset Prompt" @{ */
+    private static final int BATTERY_LEVEL_LIMIT = 30;
+    private static final String DIALOG_IS_SHOWING = "isShowing";
+    /* @} */
 
     private View mContentView;
     @VisibleForTesting
@@ -108,6 +126,15 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
     CheckBox mEsimStorage;
     @VisibleForTesting
     ScrollView mScrollView;
+
+    /* UNISOC:1072218 Support "Low Battery FactoryReset Prompt" @{ */
+    private int mBatteryLevel;
+    private Context mContext;
+    private boolean mIsPromptDialogShowing = false;
+    private boolean mLowBatteryPromptSupported = false;
+    private BatteryManager mBatteryManager;
+    private AlertDialog mLowBatteryPromptDialog;
+    /* @} */
 
     @Override
     public void onGlobalLayout() {
@@ -254,6 +281,16 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
                 }
                 return;
             }
+            if (mBatteryLevel == 0) {
+                mBatteryLevel = mBatteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+            }
+            /* UNISOC:1072218 Support "Low Battery FactoryReset Prompt" start @{ */
+            if (mLowBatteryPromptSupported && mBatteryLevel < BATTERY_LEVEL_LIMIT) {
+                mIsPromptDialogShowing = true;
+                showPromptDialog();
+                return;
+            }
+            /* @} */
 
             if (runKeyguardConfirmation(KEYGUARD_REQUEST)) {
                 return;
@@ -450,6 +487,17 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
         return !"".equals(state);
     }
 
+    /* Add for bug1185063, no need to show the sprd type accounts. @{ */
+    private boolean filterSprdAccount(String[] accountArray, String type){
+         for (int i = 0; i < accountArray.length; i++){
+             if (type != null && type.equals(accountArray[i])){
+                 return true;
+             }
+         }
+         return false;
+    }
+    /* @} */
+
     private void loadAccountList(final UserManager um) {
         View accountsLabel = mContentView.findViewById(R.id.accounts_label);
         LinearLayout contents = (LinearLayout) mContentView.findViewById(R.id.accounts);
@@ -497,6 +545,13 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
                         break;
                     }
                 }
+
+                // Add for bug1185063, no need to show the sprd type accounts.
+                if (filterSprdAccount(SPRD_ACCOUNTS, account.type)) {
+                    accountsCount -= 1;
+                    continue;
+                }
+
                 if (desc == null) {
                     Log.w(TAG, "No descriptor for account name=" + account.name
                             + " type=" + account.type);
@@ -521,7 +576,13 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
 
                 View child = inflater.inflate(R.layout.master_clear_account, contents, false);
                 ((ImageView) child.findViewById(android.R.id.icon)).setImageDrawable(icon);
-                ((TextView) child.findViewById(android.R.id.title)).setText(account.name);
+                /* bug 1122804: judge the account type, if user is from the resource read, change string @{ */
+                if ("sprd.com.android.account.phone".equals(account.type)) {
+                    ((TextView) child.findViewById(android.R.id.title)).setText(R.string.current_label_phone);
+                } else {
+                    ((TextView) child.findViewById(android.R.id.title)).setText(account.name);
+                }
+                /* @} */
                 contents.addView(child);
             }
         }
@@ -546,6 +607,8 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
         final boolean disallow = !um.isAdminUser() || RestrictedLockUtilsInternal
                 .hasBaseUserRestriction(context, UserManager.DISALLOW_FACTORY_RESET,
                         UserHandle.myUserId());
+        // UNISOC:1072218 Support "Low Battery FactoryReset Prompt"
+        mLowBatteryPromptSupported = context.getResources().getBoolean(R.bool.config_support_lowBatteryFactoryResetPrompt);
         if (disallow && !Utils.isDemoUser(context)) {
             return inflater.inflate(R.layout.master_clear_disallowed_screen, null);
         } else if (admin != null) {
@@ -558,7 +621,22 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
 
         mContentView = inflater.inflate(R.layout.master_clear, null);
 
+        /* UNISOC:1072218 Support "Low Battery FactoryReset Prompt" @{ */
+        mContext = context;
+        if (savedInstanceState != null) {
+            mIsPromptDialogShowing = savedInstanceState.getBoolean(DIALOG_IS_SHOWING, false);
+        }
+        /* @} */
+
         establishInitialState();
+
+
+        /* UNISOC:1072218 Support "Low Battery FactoryReset Prompt" @{ */
+        if (mLowBatteryPromptSupported && mIsPromptDialogShowing) {
+            showPromptDialog();
+        }
+        /* @} */
+
         return mContentView;
     }
 
@@ -566,4 +644,84 @@ public class MasterClear extends InstrumentedFragment implements OnGlobalLayoutL
     public int getMetricsCategory() {
         return SettingsEnums.MASTER_CLEAR;
     }
+
+
+    /* UNISOC:1072218 Support "Low Battery FactoryReset Prompt" start */
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(DIALOG_IS_SHOWING, mIsPromptDialogShowing);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mBatteryManager = (BatteryManager) mContext.getSystemService(Context.BATTERY_SERVICE);
+        if (mLowBatteryPromptSupported) {
+            // Monitor battery changes
+            mContext.registerReceiver(mBatteryInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        }
+    }
+
+    private BroadcastReceiver mBatteryInfoReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (Intent.ACTION_BATTERY_CHANGED.equals(action)) {
+                int rawlevel = intent.getIntExtra("level", -1);
+                int scale = intent.getIntExtra("scale", -1);
+                int level = -1;
+                if (rawlevel >= 0 && scale > 0) {
+                    level = (rawlevel * 100) / scale;
+                }
+                mBatteryLevel = level;
+            }
+        }
+    };
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (mLowBatteryPromptSupported) {
+            mContext.unregisterReceiver(mBatteryInfoReceiver);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mLowBatteryPromptDialog != null && mLowBatteryPromptDialog.isShowing()) {
+            mLowBatteryPromptDialog.dismiss();
+        }
+        mLowBatteryPromptDialog = null;
+    }
+
+    protected void showPromptDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        builder.setMessage(R.string.master_clear_level)
+            .setTitle(R.string.factory_dialog_title)
+            .setPositiveButton(mContext.getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+                 @Override
+                 public void onClick(DialogInterface dialog, int which) {
+                     if (!runKeyguardConfirmation(KEYGUARD_REQUEST)) {
+                         Intent intent = getAccountConfirmationIntent();
+                         if (intent != null) {
+                             // Try to show an account confirmation request if applciable.
+                             showAccountCredentialConfirmation(intent);
+                         } else {
+                             showFinalConfirmation();
+                         }
+                     }
+                 }
+            })
+            .setNegativeButton(mContext.getString(android.R.string.cancel), null)
+            .setOnDismissListener(new OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    mIsPromptDialogShowing = false;
+                }
+            });
+        mLowBatteryPromptDialog = builder.show();
+    }
+    /* UNISOC:1072218 Support "Low Battery FactoryReset Prompt" end */
 }

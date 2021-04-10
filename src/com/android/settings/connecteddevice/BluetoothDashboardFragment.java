@@ -23,6 +23,7 @@ import android.os.Bundle;
 
 import com.android.settings.R;
 import com.android.settings.SettingsActivity;
+import com.android.settings.bluetooth.BluetoothSlaveSwitchPreferenceController;
 import com.android.settings.bluetooth.BluetoothDeviceRenamePreferenceController;
 import com.android.settings.bluetooth.BluetoothSwitchPreferenceController;
 import com.android.settings.core.TogglePreferenceController;
@@ -51,6 +52,8 @@ public class BluetoothDashboardFragment extends DashboardFragment {
     private FooterPreference mFooterPreference;
     private SwitchBar mSwitchBar;
     private BluetoothSwitchPreferenceController mController;
+    private SwitchBar mSlaveSwitchBar;
+    private BluetoothSlaveSwitchPreferenceController mSlaveController;
 
     @Override
     public int getMetricsCategory() {
@@ -88,13 +91,26 @@ public class BluetoothDashboardFragment extends DashboardFragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        final boolean supportBtResverse = getResources()
+                    .getBoolean(com.android.internal.R.bool.support_bluetooth_reverse);
         SettingsActivity activity = (SettingsActivity) getActivity();
         mSwitchBar = activity.getSwitchBar();
         mController = new BluetoothSwitchPreferenceController(activity,
                 new SwitchBarController(mSwitchBar), mFooterPreference);
+
+        if (supportBtResverse) {
+            mSlaveSwitchBar = activity.getSlaveSwitchBar();
+            mSlaveSwitchBar.setSwitchBarText(R.string.slave, R.string.master);
+            mSlaveController = new BluetoothSlaveSwitchPreferenceController(activity,
+                new SwitchBarController(mSlaveSwitchBar));
+        }
+
         Lifecycle lifecycle = getSettingsLifecycle();
         if (lifecycle != null) {
             lifecycle.addObserver(mController);
+            if (supportBtResverse) {
+                lifecycle.addObserver(mSlaveController);
+            }
         }
     }
     /**

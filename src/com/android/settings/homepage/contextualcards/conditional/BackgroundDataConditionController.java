@@ -20,10 +20,13 @@ import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkPolicyManager;
+import android.os.Bundle;
 
 import com.android.settings.R;
 import com.android.settings.Settings;
 import com.android.settings.homepage.contextualcards.ContextualCard;
+import static com.android.settings.network.NetworkDashboardFragment.ARG_SHOW_EXPAND_BUTTON;
+import static com.android.settings.SettingsActivity.EXTRA_SHOW_FRAGMENT_ARGUMENTS;
 
 import java.util.Objects;
 
@@ -53,7 +56,13 @@ public class BackgroundDataConditionController implements ConditionalCardControl
 
     @Override
     public void onPrimaryClick(Context context) {
-        context.startActivity(new Intent(context, Settings.DataUsageSummaryActivity.class));
+        //Modify for bug1130300、1130366, Change the display activity
+        //UNISOC: Modify for bug1136114, We do not want to display an advanced button.
+        Intent intent = new Intent(context, Settings.NetworkDashboardActivity.class);
+        final Bundle bundle = new Bundle();
+        bundle.putBoolean(ARG_SHOW_EXPAND_BUTTON, false);
+        intent.putExtra(EXTRA_SHOW_FRAGMENT_ARGUMENTS, bundle);
+        context.startActivity(intent);
     }
 
     @Override

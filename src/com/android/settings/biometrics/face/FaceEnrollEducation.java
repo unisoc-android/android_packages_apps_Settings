@@ -51,7 +51,8 @@ public class FaceEnrollEducation extends BiometricEnrollBase {
     private static final int ON = 1;
     private static final int OFF = 0;
     // 8 seconds.
-    private static final long FACE_ENROLL_EDUCATION_DELAY = 8000;
+    // Unisoc: fix for bug 1138442
+    private static final long FACE_ENROLL_EDUCATION_DELAY = 0;
 
     private FaceManager mFaceManager;
     private FaceEnrollAccessibilityToggle mSwitchDiversity;
@@ -90,7 +91,7 @@ public class FaceEnrollEducation extends BiometricEnrollBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.face_enroll_education);
-        getLayout().setHeaderText(R.string.security_settings_face_enroll_education_title);
+        getLayout().setHeaderText(R.string.security_settings_face_enroll_education_title_accessibility);
         setTitle(R.string.security_settings_face_enroll_education_title);
         mHandler = new Handler();
 
@@ -103,7 +104,7 @@ public class FaceEnrollEducation extends BiometricEnrollBase {
         mFooterBarMixin = getLayout().getMixin(FooterBarMixin.class);
         mFooterBarMixin.setSecondaryButton(
                 new FooterButton.Builder(this)
-                        .setText(R.string.security_settings_face_enroll_enrolling_skip)
+                        .setText(R.string.security_settings_face_enroll_introduction_cancel)
                         .setListener(this::onSkipButtonClick)
                         .setButtonType(FooterButton.ButtonType.SKIP)
                         .setTheme(R.style.SudGlifButton_Secondary)
@@ -155,8 +156,9 @@ public class FaceEnrollEducation extends BiometricEnrollBase {
     @Override
     protected void onResume() {
         super.onResume();
-        mSwitchDiversityListener.onCheckedChanged(mSwitchDiversity.getSwitch(),
-                mSwitchDiversity.isChecked());
+        // Unisoc: fix for bug 1138442
+        /*mSwitchDiversityListener.onCheckedChanged(mSwitchDiversity.getSwitch(),
+                mSwitchDiversity.isChecked());*/
     }
 
     @Override

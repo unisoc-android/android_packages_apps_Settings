@@ -61,6 +61,9 @@ public class TimeoutPreferenceController extends AbstractPreferenceController im
         final TimeoutListPreference timeoutListPreference = (TimeoutListPreference) preference;
         final long currentTimeout = Settings.System.getLong(mContext.getContentResolver(),
                 SCREEN_OFF_TIMEOUT, FALLBACK_SCREEN_TIMEOUT_VALUE);
+        // Bug1164343, If there is no highlighted option indicating that nothing in the list
+        // matches currentTimeout, add log to confirm the currentTimeout.
+        Log.d(TAG, "Screen off timeout from database is " + currentTimeout);
         timeoutListPreference.setValue(String.valueOf(currentTimeout));
         final DevicePolicyManager dpm =
                 (DevicePolicyManager) mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);

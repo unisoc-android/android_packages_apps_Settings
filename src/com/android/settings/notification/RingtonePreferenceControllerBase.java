@@ -17,9 +17,14 @@
 package com.android.settings.notification;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
+import android.provider.MediaStore;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.preference.Preference;
 
@@ -29,6 +34,8 @@ import com.android.settingslib.utils.ThreadUtils;
 
 public abstract class RingtonePreferenceControllerBase extends AbstractPreferenceController
         implements PreferenceControllerMixin {
+
+    private String TAG = "RingtonePreferenceControllerBase";
 
     public RingtonePreferenceControllerBase(Context context) {
         super(context);
@@ -50,21 +57,36 @@ public abstract class RingtonePreferenceControllerBase extends AbstractPreferenc
     }
 
     private void updateSummary(Preference preference) {
-        final Uri ringtoneUri = RingtoneManager.getActualDefaultRingtoneUri(
+        Uri ringtoneUri = RingtoneManager.getActualDefaultRingtoneUri(
                 mContext, getRingtoneType());
-
-        final CharSequence summary;
-        if (ringtoneUri == null) {
-            summary = null;
-        } else {
-            summary = Ringtone.getTitle(
-                    mContext, ringtoneUri, false /* followSettingsUri */, true /* allowRemote */);
+        if (!isRingtoneAvailable(ringtoneUri)) {
+            //set null when returned uri is not available
+            RingtoneManager.setActualDefaultRingtoneUri(mContext, getRingtoneType(), null);
         }
+        ringtoneUri = RingtoneManager.getActualDefaultRingtoneUri(mContext, getRingtoneType());
+        CharSequence summary = Ringtone.getTitle(
+                    mContext, ringtoneUri, false /* followSettingsUri */, true /* allowRemote */);
+
         if (summary != null) {
             ThreadUtils.postOnMainThread(() -> preference.setSummary(summary));
         }
     }
 
     public abstract int getRingtoneType();
+
+    //Bug 1177353 ringtone show some odd numbers after delete the ringtone file.
+    private boolean isRingtoneAvailable(Uri ringtoneUri) {
+        ContentResolver res = mContext.getContentResolver();
+        if (ringtoneUri == null) return true;
+        String authority = ContentProvider.getAuthorityWithoutUserId(ringtoneUri.getAuthority());
+        if (MediaStore.AUTHORITY.equals(authority)) {
+            try (Cursor cursor = res.query(ringtoneUri, new String[]{"_id"}, null, null, null)) {
+                return (cursor != null && cursor.getCount() == 1) ? true : false;
+            } catch (SecurityException se) {
+               Log.e(TAG, "reading content://media/external/audio/media/id ,permission requires :", se);
+            }
+        }
+        return false;
+    }
 
 }

@@ -267,4 +267,10 @@ public class VideoPreference extends Preference {
     void updateAspectRatio() {
         mAspectRatio = mMediaPlayer.getVideoWidth() / (float) mMediaPlayer.getVideoHeight();
     }
+
+    /* bug 1146371 : if animation is not available , hide preference @} */
+    public boolean getAnimationAvailable() {
+        return mAnimationAvailable;
+    }
+    /* @} */
 }

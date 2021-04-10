@@ -23,12 +23,19 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.android.ims.internal.ImsManagerEx;
 import com.android.settings.R;
 import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
+// UNISOC:Bug 1128242 hot plug out sim card dismiss switch data dialog
+import com.android.settings.network.SimStateChangeListener;
 
+import java.util.List;
 
 /**
  * Dialog Fragment to show dialog for "mobile data"
@@ -38,17 +45,22 @@ import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
  * sim
  */
 public class MobileDataDialogFragment extends InstrumentedDialogFragment implements
-        DialogInterface.OnClickListener {
+        DialogInterface.OnClickListener, SimStateChangeListener.SimStateChangeListenerClient {
 
     public static final int TYPE_DISABLE_DIALOG = 0;
     public static final int TYPE_MULTI_SIM_DIALOG = 1;
+    public static final int TYPE_ATTENTION_CHANGE_DIALOG =2;
+    private static final String TAG = "MobileDataDialogFragment";
 
     private static final String ARG_DIALOG_TYPE = "dialog_type";
     private static final String ARG_SUB_ID = "subId";
 
+    private TelephonyManager mTelephonyManager;
     private SubscriptionManager mSubscriptionManager;
     private int mType;
     private int mSubId;
+    // UNISOC:Bug 1128242 hot plug out sim card dismiss switch data dialog
+    private SimStateChangeListener mSimStateChangeListener;
 
     public static MobileDataDialogFragment newInstance(int type, int subId) {
         final MobileDataDialogFragment dialogFragment = new MobileDataDialogFragment();
@@ -64,7 +76,11 @@ public class MobileDataDialogFragment extends InstrumentedDialogFragment impleme
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mTelephonyManager = TelephonyManager.from(getContext()).createForSubscriptionId(mSubId);
         mSubscriptionManager = getContext().getSystemService(SubscriptionManager.class);
+        // UNISOC:Bug 1128242 hot plug out sim card dismiss switch data dialog
+        mSimStateChangeListener = new SimStateChangeListener(getContext(), this);
+        mSimStateChangeListener.start();
     }
 
     @Override
@@ -107,6 +123,16 @@ public class MobileDataDialogFragment extends InstrumentedDialogFragment impleme
                                 this)
                         .setNegativeButton(R.string.cancel, null)
                         .create();
+            /* UNISOC:Add for Reliance custom set default data sub need pop dialog @{ */
+            case TYPE_ATTENTION_CHANGE_DIALOG:
+                int phoneId = mSubscriptionManager.getSlotIndex(mSubId);
+                String title = getContext().getResources().getString(R.string.confirm_data_dialog_title, phoneId + 1);
+                return new AlertDialog.Builder(context).setTitle(title)
+                        .setMessage(context.getString(R.string.confirm_data_dialog_message))
+                        .setPositiveButton(android.R.string.ok, this)
+                        .setNegativeButton(android.R.string.cancel,null)
+                        .create();
+            /* @} */
             default:
                 throw new IllegalArgumentException("unknown type " + mType);
         }
@@ -125,13 +151,64 @@ public class MobileDataDialogFragment extends InstrumentedDialogFragment impleme
                         false /* disableOtherSubscriptions */);
                 break;
             case TYPE_MULTI_SIM_DIALOG:
+                //UNISOC:Bug 782772 Do not allow to switch data on non L+L verson
+                //UNISOC:Do not allow to switch data for DSDS feature during call
+                if (isPhoneStateInCall()) {
+                    Toast.makeText(getContext(),
+                            getContext().getResources().getString(R.string.do_not_switch_default_data_subscription),
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
                 mSubscriptionManager.setDefaultDataSubId(mSubId);
                 MobileNetworkUtils.setMobileDataEnabled(getContext(), mSubId, true /* enabled */,
                         true /* disableOtherSubscriptions */);
                 break;
+            /* UNISOC:Add for Reliance custom set default data sub need pop dialog @{ */
+            case TYPE_ATTENTION_CHANGE_DIALOG:
+                mSubscriptionManager.setDefaultDataSubId(mSubId);
+                MobileNetworkUtils.setMobileDataEnabled(getContext(), mSubId, true /* enabled */,
+                        true /* disableOtherSubscriptions */);
+                break;
+            /* @} */
             default:
                 throw new IllegalArgumentException("unknown type " + mType);
         }
     }
 
+    /** UNISOC:Bug 1128242 hot plug out sim card dismiss switch data dialog @{ */
+    @Override
+    public void onDestroy() {
+        mSimStateChangeListener.stop();
+        super.onDestroy();
+    }
+    /** @} */
+
+    /* UNISOC:Bug 782772 Do not allow to switch data on non L+L verson @{ */
+    private boolean isPhoneStateInCall() {
+        final List<SubscriptionInfo> subInfoList =
+                mSubscriptionManager.getActiveSubscriptionInfoList(true);
+        if (subInfoList != null) {
+            for (SubscriptionInfo subInfo : subInfoList) {
+                final int callState = mTelephonyManager.getCallStateForSlot(subInfo.getSimSlotIndex());
+                if (callState != TelephonyManager.CALL_STATE_IDLE) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    /* @} */
+
+    /** UNISOC:Bug 1128242 hot plug out sim card dismiss switch data dialog @{ */
+    @Override
+    public void onSimAbsent(int phoneId) {
+        Log.d(TAG, "MobileDataDialogFragment: onSimAbsent phoneId="+ phoneId);
+        Dialog dialog = getDialog();
+        if (dialog != null){
+            dialog.dismiss();
+        } else {
+            Log.d(TAG, "MobileDataDialogFragment: dialog is null");
+        }
+    }
+    /** @} */
 }

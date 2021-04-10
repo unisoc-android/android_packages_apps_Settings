@@ -101,12 +101,18 @@ public class ConfigDialogFragment extends InstrumentedDialogFragment implements
      */
     @Override
     public void onShow(DialogInterface dialogInterface) {
-        ((AlertDialog) getDialog()).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(this);
+        // bug 1130930：NPE occurs when pop up vpn dialog frequently
+        if (getDialog() != null) {
+            ((AlertDialog) getDialog()).getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(this);
+        }
     }
 
     @Override
     public void onClick(View positiveButton) {
-        onClick(getDialog(), AlertDialog.BUTTON_POSITIVE);
+        //bug 1138415: NPE occurs when click dialog and split screen at the same time.
+        if (getDialog() != null) {
+            onClick(getDialog(), AlertDialog.BUTTON_POSITIVE);
+        }
     }
 
     @Override
@@ -119,6 +125,8 @@ public class ConfigDialogFragment extends InstrumentedDialogFragment implements
     @Override
     public void onClick(DialogInterface dialogInterface, int button) {
         ConfigDialog dialog = (ConfigDialog) getDialog();
+        //bug 1138415: NPE occurs when click dialog and split screen at the same time.
+        if (null == dialog) return;
         VpnProfile profile = dialog.getProfile();
 
         if (button == DialogInterface.BUTTON_POSITIVE) {

@@ -19,13 +19,19 @@ import static android.net.NetworkPolicy.WARNING_DISABLED;
 
 import android.app.Dialog;
 import android.app.settings.SettingsEnums;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.net.NetworkPolicy;
 import android.net.NetworkTemplate;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.provider.SearchIndexableResource;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -40,6 +46,9 @@ import androidx.fragment.app.Fragment;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreference;
 
+import com.android.internal.telephony.IccCardConstants;
+import com.android.internal.telephony.PhoneConstants;
+import com.android.internal.telephony.TelephonyIntents;
 import com.android.settings.R;
 import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
 import com.android.settings.search.BaseSearchIndexProvider;
@@ -72,6 +81,7 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
     @VisibleForTesting
     static final String KEY_SET_DATA_LIMIT = "set_data_limit";
     private static final String KEY_DATA_LIMIT = "data_limit";
+    private static final String KEY_SUBID = "sub_id";
 
     @VisibleForTesting
     NetworkTemplate mNetworkTemplate;
@@ -81,6 +91,10 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
     private SwitchPreference mEnableDataLimit;
     private Preference mDataLimit;
     private DataUsageController mDataUsageController;
+
+    private Context mContext;
+    private int mPhoneId;
+    private int mDefaultDataSubId;
 
     @VisibleForTesting
     void setUpForTest(NetworkPolicyEditor policyEditor,
@@ -100,11 +114,14 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-
+        mContext = getContext();
         final Context context = getContext();
         mDataUsageController = new DataUsageController(context);
 
         Bundle args = getArguments();
+        mDefaultDataSubId = args.getInt(KEY_SUBID, -1);
+        mPhoneId = SubscriptionManager.getPhoneId(mDefaultDataSubId);
+
         mNetworkTemplate = args.getParcelable(DataUsageList.EXTRA_NETWORK_TEMPLATE);
         if (mNetworkTemplate == null) {
             mNetworkTemplate = DataUsageUtils.getDefaultTemplate(context,
@@ -128,12 +145,34 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
         updatePrefs();
     }
 
+    /* UNISOC:Bug1105656, one sim removed, finish this page @{ */
+    @Override
+    public void onStart() {
+        super.onStart();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED);
+        intentFilter.addAction(TelephonyIntents.ACTION_SIM_STATE_CHANGED);
+        mContext.registerReceiver(mReceiver, intentFilter);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mContext.unregisterReceiver(mReceiver);
+    }
+    /* @ */
+
     @VisibleForTesting
     void updatePrefs() {
+        //Add for bug1144014, Settings crashed when update preference
+        final Context context = getContext();
         mBillingCycle.setSummary(null);
         final long warningBytes = services.mPolicyEditor.getPolicyWarningBytes(mNetworkTemplate);
         if (warningBytes != WARNING_DISABLED) {
-            mDataWarning.setSummary(DataUsageUtils.formatDataUsage(getContext(), warningBytes));
+            //Add for bug1144014, Settings crashed when update preference
+            if (context != null) {
+                mDataWarning.setSummary(DataUsageUtils.formatDataUsage(context, warningBytes));
+            }
             mDataWarning.setEnabled(true);
             mEnableDataWarning.setChecked(true);
         } else {
@@ -143,7 +182,10 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
         }
         final long limitBytes = services.mPolicyEditor.getPolicyLimitBytes(mNetworkTemplate);
         if (limitBytes != LIMIT_DISABLED) {
-            mDataLimit.setSummary(DataUsageUtils.formatDataUsage(getContext(), limitBytes));
+            //Add for bug1144014, Settings crashed when update preference
+            if (context != null) {
+                mDataLimit.setSummary(DataUsageUtils.formatDataUsage(context, limitBytes));
+            }
             mDataLimit.setEnabled(true);
             mEnableDataLimit.setChecked(true);
         } else {
@@ -350,6 +392,7 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
     public static class CycleEditorFragment extends InstrumentedDialogFragment implements
             DialogInterface.OnClickListener {
         private static final String EXTRA_TEMPLATE = "template";
+        private static final String PICKER_VALUE = "pickerValue";
         private NumberPicker mCycleDayPicker;
 
         public static void show(BillingCycleSettings parent) {
@@ -382,7 +425,10 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
             mCycleDayPicker = (NumberPicker) view.findViewById(R.id.cycle_day);
 
             final NetworkTemplate template = getArguments().getParcelable(EXTRA_TEMPLATE);
-            final int cycleDay = editor.getPolicyCycleDay(template);
+            int cycleDay = editor.getPolicyCycleDay(template);
+            if ((savedInstanceState != null) && (savedInstanceState.getInt(PICKER_VALUE, -1) != -1)) {
+                cycleDay = savedInstanceState.getInt(PICKER_VALUE);
+            }
 
             mCycleDayPicker.setMinValue(1);
             mCycleDayPicker.setMaxValue(31);
@@ -408,6 +454,11 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
             final String cycleTimezone = new Time().timezone;
             editor.setPolicyCycleDay(template, cycleDay, cycleTimezone);
             target.updateDataUsage();
+        }
+
+        @Override
+        public void onSaveInstanceState(Bundle pickerState) {
+            pickerState.putInt(PICKER_VALUE, mCycleDayPicker.getValue());
         }
     }
 
@@ -480,7 +531,11 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
                 public List<SearchIndexableResource> getXmlResourcesToIndex(Context context,
                         boolean enabled) {
                     final ArrayList<SearchIndexableResource> result = new ArrayList<>();
-
+                    /*Add for bug1137327, This page should not be searched in guest mode @{ */
+                    if (UserHandle.myUserId() != UserHandle.USER_SYSTEM) {
+                        return result;
+                    }
+                    /* @} */
                     final SearchIndexableResource sir = new SearchIndexableResource(context);
                     sir.xmlResId = R.xml.billing_cycle;
                     result.add(sir);
@@ -493,4 +548,31 @@ public class BillingCycleSettings extends DataUsageBaseFragment implements
                 }
             };
 
+    // UNISOC:Bug1105656, one sim removed, finish this page
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (TelephonyIntents.ACTION_SIM_STATE_CHANGED.equals(action)) {
+                String simState = intent.getStringExtra(IccCardConstants.INTENT_KEY_ICC_STATE);
+                int phoneId = intent.getIntExtra(PhoneConstants.PHONE_KEY, SubscriptionManager.DEFAULT_PHONE_INDEX);
+                /* Bug1119552: Only if the phoneid of the absent sim card is the same as the phoneid of the current fragment, then finish the fragment @{ */
+                Log.d(TAG, "simState = " + simState + ",phoneId = " + phoneId
+                        + ",mPhoneId = " + mPhoneId);
+                if (IccCardConstants.INTENT_VALUE_ICC_ABSENT.equals(simState)
+                        && (phoneId == mPhoneId)) {
+                    finish();
+                }
+                /* @} */
+            //UNISOC:Bug1164467, Finish this page after default data simcard changed
+            } else if (TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED.equals(action)) {
+                int defaultDataSubId = DataUsageUtils.getDefaultSubscriptionId(context);
+                Log.d(TAG, "defaultDataSubId = " + defaultDataSubId + " mDefaultDataSubId = "
+                        + mDefaultDataSubId);
+                if (mDefaultDataSubId != -1 && defaultDataSubId != -1
+                        && mDefaultDataSubId != defaultDataSubId) {
+                    finish();
+                }
+            }
+        }
+    };
 }

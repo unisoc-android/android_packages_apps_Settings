@@ -35,6 +35,14 @@ import com.android.settings.R;
 import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
 import com.android.settings.security.OwnerInfoPreferenceController.OwnerInfoCallback;
 
+import android.content.Context;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
+import android.widget.EditText;
+import android.widget.Toast;
+import android.util.Log;
+
 public class OwnerInfoSettings extends InstrumentedDialogFragment implements OnClickListener {
 
     private static final String TAG_OWNER_INFO = "ownerInfo";
@@ -43,12 +51,17 @@ public class OwnerInfoSettings extends InstrumentedDialogFragment implements OnC
     private int mUserId;
     private LockPatternUtils mLockPatternUtils;
     private EditText mOwnerInfo;
+    // UNISOC: 1072210  modify for limit OwnerInfo length
+    private Context mContext;
+    private static final int TEXT_MAX_LENGTH = 50;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mUserId = UserHandle.myUserId();
         mLockPatternUtils = new LockPatternUtils(getActivity());
+        // UNISOC: 1072210  modify for limit OwnerInfo length
+        mContext = getActivity();
     }
 
     @Override
@@ -70,6 +83,11 @@ public class OwnerInfoSettings extends InstrumentedDialogFragment implements OnC
         if (!TextUtils.isEmpty(info)) {
             mOwnerInfo.setText(info);
             mOwnerInfo.setSelection(info.length());
+        }
+
+        // UNISOC: 1072210  modify for limit OwnerInfo length
+        if (mContext.getResources().getBoolean(R.bool.config_support_limitOwnerInfoLength)) {
+            checkText(mOwnerInfo, mContext);
         }
     }
 
@@ -97,5 +115,26 @@ public class OwnerInfoSettings extends InstrumentedDialogFragment implements OnC
     @Override
     public int getMetricsCategory() {
         return SettingsEnums.DIALOG_OWNER_INFO_SETTINGS;
+    }
+
+    private void checkText(EditText mOwnerInfo, final Context context) {
+        mOwnerInfo.setFilters(new InputFilter[]{new InputFilter.LengthFilter(TEXT_MAX_LENGTH)});
+        mOwnerInfo.setSelection(mOwnerInfo.getText().length());
+        mOwnerInfo.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.length() >= TEXT_MAX_LENGTH) {
+                    Toast.makeText(context, R.string.name_too_long, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }

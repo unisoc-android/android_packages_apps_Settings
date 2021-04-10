@@ -31,6 +31,7 @@ import android.provider.Settings.Global;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.euicc.EuiccManager;
+import android.telephony.SubscriptionManager.OnSubscriptionsChangedListener;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -266,4 +267,29 @@ public class ResetNetwork extends InstrumentedFragment {
     public int getMetricsCategory() {
         return SettingsEnums.RESET_NETWORK;
     }
+
+    /* SPRD: [bug1175382] Refresh SIM list when subscription changed. @{ */
+    @Override
+    public void onResume() {
+        SubscriptionManager.from(getActivity())
+                .addOnSubscriptionsChangedListener(mOnSubscriptionsChangedListener);
+        establishInitialState();
+        super.onResume();
+    }
+
+    private final OnSubscriptionsChangedListener mOnSubscriptionsChangedListener = new OnSubscriptionsChangedListener() {
+        @Override
+        public void onSubscriptionsChanged() {
+            establishInitialState();
+        }
+    };
+
+    @Override
+    public void onPause() {
+        SubscriptionManager.from(getActivity())
+                .removeOnSubscriptionsChangedListener(mOnSubscriptionsChangedListener);
+        super.onPause();
+    }
+    /* @} */
+
 }

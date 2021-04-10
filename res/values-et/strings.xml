@@ -1794,6 +1794,10 @@
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Muuda avamismustrit"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Kuidas joonistada avamismustrit"</string>
     <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Liiga palju valesid katseid. Proovige uuesti <xliff:g id="NUMBER">%d</xliff:g> sekundi pärast."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Liiga palju valesid katseid. Proovige uuesti <xliff:g id="NUMBER">%d</xliff:g> sekundi pärast.</item>
+        <item quantity="one">Liiga palju valesid katseid. Proovige uuesti 1 sekundi pärast.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Rakendus pole teie telefoni installitud."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Tööprofiili turvalisus"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Tööprofiili ekraanilukk"</string>

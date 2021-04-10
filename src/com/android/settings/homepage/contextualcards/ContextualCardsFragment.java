@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.android.settings.R;
 import com.android.settings.core.InstrumentedFragment;
@@ -77,10 +78,23 @@ public class ContextualCardsFragment extends InstrumentedFragment implements
         mCardsContainer.setAdapter(mContextualCardsAdapter);
         mContextualCardManager.setListener(mContextualCardsAdapter);
         mCardsContainer.setListener(this);
+        closeDefaultAnimator();
         mItemTouchHelper = new ItemTouchHelper(new SwipeDismissalDelegate(mContextualCardsAdapter));
         mItemTouchHelper.attachToRecyclerView(mCardsContainer);
 
         return rootView;
+    }
+
+    //Close animations of RecycleView
+    private void closeDefaultAnimator() {
+        mCardsContainer.getItemAnimator().setAddDuration(0);
+        mCardsContainer.getItemAnimator().setChangeDuration(0);
+        mCardsContainer.getItemAnimator().setMoveDuration(0);
+        mCardsContainer.getItemAnimator().setRemoveDuration(0);
+        ((SimpleItemAnimator)mCardsContainer.getItemAnimator()).setSupportsChangeAnimations(false);
+        mCardsContainer.setLayoutAnimation(null);
+        mCardsContainer.setLayoutTransition(null);
+        mCardsContainer.clearAnimation();
     }
 
     @Override

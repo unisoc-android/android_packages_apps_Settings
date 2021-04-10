@@ -46,6 +46,7 @@ import com.android.settings.password.ConfirmDeviceCredentialActivity;
 import com.android.settings.widget.ToggleSwitch;
 import com.android.settings.widget.ToggleSwitch.OnBeforeCheckedChangeListener;
 import com.android.settingslib.accessibility.AccessibilityUtils;
+import com.sprd.settings.navigation.NavigationBarSettings;
 
 import java.util.List;
 
@@ -176,9 +177,14 @@ public class ToggleAccessibilityServicePreferenceFragment
     }
 
     private void updateSwitchBarToggleSwitch() {
-        final boolean checked = AccessibilityUtils.getEnabledServicesFromSettings(getActivity())
-                .contains(mComponentName);
-        mSwitchBar.setCheckedInternal(checked);
+        /* UNISOC:1195292 check the state of activity @{ */
+        Activity activity = getActivity();
+        if (activity != null) {
+            final boolean checked = AccessibilityUtils.getEnabledServicesFromSettings(activity)
+                    .contains(mComponentName);
+            mSwitchBar.setCheckedInternal(checked);
+        }
+        /* @ */
     }
 
     /**
@@ -237,7 +243,8 @@ public class ToggleAccessibilityServicePreferenceFragment
     }
 
     private boolean isGestureNavigateEnabled() {
-        return getContext().getResources().getInteger(
+        /*UNISOC: Modify for bug 1111853*/
+        return NavigationBarSettings.hasNavigationBar(getContext()) && getContext().getResources().getInteger(
                 com.android.internal.R.integer.config_navBarInteractionMode)
                 == NAV_BAR_MODE_GESTURAL;
     }

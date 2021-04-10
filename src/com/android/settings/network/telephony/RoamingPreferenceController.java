@@ -27,12 +27,15 @@ import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 
+import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
+import com.android.settings.R;
 import com.android.settingslib.RestrictedSwitchPreference;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settingslib.core.lifecycle.events.OnStart;
@@ -42,9 +45,10 @@ import com.android.settingslib.core.lifecycle.events.OnStop;
  * Preference controller for "Roaming"
  */
 public class RoamingPreferenceController extends TelephonyTogglePreferenceController implements
-        LifecycleObserver, OnStart, OnStop {
+        LifecycleObserver, OnStart, OnStop, RoamingDialogFragment.RoamingDialogListener {
 
     private static final String DIALOG_TAG = "MobileDataDialog";
+    private static final String LOG_TAG = "RoamingPreferenceController";
 
     private RestrictedSwitchPreference mSwitchPreference;
     private TelephonyManager mTelephonyManager;
@@ -79,9 +83,18 @@ public class RoamingPreferenceController extends TelephonyTogglePreferenceContro
 
     @Override
     public int getAvailabilityStatus(int subId) {
-        return subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
-                ? AVAILABLE
-                : AVAILABLE_UNSEARCHABLE;
+        //UNISOC:add for national data roaming
+        int visible;
+        if (!mContext.getResources().getBoolean(com.android.internal.R.bool.national_data_roaming)) {
+            if (subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+                visible = AVAILABLE;
+            } else {
+                visible = AVAILABLE_UNSEARCHABLE;
+            }
+        } else {
+            visible = CONDITIONALLY_UNAVAILABLE;
+        }
+        return visible;
     }
 
     @Override
@@ -145,8 +158,9 @@ public class RoamingPreferenceController extends TelephonyTogglePreferenceContro
     }
 
     private void showDialog() {
+        mSwitchPreference.setEnabled(false);
         final RoamingDialogFragment dialogFragment = RoamingDialogFragment.newInstance(mSubId);
-
+        dialogFragment.setController(this);
         dialogFragment.show(mFragmentManager, DIALOG_TAG);
     }
 
@@ -178,4 +192,11 @@ public class RoamingPreferenceController extends TelephonyTogglePreferenceContro
             context.getContentResolver().unregisterContentObserver(this);
         }
     }
+
+    /* UNISOC: bug 906818 @{ */
+    public void onDialogDismiss(InstrumentedDialogFragment dialog) {
+        Log.d(LOG_TAG, "onDialogDismiss");
+        mSwitchPreference.setEnabled(true);
+    }
+    /* @} */
 }

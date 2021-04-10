@@ -23,6 +23,7 @@ import android.os.UserManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.fragment.app.Fragment;
@@ -72,9 +73,21 @@ public class ImeiInfoPreferenceController extends BasePreferenceController {
             final Preference multiSimPreference = createNewPreference(screen.getContext());
             multiSimPreference.setOrder(imeiPreferenceOrder + simSlotNumber);
             multiSimPreference.setKey(getPreferenceKey() + simSlotNumber);
+            //Bug1144572, If not the owner user, hide the preference.
+            multiSimPreference.setVisible(isAvailable());
             screen.addPreference(multiSimPreference);
             mPreferenceList.add(multiSimPreference);
             updatePreference(multiSimPreference, simSlotNumber);
+        }
+        // Bug1145059:Add MEID if not empty
+        final String meid = mTelephonyManager.getMeid();
+        if (!TextUtils.isEmpty(meid)) {
+            final Preference meidPreference = createNewPreference(screen.getContext());
+            meidPreference.setOrder(imeiPreferenceOrder + mTelephonyManager.getPhoneCount());
+            meidPreference.setTitle(mContext.getString(R.string.status_meid_number));
+            meidPreference.setSummary(meid);
+            meidPreference.setVisible(isAvailable());
+            screen.addPreference(meidPreference);
         }
     }
 
@@ -139,8 +152,10 @@ public class ImeiInfoPreferenceController extends BasePreferenceController {
     }
 
     private void updatePreference(Preference preference, int simSlot) {
-        preference.setTitle(getTitle(simSlot));
-        preference.setSummary(getSummary(simSlot));
+        /* Bug1145059:Display IMEI only, add MEID later */
+        preference.setTitle(getTitleForGsmPhone(simSlot));
+        preference.setSummary(mTelephonyManager.getImei(simSlot));
+        /* @} */
     }
 
     private CharSequence getTitleForGsmPhone(int simSlot) {

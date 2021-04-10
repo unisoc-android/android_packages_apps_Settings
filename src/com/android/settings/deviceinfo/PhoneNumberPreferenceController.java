@@ -77,6 +77,9 @@ public class PhoneNumberPreferenceController extends BasePreferenceController {
             final Preference multiSimPreference = createNewPreference(screen.getContext());
             multiSimPreference.setOrder(phonePreferenceOrder + simSlotNumber);
             multiSimPreference.setKey(KEY_PHONE_NUMBER + simSlotNumber);
+            // UNISOC: Bug1140946 Phone number preference is not selectable.
+            multiSimPreference.setCopyingEnabled(true);
+            multiSimPreference.setSelectable(false);
             screen.addPreference(multiSimPreference);
             mPreferenceList.add(multiSimPreference);
         }

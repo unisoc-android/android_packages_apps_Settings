@@ -34,4 +34,12 @@
         app:controller="com.android.settings.gestures.DoubleTapPowerPreferenceController"
         app:allowDividerAbove="true" />
 
+    <!-- UNISOC: 1129524 Support open camera by double tap volume up key -->
+    <SwitchPreference
+        android:key="gesture_double_tap_volumeup"
+        android:title="@string/double_tap_power_for_camera_title"
+        android:summary="@string/double_tap_volumeup_for_camera_summary"
+        app:controller="com.android.settings.gestures.DoubleTapVolumeUpPreferenceController"
+        app:allowDividerAbove="true" />
+
 </PreferenceScreen>

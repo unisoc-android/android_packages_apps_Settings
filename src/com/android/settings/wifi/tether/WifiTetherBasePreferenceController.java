@@ -18,7 +18,9 @@ package com.android.settings.wifi.tether;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.wifi.WifiFeaturesUtils;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiConfiguration;
 
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
@@ -40,6 +42,9 @@ public abstract class WifiTetherBasePreferenceController extends AbstractPrefere
 
     protected Preference mPreference;
 
+    protected WifiConfiguration mWifiConfig;
+    protected int mHotspotState = WifiManager.WIFI_AP_STATE_DISABLED;
+
     public WifiTetherBasePreferenceController(Context context,
             OnTetherConfigUpdateListener listener) {
         super(context);
@@ -47,6 +52,10 @@ public abstract class WifiTetherBasePreferenceController extends AbstractPrefere
         mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         mCm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         mWifiRegexs = mCm.getTetherableWifiRegexs();
+        if (WifiFeaturesUtils.FeatureProperty.SUPPORT_SPRD_SOFTAP_FEATURES) {
+            mWifiConfig = mWifiManager.getWifiApConfiguration();
+            mHotspotState = mWifiManager.getWifiApState();
+        }
     }
 
     @Override
@@ -59,6 +68,14 @@ public abstract class WifiTetherBasePreferenceController extends AbstractPrefere
         super.displayPreference(screen);
         mPreference = screen.findPreference(getPreferenceKey());
         updateDisplay();
+    }
+
+    public void updateWifiApConfig(WifiConfiguration config) {
+        mWifiConfig = config;
+    }
+
+    public void updateWifiApState(int state) {
+        mHotspotState = state;
     }
 
     public abstract void updateDisplay();

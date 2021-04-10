@@ -58,6 +58,13 @@
             app:keywords="@string/keywords_face_unlock"
             app:controller="com.android.settings.biometrics.face.FaceSettingsConfirmPreferenceController"/>
 
+        <SwitchPreference
+            android:key="security_settings_face_require_livenessmode"
+            android:title="@string/security_settings_face_settings_require_livenessmode"
+            android:summary="@string/security_settings_face_settings_require_livenessmode_details"
+            app:keywords="@string/keywords_face_unlock"
+            app:controller="com.android.settings.biometrics.face.FaceSettingsLivenessModePreferenceController"/>
+
         <com.android.settingslib.widget.LayoutPreference
             android:key="security_settings_face_delete_faces_container"
             android:selectable="false"

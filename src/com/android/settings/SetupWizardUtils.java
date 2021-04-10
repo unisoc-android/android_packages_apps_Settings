@@ -73,7 +73,8 @@ public class SetupWizardUtils {
                 }
             }
         }
-        return R.style.GlifTheme;
+        // UNISOC: fix for bug 1187994
+        return R.style.GlifV2Theme;
     }
 
     public static int getTransparentTheme(Intent intent) {

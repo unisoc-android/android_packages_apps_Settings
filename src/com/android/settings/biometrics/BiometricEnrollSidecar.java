@@ -215,4 +215,8 @@ public abstract class BiometricEnrollSidecar extends InstrumentedFragment {
     public boolean isEnrolling() {
         return mEnrolling;
     }
+
+    public void updateToken(byte[] token) {
+        mToken = token;
+    }
 }

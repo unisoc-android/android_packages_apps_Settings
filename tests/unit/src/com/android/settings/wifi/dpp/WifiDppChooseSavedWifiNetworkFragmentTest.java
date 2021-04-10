@@ -26,15 +26,19 @@ import static com.android.settings.wifi.dpp.WifiDppUtils.TAG_FRAGMENT_CHOOSE_SAV
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 
 import android.provider.Settings;
 import androidx.fragment.app.FragmentManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.settings.tests.unit.R;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -43,6 +47,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class WifiDppChooseSavedWifiNetworkFragmentTest {
+    private static final String TAG = "Settings_ut";
     // Valid Wi-Fi DPP QR code
     private static final String VALID_WIFI_DPP_QR_CODE = "DPP:I:SN=4774LH2b4044;M:010203040506;K:"
             + "MDkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDIgADURzxmttZoIRIPWGoQMV00XHWCAQIhXruVWOz0NjlkIA=;;";
@@ -59,44 +64,55 @@ public class WifiDppChooseSavedWifiNetworkFragmentTest {
             /* launchActivity */ false);
 
     private Context mContext;
+    private boolean mTestFlag;
 
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        mTestFlag = context.getResources().getBoolean(R.bool.config_test_wifi);
     }
 
     @Test
     public void clickCancelButton_configuratorQrCodeScannerIntent_shouldPopBackStack() {
-        final Intent intent =
-                new Intent(WifiDppConfiguratorActivity.ACTION_CONFIGURATOR_QR_CODE_SCANNER);
-        intent.putExtra(WifiDppUtils.EXTRA_WIFI_SECURITY, "WEP");
-        intent.putExtra(WifiDppUtils.EXTRA_WIFI_SSID, "GoogleGuest");
-        intent.putExtra(WifiDppUtils.EXTRA_WIFI_PRE_SHARED_KEY, "password");
-        final WifiDppConfiguratorActivity hostActivity = mActivityRule.launchActivity(intent);
+        if (mTestFlag) {
+            final Intent intent =
+                    new Intent(WifiDppConfiguratorActivity.ACTION_CONFIGURATOR_QR_CODE_SCANNER);
+            intent.putExtra(WifiDppUtils.EXTRA_WIFI_SECURITY, "WEP");
+            intent.putExtra(WifiDppUtils.EXTRA_WIFI_SSID, "GoogleGuest");
+            intent.putExtra(WifiDppUtils.EXTRA_WIFI_PRE_SHARED_KEY, "password");
+            final WifiDppConfiguratorActivity hostActivity = mActivityRule.launchActivity(intent);
 
-        // Go to WifiDppChooseSavedWifiNetworkFragment and click the cancel button
-        final FragmentManager fragmentManager = hostActivity.getSupportFragmentManager();
-        final WifiQrCode wifiQrCode = new WifiQrCode(VALID_WIFI_DPP_QR_CODE);
-        hostActivity.runOnUiThread(() ->
-            ((WifiDppConfiguratorActivity)hostActivity).onScanWifiDppSuccess(wifiQrCode)
-        );
-        onView(withText(resourceString(WIFI_DPP_CHOOSE_DIFFERENT_NETWORK))).perform(click());
-        onView(withText(resourceString(CANCEL))).perform(click());
+            // Go to WifiDppChooseSavedWifiNetworkFragment and click the cancel button
+            final FragmentManager fragmentManager = hostActivity.getSupportFragmentManager();
+            final WifiQrCode wifiQrCode = new WifiQrCode(VALID_WIFI_DPP_QR_CODE);
+            hostActivity.runOnUiThread(() ->
+                ((WifiDppConfiguratorActivity)hostActivity).onScanWifiDppSuccess(wifiQrCode)
+            );
+            onView(withText(resourceString(WIFI_DPP_CHOOSE_DIFFERENT_NETWORK))).perform(click());
+            onView(withText(resourceString(CANCEL))).perform(click());
 
-        assertThat(fragmentManager.findFragmentByTag(TAG_FRAGMENT_ADD_DEVICE)).isNotNull();
-        assertThat(fragmentManager.findFragmentByTag(TAG_FRAGMENT_CHOOSE_SAVED_WIFI_NETWORK))
-                .isNull();
+            assertThat(fragmentManager.findFragmentByTag(TAG_FRAGMENT_ADD_DEVICE)).isNotNull();
+            assertThat(fragmentManager.findFragmentByTag(TAG_FRAGMENT_CHOOSE_SAVED_WIFI_NETWORK))
+                    .isNull();
+        } else {
+            Log.d(TAG, "clickCancelButton_configuratorQrCodeScannerIntent_shouldPopBackStack not test");
+        }
     }
 
     @Test
     public void clickCancelButton_processWifiDppQrCodeIntent_shouldFinish() {
-        final Intent intent = new Intent(Settings.ACTION_PROCESS_WIFI_EASY_CONNECT_URI);
-        intent.setData(Uri.parse(VALID_WIFI_DPP_QR_CODE));
-        final WifiDppConfiguratorActivity hostActivity = mActivityRule.launchActivity(intent);
+        if (mTestFlag) {
+            final Intent intent = new Intent(Settings.ACTION_PROCESS_WIFI_EASY_CONNECT_URI);
+            intent.setData(Uri.parse(VALID_WIFI_DPP_QR_CODE));
+            final WifiDppConfiguratorActivity hostActivity = mActivityRule.launchActivity(intent);
 
-        onView(withText(resourceString(CANCEL))).perform(click());
+            onView(withText(resourceString(CANCEL))).perform(click());
 
-        assertThat(hostActivity.isFinishing()).isEqualTo(true);
+            assertThat(hostActivity.isFinishing()).isEqualTo(true);
+        } else {
+            Log.d(TAG, "clickCancelButton_processWifiDppQrCodeIntent_shouldFinish not test");
+        }
     }
 
     private int resourceId(String type, String name) {

@@ -16,8 +16,12 @@
 
 package com.android.settings.network;
 
-import static androidx.lifecycle.Lifecycle.Event.ON_PAUSE;
+//add SubscriptionsChanged listen lifecycle,delete google design begin
+import static androidx.lifecycle.Lifecycle.Event.ON_CREATE;
+//import static androidx.lifecycle.Lifecycle.Event.ON_PAUSE;
 import static androidx.lifecycle.Lifecycle.Event.ON_RESUME;
+import static androidx.lifecycle.Lifecycle.Event.ON_DESTROY;
+//add SubscriptionsChanged listen lifecycle,delete google design end
 
 import android.content.Context;
 import android.content.Intent;
@@ -31,6 +35,7 @@ import com.android.settings.R;
 import com.android.settings.network.telephony.MobileNetworkActivity;
 import com.android.settings.network.telephony.MobileNetworkUtils;
 import com.android.settingslib.core.AbstractPreferenceController;
+import com.android.settingslib.WirelessUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -57,6 +62,8 @@ public class MobileNetworkListController extends AbstractPreferenceController im
     private SubscriptionsChangeListener mChangeListener;
     private PreferenceScreen mPreferenceScreen;
     private Map<Integer, Preference> mPreferences;
+    // UNISOC: Bug1117246
+    private MobileNetworkListFragment mFragment;
 
     public MobileNetworkListController(Context context, Lifecycle lifecycle) {
         super(context);
@@ -66,6 +73,26 @@ public class MobileNetworkListController extends AbstractPreferenceController im
         lifecycle.addObserver(this);
     }
 
+    /**
+     * UNISOC: Bug1117246 finish activity if existing subscriptions size is 1 or 0.
+     * @{
+     */
+    public MobileNetworkListController(Context context, Lifecycle lifecycle,
+            MobileNetworkListFragment fragment) {
+        super(context);
+        mSubscriptionManager = context.getSystemService(SubscriptionManager.class);
+        mChangeListener = new SubscriptionsChangeListener(context, this);
+        mPreferences = new ArrayMap<>();
+        mFragment = fragment;
+        lifecycle.addObserver(this);
+    }
+    /**
+     *@}
+     */
+
+    //add SubscriptionsChanged listen lifecycle,delete google design begin
+
+/*
     @OnLifecycleEvent(ON_RESUME)
     public void onResume() {
         mChangeListener.start();
@@ -76,6 +103,24 @@ public class MobileNetworkListController extends AbstractPreferenceController im
     public void onPause() {
         mChangeListener.stop();
     }
+*/
+
+    @OnLifecycleEvent(ON_CREATE)
+    public void onCreate() {
+        mChangeListener.start();
+    }
+
+    @OnLifecycleEvent(ON_RESUME)
+    public void onResume() {
+        update();
+    }
+
+    @OnLifecycleEvent(ON_DESTROY)
+    public void onDestroy() {
+        mChangeListener.stop();
+    }
+
+   //add SubscriptionsChanged listen lifecycle,delete google design google end
 
     @Override
     public void displayPreference(PreferenceScreen screen) {
@@ -99,6 +144,12 @@ public class MobileNetworkListController extends AbstractPreferenceController im
 
         final List<SubscriptionInfo> subscriptions = SubscriptionUtil.getAvailableSubscriptions(
                 mContext);
+
+        // UNISOC: Bug1117246 finish activity if existing subscriptions size is 1 or 0.
+        if (subscriptions.size() <= 1 && mFragment != null) {
+            mFragment.finishActivity();
+            return;
+        }
         for (SubscriptionInfo info : subscriptions) {
             final int subId = info.getSubscriptionId();
             Preference pref = existingPreferences.remove(subId);
@@ -138,6 +189,8 @@ public class MobileNetworkListController extends AbstractPreferenceController im
         for (Preference pref : existingPreferences.values()) {
             mPreferenceScreen.removePreference(pref);
         }
+        // UNISOC: Disable all preferences if airplane mode is on
+        mPreferenceScreen.setEnabled(!WirelessUtils.isAirplaneModeOn(mContext));
     }
 
     @Override
@@ -152,6 +205,10 @@ public class MobileNetworkListController extends AbstractPreferenceController im
 
     @Override
     public void onAirplaneModeChanged(boolean airplaneModeEnabled) {
+        // UNISOC: Refresh all preferences if airplane mode is changed
+        if (mPreferenceScreen != null) {
+            mPreferenceScreen.setEnabled(!airplaneModeEnabled);
+        }
     }
 
     @Override

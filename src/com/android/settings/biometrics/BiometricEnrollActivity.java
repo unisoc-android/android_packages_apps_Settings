@@ -17,8 +17,10 @@
 package com.android.settings.biometrics;
 
 import android.app.settings.SettingsEnums;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.os.UserHandle;
 
@@ -50,11 +52,16 @@ public class BiometricEnrollActivity extends InstrumentedActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // UNISOC: Fix for bug 1211381
+        final boolean forFace = getIntent()
+                .getBooleanExtra(ChooseLockSettingsHelper.EXTRA_KEY_FOR_FACE, false);
         final PackageManager pm = getApplicationContext().getPackageManager();
         Intent intent = null;
-
+        FingerprintManager fingerprintManager = (FingerprintManager) getApplicationContext().getSystemService(Context.FINGERPRINT_SERVICE);
         // This logic may have to be modified on devices with multiple biometrics.
-        if (pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
+        // UNISOC: Fix for bug 1211381
+        if (pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
+                  && fingerprintManager != null && fingerprintManager.isHardwareDetected() && !forFace) {
             // ChooseLockGeneric can request to start fingerprint enroll bypassing the intro screen.
             if (getIntent().getBooleanExtra(EXTRA_SKIP_INTRO, false)
                     && this instanceof InternalActivity) {

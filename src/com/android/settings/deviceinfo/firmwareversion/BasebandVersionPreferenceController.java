@@ -24,6 +24,7 @@ import androidx.annotation.VisibleForTesting;
 import com.android.settings.R;
 import com.android.settings.Utils;
 import com.android.settings.core.BasePreferenceController;
+import com.android.settings.deviceinfo.SupportCPVersion;
 
 public class BasebandVersionPreferenceController extends BasePreferenceController {
 
@@ -41,7 +42,18 @@ public class BasebandVersionPreferenceController extends BasePreferenceControlle
 
     @Override
     public CharSequence getSummary() {
-        return SystemProperties.get(BASEBAND_PROPERTY,
-                mContext.getString(R.string.device_info_default));
+        /* UNISOC:1072208 Support "Show CP2 Version" @{ */
+        String basebandInfo = "";
+        if (mContext.getResources().getBoolean(R.bool.config_support_showCp2Info)){
+            // return baseband version + cp2 version
+            basebandInfo = SupportCPVersion.getInstance().getBasedSummary(mContext,
+                    BASEBAND_PROPERTY);
+        } else {
+            // return baseband version only
+            basebandInfo = SystemProperties.get(BASEBAND_PROPERTY,
+                    mContext.getString(R.string.device_info_default));
+        }
+        return basebandInfo;
+        /* @} */
     }
 }

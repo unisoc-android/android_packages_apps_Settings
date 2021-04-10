@@ -23,15 +23,18 @@ import android.app.settings.SettingsEnums;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.provider.Telephony;
 import android.telephony.CarrierConfigManager;
+import android.telephony.CarrierConfigManagerEx;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.TelephonyManagerEx;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -63,7 +66,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ApnEditor extends SettingsPreferenceFragment
-        implements OnPreferenceChangeListener, OnKeyListener {
+        implements OnPreferenceChangeListener, OnKeyListener, SimStateChangeListener.SimStateChangeListenerClient {
 
     private final static String TAG = ApnEditor.class.getSimpleName();
     private final static boolean VDBG = false;   // STOPSHIP if true
@@ -75,6 +78,13 @@ public class ApnEditor extends SettingsPreferenceFragment
     private final static String KEY_BEARER_MULTI = "bearer_multi";
     private final static String KEY_MVNO_TYPE = "mvno_type";
     private final static String KEY_PASSWORD = "apn_password";
+    // UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS
+    private final static String KEY_TRAFFIC_CLASS = "traffic_class";
+
+    private final static String TYPE_XCAP = "xcap";
+
+    /* UNISOC: add for bug 693484 @{ */
+    private final static String PHONE_EX = "phone_ex";
 
     private static final int MENU_DELETE = Menu.FIRST;
     private static final int MENU_SAVE = Menu.FIRST + 1;
@@ -122,6 +132,9 @@ public class ApnEditor extends SettingsPreferenceFragment
     ListPreference mMvnoType;
     @VisibleForTesting
     EditTextPreference mMvnoMatchData;
+    // UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS
+    @VisibleForTesting
+    ListPreference mTrafficClass;
 
     @VisibleForTesting
     ApnData mApnData;
@@ -131,14 +144,22 @@ public class ApnEditor extends SettingsPreferenceFragment
 
     private boolean mNewApn;
     private int mSubId;
+    private int mPhoneId;
     private TelephonyManager mTelephonyManager;
+    private TelephonyManagerEx mTelephonyManagerEx;
     private int mBearerInitialVal = 0;
     private String mMvnoTypeStr;
     private String mMvnoMatchDataStr;
     private String[] mReadOnlyApnTypes;
+    private String[] mHideApnTypes;
     private String[] mReadOnlyApnFields;
     private boolean mReadOnlyApn;
     private Uri mCarrierUri;
+    private boolean mAllowEmptyApn = false;
+    // UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS
+    private boolean mIsSupportTrafficClass = false;
+    // UNISOC: listen to sim state change
+    private SimStateChangeListener mSimStateChangeListener;
 
     /**
      * Standard projection for the interesting columns of a normal note.
@@ -168,7 +189,8 @@ public class ApnEditor extends SettingsPreferenceFragment
             Telephony.Carriers.MVNO_TYPE,   // 21
             Telephony.Carriers.MVNO_MATCH_DATA,  // 22
             Telephony.Carriers.EDITED_STATUS,   // 23
-            Telephony.Carriers.USER_EDITABLE    //24
+            Telephony.Carriers.USER_EDITABLE,    //24
+            Telephony.Carriers.TRAFFIC_CLASS    //25
     };
 
     private static final int ID_INDEX = 0;
@@ -200,12 +222,18 @@ public class ApnEditor extends SettingsPreferenceFragment
     private static final int MVNO_MATCH_DATA_INDEX = 22;
     private static final int EDITED_INDEX = 23;
     private static final int USER_EDITABLE_INDEX = 24;
+    // UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS
+    private static final int TRAFFIC_CLASS_INDEX = 25;
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
         addPreferencesFromResource(R.xml.apn_editor);
+
+        /* UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS @{ */
+        mIsSupportTrafficClass = Resources.getSystem().getBoolean(com.android.internal.R.bool.config_dataconnection_traffic_class);
+        /* @} */
 
         sNotSet = getResources().getString(R.string.apn_not_set);
         mName = (EditTextPreference) findPreference("apn_name");
@@ -228,6 +256,16 @@ public class ApnEditor extends SettingsPreferenceFragment
         mBearerMulti = (MultiSelectListPreference) findPreference(KEY_BEARER_MULTI);
         mMvnoType = (ListPreference) findPreference(KEY_MVNO_TYPE);
         mMvnoMatchData = (EditTextPreference) findPreference("mvno_match_data");
+        /* UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS @{ */
+        mTrafficClass = (ListPreference) findPreference(KEY_TRAFFIC_CLASS);
+        if (mIsSupportTrafficClass) {
+            mTrafficClass.setOnPreferenceChangeListener(this);
+        } else {
+            if (mTrafficClass != null) {
+                getPreferenceScreen().removePreference(mTrafficClass);
+            }
+        }
+        /* @} */
 
         final Intent intent = getIntent();
         final String action = intent.getAction();
@@ -238,9 +276,11 @@ public class ApnEditor extends SettingsPreferenceFragment
 
         mSubId = intent.getIntExtra(ApnSettings.SUB_ID,
                 SubscriptionManager.INVALID_SUBSCRIPTION_ID);
+        mPhoneId = SubscriptionManager.getPhoneId(mSubId);
         mReadOnlyApn = false;
         mReadOnlyApnTypes = null;
         mReadOnlyApnFields = null;
+        mHideApnTypes = null;
 
         CarrierConfigManager configManager = (CarrierConfigManager)
                 getSystemService(Context.CARRIER_CONFIG_SERVICE);
@@ -256,6 +296,8 @@ public class ApnEditor extends SettingsPreferenceFragment
                 }
                 mReadOnlyApnFields = b.getStringArray(
                         CarrierConfigManager.KEY_READ_ONLY_APN_FIELDS_STRING_ARRAY);
+                mHideApnTypes = b.getStringArray(
+                        CarrierConfigManagerEx.KEY_HIDE_APN_TYPES_STRING_ARRAY);
             }
         }
 
@@ -291,7 +333,15 @@ public class ApnEditor extends SettingsPreferenceFragment
             mApnData = new ApnData(sProjection.length);
         }
 
+        if (mApnData == null) {
+            finish();
+            return;
+         }
+
+        //UNISOC: allow empty apn
+        mAllowEmptyApn = getContext().getResources().getBoolean(R.bool.config_allow_empty_apn);
         mTelephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        mTelephonyManagerEx = (TelephonyManagerEx) getSystemService(PHONE_EX);
 
         boolean isUserEdited = mApnData.getInteger(EDITED_INDEX, Telephony.Carriers.USER_EDITED)
                 == Telephony.Carriers.USER_EDITED;
@@ -312,7 +362,28 @@ public class ApnEditor extends SettingsPreferenceFragment
         }
 
         fillUI(icicle == null);
+
+        mSimStateChangeListener = new SimStateChangeListener(getContext(), this);
+        mSimStateChangeListener.start();
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mSimStateChangeListener != null) {
+            mSimStateChangeListener.stop();
+        }
+    }
+
+    /** UNISOC: To handle the case SIM is removed @{ */
+    @Override
+    public void onSimAbsent(int phoneId) {
+        if (phoneId == mPhoneId) {
+            getActivity().finish();
+        }
+    }
+    /** @} */
 
     @VisibleForTesting
     static String formatInteger(String value) {
@@ -387,6 +458,36 @@ public class ApnEditor extends SettingsPreferenceFragment
 
         Log.d(TAG, "apnTypesMatch: false");
         return false;
+    }
+
+    /**
+     * UNISOC hide specific APN types.
+     * @param apnTypes1,apn types from apn database,it could contains more than one type.
+     * @param apnType,apn type witch need to be hidden.
+     * @return if apnTypes1 contains apnType,return apn types without apnType.
+     */
+    private String hideApnMatchTypes(String apnTypes1, String apnType) {
+        if (TextUtils.isEmpty(apnTypes1) || TextUtils.isEmpty(apnType)) {
+            return apnTypes1;
+        }
+
+        String[] apnTypesArray1 = apnTypes1.split(",");
+        StringBuilder apnTypes = new StringBuilder();
+
+        int apnTypes1Size = apnTypesArray1.length;
+        for (int i = 0; i < apnTypes1Size; i++) {
+            if (TextUtils.isEmpty(apnTypesArray1[i]) || apnTypesArray1[i].equals(apnType)){
+                Log.d(TAG,"apnType " + apnType + "need to be hidden");
+                continue;
+            }
+            apnTypes.append(",");
+            apnTypes.append(apnTypesArray1[i]);
+        }
+        if (apnTypes.length() > 0) {
+            apnTypes.deleteCharAt(0);
+        }
+        Log.d(TAG,"return apn types: " + apnTypes.toString());
+        return apnTypes.toString();
     }
 
     /**
@@ -479,6 +580,7 @@ public class ApnEditor extends SettingsPreferenceFragment
         mBearerMulti.setEnabled(false);
         mMvnoType.setEnabled(false);
         mMvnoMatchData.setEnabled(false);
+        mTrafficClass.setEnabled(false);
     }
 
     @Override
@@ -502,7 +604,12 @@ public class ApnEditor extends SettingsPreferenceFragment
             mMmsc.setText(mApnData.getString(MMSC_INDEX));
             mMcc.setText(mApnData.getString(MCC_INDEX));
             mMnc.setText(mApnData.getString(MNC_INDEX));
-            mApnType.setText(mApnData.getString(TYPE_INDEX));
+            String apnType = mApnData.getString(TYPE_INDEX);
+            //UNISOC:check whether apn type xcap need to be hidden
+            if (apnTypesMatch(mHideApnTypes,TYPE_XCAP)) {
+                apnType = hideApnMatchTypes(apnType,TYPE_XCAP);
+            }
+            mApnType.setText(apnType);
             if (mNewApn) {
                 String numeric = mTelephonyManager.getSimOperator(mSubId);
                 // MCC is first 3 chars and then in 2 - 3 chars of MNC
@@ -524,7 +631,11 @@ public class ApnEditor extends SettingsPreferenceFragment
             } else {
                 mAuthType.setValue(null);
             }
-
+            /* UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS @{ */
+            if (mIsSupportTrafficClass) {
+                mTrafficClass.setValue(mApnData.getString(TRAFFIC_CLASS_INDEX));
+            }
+            /* @} */
             mProtocol.setValue(mApnData.getString(PROTOCOL_INDEX));
             mRoamingProtocol.setValue(mApnData.getString(ROAMING_PROTOCOL_INDEX));
             mCarrierEnabled.setChecked(mApnData.getInteger(CARRIER_ENABLED_INDEX, 1) == 1);
@@ -586,7 +697,12 @@ public class ApnEditor extends SettingsPreferenceFragment
         } else {
             mAuthType.setSummary(sNotSet);
         }
-
+        /* UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS @{ */
+        if (mIsSupportTrafficClass) {
+            mTrafficClass.setSummary(checkNull(trafficClassDescription(
+                    mTrafficClass.getValue())));
+        }
+        /* @} */
         mProtocol.setSummary(checkNull(protocolDescription(mProtocol.getValue(), mProtocol)));
         mRoamingProtocol.setSummary(
                 checkNull(protocolDescription(mRoamingProtocol.getValue(), mRoamingProtocol)));
@@ -603,6 +719,24 @@ public class ApnEditor extends SettingsPreferenceFragment
             mCarrierEnabled.setEnabled(false);
         }
     }
+
+    /**
+     * UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS. @{
+     */
+    private String trafficClassDescription(String raw) {
+        int mTrafficClassIndex = mTrafficClass.findIndexOfValue(raw);
+        if (mTrafficClassIndex == -1) {
+            return null;
+        } else {
+            String[] values = getResources().getStringArray(R.array.traffic_class_entries);
+            try {
+                return values[mTrafficClassIndex];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                return null;
+            }
+        }
+    }
+    /** @} */
 
     /**
      * Returns the UI choice (e.g., "IPv4/IPv6") corresponding to the given
@@ -654,20 +788,31 @@ public class ApnEditor extends SettingsPreferenceFragment
         if (mvnoIndex == -1) {
             return null;
         } else {
-            String[] values = getResources().getStringArray(R.array.mvno_type_entries);
+            String[] values = getResources().getStringArray(R.array.mvno_type_entries_ex);
             boolean mvnoMatchDataUneditable =
                     mReadOnlyApn || (mReadOnlyApnFields != null
                             && Arrays.asList(mReadOnlyApnFields)
                             .contains(Telephony.Carriers.MVNO_MATCH_DATA));
             mMvnoMatchData.setEnabled(!mvnoMatchDataUneditable && mvnoIndex != 0);
+            Log.d(TAG, "values[" + mvnoIndex + "]= " + values[mvnoIndex]);
             if (newValue != null && newValue.equals(oldValue) == false) {
                 if (values[mvnoIndex].equals("SPN")) {
-                    mMvnoMatchData.setText(mTelephonyManager.getSimOperatorName());
+                    mMvnoMatchData.setText(mTelephonyManager.getSimOperatorName(mSubId));
+                    mMvnoMatchData.setSummary(mTelephonyManager.getSimOperatorName(mSubId));
                 } else if (values[mvnoIndex].equals("IMSI")) {
                     String numeric = mTelephonyManager.getSimOperator(mSubId);
                     mMvnoMatchData.setText(numeric + "x");
+                    mMvnoMatchData.setSummary(numeric + "x");
                 } else if (values[mvnoIndex].equals("GID")) {
                     mMvnoMatchData.setText(mTelephonyManager.getGroupIdLevel1());
+                    mMvnoMatchData.setSummary(mTelephonyManager.getGroupIdLevel1());
+                /* UNISOC: Bug 602746 add support for MVNO type pnn @{ */
+                } else if (values[mvnoIndex].equals("PNN")) {
+                    mMvnoMatchData.setText(checkNull(mTelephonyManagerEx.getPnnHomeName(mSubId)));
+                    mMvnoMatchData.setSummary(checkNull(mTelephonyManagerEx.getPnnHomeName(mSubId)));
+                } else if (values[mvnoIndex].equals("None")) {
+                    mMvnoMatchData.setText("");
+                    mMvnoMatchData.setSummary(sNotSet);
                 }
             }
 
@@ -723,7 +868,15 @@ public class ApnEditor extends SettingsPreferenceFragment
             mPassword.setSummary(starify(newValue != null ? String.valueOf(newValue) : ""));
         } else if (KEY_CARRIER_ENABLED.equals(key)) {
             // do nothing
-        } else {
+        } else if (mIsSupportTrafficClass && KEY_TRAFFIC_CLASS.equals(key)) {
+            // UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS
+            String trafficClass = trafficClassDescription((String) newValue);
+            if (trafficClass == null) {
+                return false;
+            }
+            mTrafficClass.setValue((String) newValue);
+            mTrafficClass.setSummary(trafficClass);
+        }else {
             preference.setSummary(checkNull(newValue != null ? String.valueOf(newValue) : null));
         }
 
@@ -1035,6 +1188,14 @@ public class ApnEditor extends SettingsPreferenceFragment
                 callUpdate,
                 CARRIER_ENABLED_INDEX);
 
+        /* UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS @{ */
+        callUpdate = setStringValueAndCheckIfDiff(values,
+                Telephony.Carriers.TRAFFIC_CLASS,
+                checkNotSet(mTrafficClass.getValue()),
+                callUpdate,
+                TRAFFIC_CLASS_INDEX);
+        /* @} */
+
         values.put(Telephony.Carriers.EDITED_STATUS, Telephony.Carriers.USER_EDITED);
 
         if (callUpdate) {
@@ -1079,7 +1240,7 @@ public class ApnEditor extends SettingsPreferenceFragment
 
         if (TextUtils.isEmpty(name)) {
             errorMsg = getResources().getString(R.string.error_name_empty);
-        } else if (TextUtils.isEmpty(apn)) {
+        } else if (TextUtils.isEmpty(apn) && !mAllowEmptyApn) {
             errorMsg = getResources().getString(R.string.error_apn_empty);
         } else if (mcc == null || mcc.length() != 3) {
             errorMsg = getResources().getString(R.string.error_mcc_not3);
@@ -1185,6 +1346,12 @@ public class ApnEditor extends SettingsPreferenceFragment
     public static class ErrorDialog extends InstrumentedDialogFragment {
 
         public static void showError(ApnEditor editor) {
+            /* UNISOC: add for bug718139 @{ */
+            if (editor == null || editor.getFragmentManager() == null) {
+                Log.d(TAG, "showError: editor || getFragmentManager is null");
+                return;
+            }
+            /* @} */
             ErrorDialog dialog = new ErrorDialog();
             dialog.setTargetFragment(editor, 0);
             dialog.show(editor.getFragmentManager(), "error");
@@ -1216,8 +1383,7 @@ public class ApnEditor extends SettingsPreferenceFragment
                 null /* selection */,
                 null /* selectionArgs */,
                 null /* sortOrder */)) {
-            if (cursor != null) {
-                cursor.moveToFirst();
+            if (cursor != null && cursor.moveToFirst()) {
                 apnData = new ApnData(uri, cursor);
             }
         }

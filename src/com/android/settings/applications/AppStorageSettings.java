@@ -361,7 +361,14 @@ public class AppStorageSettings extends AppInfoWithHeader
      * button for a system package
      */
     private void initiateClearUserData() {
-        mMetricsFeatureProvider.action(getContext(), SettingsEnums.ACTION_SETTINGS_CLEAR_APP_DATA);
+        /* Bug1118834:Repeatedly clicking the "Clear Storage" button while splitting the screen causes the settings to crash @{ */
+        final Context context = getActivity();
+        if (context == null) {
+            Log.i(TAG, "Couldn't clear application user data");
+            return;
+        }
+        /* @} */
+        mMetricsFeatureProvider.action(context, SettingsEnums.ACTION_SETTINGS_CLEAR_APP_DATA);
         mButtonsPref.setButton1Enabled(false);
         // Invoke uninstall or clear user data based on sysPackage
         String packageName = mAppEntry.info.packageName;
@@ -370,7 +377,7 @@ public class AppStorageSettings extends AppInfoWithHeader
             mClearDataObserver = new ClearUserDataObserver();
         }
         ActivityManager am = (ActivityManager)
-                getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+                context.getSystemService(Context.ACTIVITY_SERVICE);
         boolean res = am.clearApplicationUserData(packageName, mClearDataObserver);
         if (!res) {
             // Clearing data failed for some obscure reason. Just log error for now
@@ -394,6 +401,8 @@ public class AppStorageSettings extends AppInfoWithHeader
         if (result == OP_SUCCESSFUL) {
             Log.i(TAG, "Cleared user data for package : " + packageName);
             updateSize();
+            // Add for Bug1142892, refresh permission ui after clear data
+            refreshGrantedUriPermissions();
         } else {
             mButtonsPref.setButton1Enabled(true);
         }

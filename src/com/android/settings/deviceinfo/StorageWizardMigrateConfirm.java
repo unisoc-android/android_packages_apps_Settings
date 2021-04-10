@@ -42,6 +42,9 @@ public class StorageWizardMigrateConfirm extends StorageWizardBase {
     private static final int REQUEST_CREDENTIAL = 100;
 
     private MigrateEstimateTask mEstimate;
+    /* SPRD: add for storage manage @{ */
+    private Thread mTask;
+    /* @} */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,47 +106,64 @@ public class StorageWizardMigrateConfirm extends StorageWizardBase {
                     Log.d(TAG, "User " + user.id + " is currently locked; requesting unlock");
                     final CharSequence description = TextUtils.expandTemplate(
                             getText(R.string.storage_wizard_move_unlock), user.name);
-                    new ChooseLockSettingsHelper(this).launchConfirmationActivityForAnyUser(
+                    boolean launched = new ChooseLockSettingsHelper(this).launchConfirmationActivityForAnyUser(
                             REQUEST_CREDENTIAL, null, null, description, user.id);
+                    if (!launched) {
+                        Toast.makeText(this, description, Toast.LENGTH_LONG).show();
+                    }
                     return;
                 }
             }
         }
-
-        // We only expect exceptions from StorageManagerService#setPrimaryStorageUuid
-        int moveId;
-        try {
-            moveId = getPackageManager().movePrimaryStorage(mVolume);
-        } catch (IllegalArgumentException e) {
-            StorageManager sm = (StorageManager) getSystemService(STORAGE_SERVICE);
-
-            if (Objects.equals(mVolume.getFsUuid(), sm.getPrimaryStorageVolume().getUuid())) {
-                final Intent intent = new Intent(this, StorageWizardReady.class);
-                intent.putExtra(DiskInfo.EXTRA_DISK_ID,
-                        getIntent().getStringExtra(DiskInfo.EXTRA_DISK_ID));
-                startActivity(intent);
-                finishAffinity();
-
-                return;
-            } else {
-                throw e;
-            }
-        } catch (IllegalStateException e) {
-            Toast.makeText(this, getString(R.string.another_migration_already_in_progress),
-                    Toast.LENGTH_LONG).show();
-            finishAffinity();
-
+        /* SPRD: modify for emulated storage @{ */
+        if (mTask != null) {
+            Log.w(TAG, "Task thread already exist.");
             return;
         }
+        Toast toast = Toast.makeText(StorageWizardMigrateConfirm.this, getString(R.string.another_migration_already_in_progress),
+                Toast.LENGTH_LONG);
+        mTask = new Thread(){
+            @Override
+            public void run() {
+                // We only expect exceptions from StorageManagerService#setPrimaryStorageUuid
+                int moveId;
+                try {
+                    moveId = getPackageManager().movePrimaryStorage(mVolume);
+                } catch (IllegalArgumentException e) {
+                    Log.w(TAG, "set primary or migrate data get an exception", e);
+                    StorageManager sm = (StorageManager) getSystemService(STORAGE_SERVICE);
 
-        FeatureFactory.getFactory(this).getMetricsFeatureProvider().action(this,
-                SettingsEnums.ACTION_STORAGE_MIGRATE_NOW);
+                    if (Objects.equals(mVolume.getFsUuid(), sm.getPrimaryStorageVolume().getUuid())) {
+                        final Intent intent = new Intent(StorageWizardMigrateConfirm.this, StorageWizardReady.class);
+                        intent.putExtra(DiskInfo.EXTRA_DISK_ID,
+                                getIntent().getStringExtra(DiskInfo.EXTRA_DISK_ID));
+                        startActivity(intent);
+                        finishAffinity();
 
-        final Intent intent = new Intent(this, StorageWizardMigrateProgress.class);
-        intent.putExtra(VolumeInfo.EXTRA_VOLUME_ID, mVolume.getId());
-        intent.putExtra(PackageManager.EXTRA_MOVE_ID, moveId);
-        startActivity(intent);
-        finishAffinity();
+                    }
+                    mTask = null;
+                    return;
+                } catch (IllegalStateException e) {
+                    Log.w(TAG, "set primary or migrate data get an exception", e);
+                    toast.show();
+                    finishAffinity();
+                    mTask = null;
+                    return;
+                }
+
+                FeatureFactory.getFactory(StorageWizardMigrateConfirm.this).getMetricsFeatureProvider().
+                        action(StorageWizardMigrateConfirm.this, SettingsEnums.ACTION_STORAGE_MIGRATE_NOW);
+
+                final Intent intent = new Intent(StorageWizardMigrateConfirm.this, StorageWizardMigrateProgress.class);
+                intent.putExtra(VolumeInfo.EXTRA_VOLUME_ID, mVolume.getId());
+                intent.putExtra(PackageManager.EXTRA_MOVE_ID, moveId);
+                startActivity(intent);
+                finishAffinity();
+                mTask = null;
+            }
+        };
+        mTask.start();
+        /* @} */
     }
 
     @Override

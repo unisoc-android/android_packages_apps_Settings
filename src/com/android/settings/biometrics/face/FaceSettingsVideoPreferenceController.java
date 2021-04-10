@@ -28,7 +28,7 @@ import com.android.settings.widget.VideoPreferenceController;
  */
 public class FaceSettingsVideoPreferenceController extends VideoPreferenceController {
 
-    private static final String KEY_VIDEO = "security_settings_face_video";
+    public static final String KEY_VIDEO = "security_settings_face_video";
 
     private VideoPreference mVideoPreference;
 

@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"잠금해제 패턴 설정"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"잠금해제 패턴 변경"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"잠금해제 패턴을 그리는 방법"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"잘못된 시도 횟수가 너무 많습니다. <xliff:g id="NUMBER">%d</xliff:g>초 후에 다시 시도하세요."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">잘못된 시도 횟수가 너무 많습니다. <xliff:g id="NUMBER">%d</xliff:g>초 후에 다시 시도하세요.</item>
+        <item quantity="one">잘못된 시도 횟수가 너무 많습니다. 1초 후에 다시 시도하세요.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"휴대전화에 설치되어 있지 않은 애플리케이션입니다."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"직장 프로필 보안"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"직장 프로필 화면 잠금"</string>

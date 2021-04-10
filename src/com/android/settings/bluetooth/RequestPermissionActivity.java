@@ -295,6 +295,9 @@ public class RequestPermissionActivity extends Activity implements
         if (intent == null) {
             return true;
         }
+        if (intent.getAction() == null) {
+            return true;
+        }
         if (intent.getAction().equals(BluetoothAdapter.ACTION_REQUEST_ENABLE)) {
             mRequest = REQUEST_ENABLE;
         } else if (intent.getAction().equals(BluetoothAdapter.ACTION_REQUEST_DISABLE)) {

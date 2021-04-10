@@ -1835,7 +1835,12 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"הגדרת קו ביטול נעילה"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"שינוי קו ביטול הנעילה"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"כיצד לשרטט קו ביטול נעילה"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"יותר מדי ניסיונות שגויים. נסה שוב בעוד <xliff:g id="NUMBER">%d</xliff:g> שניות."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="two">יותר מדי ניסיונות שגויים.אפשר יהיה לנסות שוב בעוד <xliff:g id="NUMBER">%d</xliff:g> שניות."</item>
+        <item quantity="many">"יותר מדי ניסיונות שגויים. נסה שוב בעוד <xliff:g id="NUMBER">%d</xliff:g> שניות."</item>
+        <item quantity="other">"יותר מדי ניסיונות שגויים. נסה שוב בעוד <xliff:g id="NUMBER">%d</xliff:g> שניות."</item>
+        <item quantity="one">יותר מדי ניסיונות שגויים.אפשר יהיה לנסות שוב בעוד שנייה אחת.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"האפליקציה אינה מותקנת בטלפון."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"אבטחת פרופיל עבודה"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"נעילת מסך לפרופיל עבודה"</string>

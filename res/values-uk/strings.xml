@@ -1835,7 +1835,12 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Налашт. ключ розблок."</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Змінити ключ розблокув."</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Як намалювати ключ розблокування"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Забагато невдалих спроб. Повторіть через <xliff:g id="NUMBER">%d</xliff:g> с."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">Забагато невдалих спроб. Повторіть спробу через <xliff:g id="NUMBER">%d</xliff:g> секунду.</item>
+        <item quantity="few">Забагато невдалих спроб. Повторіть спробу через <xliff:g id="NUMBER">%d</xliff:g> секунди.</item>
+        <item quantity="many">Забагато невдалих спроб. Повторіть спробу через <xliff:g id="NUMBER">%d</xliff:g> секунд.</item>
+        <item quantity="other">Забагато невдалих спроб. Повторіть спробу через <xliff:g id="NUMBER">%d</xliff:g> секунди.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Додаток не встановлено у вашому телефоні."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Безпека робочого профілю"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Блокування екрана робочого профілю"</string>

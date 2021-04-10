@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"අගුළු ඇරීමේ රටාව සකසන්න"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"අගුළු ඇරීමේ රටාව වෙනස් කරන්න"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"අඟුළු හැරීමේ රටාවක් අඳින්නේ කෙසේද"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"වැරදි උත්සාහයන් ගණන වැඩියි. තත්පර <xliff:g id="NUMBER">%d</xliff:g> කින් නැවත උත්සාහ කරන්න."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">වැරදි උත්සාහයන් ගණන වැඩියි. තත්පර <xliff:g id="NUMBER">%d</xliff:g>කින් නැවත උත්සාහ කරන්න.</item>
+        <item quantity="other">වැරදි උත්සාහයන් ගණන වැඩියි. තත්පර <xliff:g id="NUMBER">%d</xliff:g>කින් නැවත උත්සාහ කරන්න.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"ඔබගේ දුරකථනය මත යෙදුම ස්ථාපනය කර නැත."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"කාර්යාල පැතිකඩ ආරක්ෂාව"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"කාර්යාල පැතිකඩ තිර අගුල"</string>

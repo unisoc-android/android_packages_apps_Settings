@@ -351,7 +351,7 @@
     <string name="date_picker_title" msgid="1338210036394128512">"日期"</string>
     <string name="time_picker_title" msgid="483460752287255019">"时间"</string>
     <string name="lock_after_timeout" msgid="4590337686681194648">"自动锁定"</string>
-    <string name="lock_after_timeout_summary" msgid="6128431871360905631">"休眠<xliff:g id="TIMEOUT_STRING">%1$s</xliff:g>后"</string>
+    <string name="lock_after_timeout_summary" msgid="6128431871360905631">"休眠后<xliff:g id="TIMEOUT_STRING">%1$s</xliff:g>"</string>
     <string name="lock_immediately_summary_with_exception" msgid="9119632173886172690">"休眠后立即锁定屏幕（<xliff:g id="TRUST_AGENT_NAME">%1$s</xliff:g>让屏幕保持解锁状态时除外）"</string>
     <string name="lock_after_timeout_summary_with_exception" msgid="5579064842797188409">"休眠<xliff:g id="TIMEOUT_STRING">%1$s</xliff:g>后（<xliff:g id="TRUST_AGENT_NAME">%2$s</xliff:g>让屏幕保持解锁状态时除外）"</string>
     <string name="show_owner_info_on_lockscreen_label" msgid="5074906168357568434">"在锁定屏幕上显示机主信息"</string>
@@ -393,14 +393,14 @@
     <string name="security_passwords_title" msgid="2881269890053568809">"隐私设置"</string>
     <string name="disabled_by_administrator_summary" msgid="1601828700318996341">"已被管理员停用"</string>
     <string name="security_status_title" msgid="5848766673665944640">"安全状态"</string>
-    <string name="security_dashboard_summary_face" msgid="268234254306703218">"屏幕锁定、人脸解锁"</string>
+    <string name="security_dashboard_summary_face" msgid="268234254306703218">"屏幕锁定、人脸识别"</string>
     <string name="security_dashboard_summary" msgid="6757421634477554939">"屏幕锁定、指纹"</string>
     <string name="security_dashboard_summary_no_fingerprint" msgid="8129641548372335540">"屏幕锁定"</string>
     <string name="security_settings_face_preference_summary" msgid="1290187225482642821">"已添加面孔"</string>
-    <string name="security_settings_face_preference_summary_none" msgid="5460349732790152186">"点按即可设置面孔身份验证"</string>
-    <string name="security_settings_face_preference_title" msgid="7074548721778680481">"面孔身份验证"</string>
-    <string name="security_settings_face_enroll_education_title" msgid="2695443729648587731">"如何设置人脸解锁"</string>
-    <string name="security_settings_face_enroll_education_title_accessibility" msgid="368169172872968330">"设置人脸解锁"</string>
+    <string name="security_settings_face_preference_summary_none" msgid="5460349732790152186">"点按即可设置人脸识别"</string>
+    <string name="security_settings_face_preference_title" msgid="7074548721778680481">"人脸识别"</string>
+    <string name="security_settings_face_enroll_education_title" msgid="2695443729648587731">"如何设置人脸识别"</string>
+    <string name="security_settings_face_enroll_education_title_accessibility" msgid="368169172872968330">"设置人脸识别"</string>
     <string name="security_settings_face_enroll_education_title_unlock_disabled" msgid="4697363240703556987">"使用您的面孔进行身份验证"</string>
     <string name="security_settings_face_enroll_education_message" msgid="4401918487764636333"></string>
     <string name="security_settings_face_enroll_education_start" msgid="6186306855277346454">"开始"</string>
@@ -594,10 +594,10 @@
     <string name="fingerprint_unlock_set_unlock_password" msgid="7351131075806338634">"指纹 + 密码"</string>
     <string name="fingerprint_unlock_skip_fingerprint" msgid="1441077909803666681">"不设置指纹并继续"</string>
     <string name="fingerprint_unlock_title" msgid="2826226740306003991">"您可以使用自己的指纹将手机解锁。为了安全起见，要使用此选项，您必须设置备用屏幕锁定方式。"</string>
-    <string name="face_unlock_set_unlock_pattern" msgid="8792301636367000123">"面孔身份验证 + 图案"</string>
-    <string name="face_unlock_set_unlock_pin" msgid="1196620299595657479">"面孔身份验证 + PIN 码"</string>
-    <string name="face_unlock_set_unlock_password" msgid="223117276773907474">"面孔身份验证 + 密码"</string>
-    <string name="face_unlock_skip_face" msgid="6362883392838482791">"不设置面孔身份验证并继续"</string>
+    <string name="face_unlock_set_unlock_pattern" msgid="8792301636367000123">"人脸识别 + 图案"</string>
+    <string name="face_unlock_set_unlock_pin" msgid="1196620299595657479">"人脸识别 + PIN 码"</string>
+    <string name="face_unlock_set_unlock_password" msgid="223117276773907474">"人脸识别 + 密码"</string>
+    <string name="face_unlock_skip_face" msgid="6362883392838482791">"不设置人脸识别并继续"</string>
     <string name="face_unlock_title" msgid="9042382084472444316">"您可以使用自己的面孔将手机解锁。为了安全起见，要使用此选项，您必须设置备用屏幕锁定方式。"</string>
     <string name="unlock_set_unlock_disabled_summary" msgid="2051593894736282302">"由于管理员、加密策略或凭据存储的要求，您无法使用此选项"</string>
     <string name="unlock_set_unlock_mode_off" msgid="5881952274566013651">"无"</string>
@@ -1121,7 +1121,7 @@
     <string name="wifi_calling_mode_wifi_preferred_summary" msgid="9092988115148569860">"如果无法连接到 WLAN，请使用移动网络"</string>
     <string name="wifi_calling_mode_cellular_preferred_summary" msgid="240885549023046403">"如果移动网络不可用，请使用 WLAN"</string>
     <string name="wifi_calling_mode_wifi_only_summary" msgid="3688265826855460036">"通过 WLAN 进行通话。如果 WLAN 连接中断，通话将会结束。"</string>
-    <string name="wifi_calling_off_explanation" msgid="564780186974911501">"开启“WLAN 通话”功能后，您的手机可根据偏好设置并视信号强弱来选择通过 WLAN 网络或运营商网络来进行通话。开启此功能之前，请先向您的运营商咨询收费情况及其他详情。<xliff:g id="ADDITIONAL_TEXT">%1$s</xliff:g>"</string>
+    <string name="wifi_calling_off_explanation" msgid="564780186974911501">"开启 WLAN 通话功能后，您的手机可根据偏好设置并视信号强弱来选择通过 WLAN 网络或运营商网络来进行通话。开启此功能之前，请先向您的运营商咨询收费情况及其他详情。<xliff:g id="ADDITIONAL_TEXT">%1$s</xliff:g>"</string>
     <string name="wifi_calling_off_explanation_2" msgid="2329334487851497223"></string>
     <string name="emergency_address_title" msgid="932729250447887545">"紧急联系地址"</string>
     <string name="emergency_address_summary" msgid="7751971156196115129">"当您通过 WLAN 网络拨打紧急呼救电话时，系统会判定您位于这个位置"</string>
@@ -1300,7 +1300,7 @@
     <string name="sim_enter_new" msgid="8742727032729243562">"新 SIM 卡 PIN 码"</string>
     <string name="sim_reenter_new" msgid="6523819386793546888">"重新输入新的PIN码"</string>
     <string name="sim_change_pin" msgid="7328607264898359112">"SIM 卡 PIN 码"</string>
-    <string name="sim_bad_pin" msgid="2345230873496357977">"PIN 码不正确"</string>
+    <string name="sim_bad_pin" msgid="2345230873496357977">"请输入4到8位的PIN码"</string>
     <string name="sim_pins_dont_match" msgid="1695021563878890574">"PIN 码不匹配"</string>
     <string name="sim_change_failed" msgid="3602072380172511475">"无法更改PIN码。\n输入的PIN码可能不正确。"</string>
     <string name="sim_change_succeeded" msgid="8556135413096489627">"已成功更改 SIM 卡 PIN 码"</string>
@@ -1448,7 +1448,7 @@
     <string name="storage_volume_summary" msgid="7023441974367853372">"已使用 <xliff:g id="USED">%1$s</xliff:g>（共 <xliff:g id="TOTAL">%2$s</xliff:g>）"</string>
     <string name="storage_size_large" msgid="5691585991420946254">"<xliff:g id="NUMBER">^1</xliff:g>"<small><small>" <xliff:g id="UNIT">^2</xliff:g>"</small></small>""</string>
     <string name="storage_volume_used" msgid="1303803057698959872">"（共 <xliff:g id="TOTAL">%1$s</xliff:g>）"</string>
-    <string name="storage_volume_used_total" msgid="6113121714019000244">"共使用 <xliff:g id="TOTAL">%1$s</xliff:g>"</string>
+    <string name="storage_volume_used_total" msgid="6113121714019000244">"总共 <xliff:g id="TOTAL">%1$s</xliff:g>"</string>
     <string name="storage_mount_success" msgid="687641090137253647">"<xliff:g id="NAME">%1$s</xliff:g>已装载"</string>
     <string name="storage_mount_failure" msgid="1042621107954547316">"无法装载<xliff:g id="NAME">%1$s</xliff:g>"</string>
     <string name="storage_unmount_success" msgid="5737203344673441677">"<xliff:g id="NAME">%1$s</xliff:g>已安全弹出"</string>
@@ -1744,9 +1744,9 @@
     <string name="lockpassword_password_set_toast" msgid="4875050283108629383">"密码已设置"</string>
     <string name="lockpassword_pin_set_toast" msgid="6011826444725291475">"已设置PIN码"</string>
     <string name="lockpassword_pattern_set_toast" msgid="6867259621331406236">"图案已设置"</string>
-    <string name="lockpassword_choose_your_password_header_for_face" msgid="7876621019688907534">"要使用面孔身份验证，请设置密码"</string>
-    <string name="lockpassword_choose_your_pattern_header_for_face" msgid="8070525076987585344">"要使用面孔身份验证，请设置图案"</string>
-    <string name="lockpassword_choose_your_pin_header_for_face" msgid="7304398683609714816">"要使用面孔身份验证，请设置 PIN 码"</string>
+    <string name="lockpassword_choose_your_password_header_for_face" msgid="7876621019688907534">"要使用人脸识别，请设置密码"</string>
+    <string name="lockpassword_choose_your_pattern_header_for_face" msgid="8070525076987585344">"要使用人脸识别，请设置图案"</string>
+    <string name="lockpassword_choose_your_pin_header_for_face" msgid="7304398683609714816">"要使用人脸识别，请设置 PIN 码"</string>
     <string name="lockpassword_confirm_your_pattern_generic" msgid="2920960858283879113">"请绘制您的设备解锁图案以继续"</string>
     <string name="lockpassword_confirm_your_pin_generic" msgid="4062335874438910487">"请输入您的设备 PIN 码以继续"</string>
     <string name="lockpassword_confirm_your_password_generic" msgid="3976394862548354966">"请输入您的设备密码以继续"</string>
@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"设置解锁图案"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"更改解锁图案"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"如何绘制解锁图案"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"尝试解锁失败次数过多。请在 <xliff:g id="NUMBER">%d</xliff:g> 秒后重试。"</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">尝试解锁失败次数过多。请在 <xliff:g id="NUMBER">%d</xliff:g> 秒后重试。</item>
+        <item quantity="one">尝试解锁失败次数过多。请在 1 秒后重试。</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"您的手机上未安装相应应用。"</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"工作资料安全"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"工作资料屏幕锁定"</string>
@@ -2945,12 +2948,12 @@
     <string name="user_exit_guest_confirm_message" msgid="2194459201944413257">"此会话中的所有应用和数据都将被删除。"</string>
     <string name="user_exit_guest_dialog_remove" msgid="6351370829952745350">"移除"</string>
     <string name="user_enable_calling" msgid="5128605672081602348">"开启通话功能"</string>
-    <string name="user_enable_calling_sms" msgid="9172507088023097063">"开启通话和短信功能"</string>
+    <string name="user_enable_calling_sms" msgid="9172507088023097063">"开启通话和信息功能"</string>
     <string name="user_remove_user" msgid="3612979309028881318">"删除用户"</string>
     <string name="user_enable_calling_confirm_title" msgid="4315789475268695378">"要开启通话功能吗？"</string>
     <string name="user_enable_calling_confirm_message" msgid="8061594235219352787">"将与此用户共享通话记录。"</string>
-    <string name="user_enable_calling_and_sms_confirm_title" msgid="7243308401401932681">"要开启通话和短信功能吗？"</string>
-    <string name="user_enable_calling_and_sms_confirm_message" msgid="4025082715546544967">"将与此用户共享通话记录和短信记录。"</string>
+    <string name="user_enable_calling_and_sms_confirm_title" msgid="7243308401401932681">"要开启通话和信息功能吗？"</string>
+    <string name="user_enable_calling_and_sms_confirm_message" msgid="4025082715546544967">"将与此用户共享通话记录和信息记录。"</string>
     <string name="emergency_info_title" msgid="208607506217060337">"急救信息"</string>
     <string name="emergency_info_summary" msgid="5062945162967838521">"<xliff:g id="USER_NAME">%1$s</xliff:g>的相关信息和联系人信息"</string>
     <string name="application_restrictions" msgid="8207332020898004394">"允许应用和内容"</string>
@@ -3040,7 +3043,7 @@
     <string name="sim_cellular_data_unavailable_summary" msgid="5416535001368135327">"点按即可选择上网用的 SIM 卡"</string>
     <string name="sim_calls_always_use" msgid="7936774751250119715">"一律使用这张卡进行通话"</string>
     <string name="select_sim_for_data" msgid="2366081042162853044">"选择用于数据网络的 SIM 卡"</string>
-    <string name="select_sim_for_sms" msgid="6232060107120265044">"选择要用于收发短信的 SIM 卡"</string>
+    <string name="select_sim_for_sms" msgid="6232060107120265044">"选择要用于发送短信的 SIM 卡"</string>
     <string name="data_switch_started" msgid="2040761479817166311">"正在切换用于连接数据网络的 SIM 卡，这最多可能需要 1 分钟的时间…"</string>
     <string name="select_sim_for_calls" msgid="3503094771801109334">"选择用于通话的 SIM 卡"</string>
     <string name="sim_select_card" msgid="211285163525563293">"选择 SIM 卡"</string>
@@ -3931,7 +3934,7 @@
     <string name="storage_summary" msgid="3801281635351732202">"已使用 <xliff:g id="PERCENTAGE">%1$s</xliff:g> - 还剩 <xliff:g id="FREE_SPACE">%2$s</xliff:g>"</string>
     <string name="storage_summary_with_sdcard" msgid="3290457009629490121">"内部存储空间：已使用 <xliff:g id="PERCENTAGE">%1$s</xliff:g>，还剩 <xliff:g id="FREE_SPACE">%2$s</xliff:g>"</string>
     <string name="display_summary" msgid="6737806235882127328">"闲置 <xliff:g id="TIMEOUT_DESCRIPTION">%1$s</xliff:g>后进入休眠状态"</string>
-    <string name="display_dashboard_summary" msgid="4145888780290131488">"壁纸、休眠、字体大小"</string>
+    <string name="display_dashboard_summary" msgid="4145888780290131488">"壁纸、屏幕超时、字体大小"</string>
     <string name="display_dashboard_summary_with_style" msgid="870920274423314524">"样式、壁纸、屏幕超时、字体大小"</string>
     <string name="display_dashboard_nowallpaper_summary" msgid="7840559323355210111">"休眠、字号"</string>
     <string name="display_summary_example" msgid="9102633726811090523">"闲置 10 分钟后会进入休眠状态"</string>
@@ -4421,6 +4424,27 @@
     <string name="pref_title_network_details" msgid="7186418845727358964">"网络详情"</string>
     <string name="about_phone_device_name_warning" msgid="8885670415541365348">"您的设备名称会显示在手机上的应用中。此外，当您连接到蓝牙设备或设置 WLAN 热点时，其他人可能也会看到您的设备名称。"</string>
     <string name="devices_title" msgid="7701726109334110391">"设备"</string>
+    <!--SPRD:Add for bug708221 Translation mistake @{ -->
+    <string name="usb_charge_only">仅充电</string>
+    <string name="usb_charge_only_summary">当USB连接时，仅使用充电功能</string>
+    <string name="usb_virtual_drive">"USB 虚拟光驱"</string>
+    <string name="usb_virtual_drive_summary">"启用USB虚拟光驱"</string>
+    <string name="usb_storage">USB 存储 </string>
+    <string name="usb_storage_summary">启用USB大容量存储 </string>
+
+    <string name="usb_pc_internet_share">USB—互联网PC</string>
+    <string name="usb_pc_internet_share_available_subtext">USB 已连接，选中以启用USB—互联网PC</string>
+    <string name="usb_pc_internet_share_active_subtext">"USB访问PC互联网功能已开启"</string>
+    <string name="usb_pc_internet_share_errored_subtext">"USB-PC 共享网络出错"</string>
+    <string name="usb_pc_internet_share_storage_active_subtext">使用 USB 存储设备时无法共享网络</string>
+    <string name="usb_pc_choose_os">选择电脑系统版本</string>
+    <string name="usb_pc_cancel">取消</string>
+    <string name="usb_pc_ok">完成</string>
+    <string name="usb_pc_next">下一步</string>
+    <string name="usb_pc_back">上一步</string>
+    <string name="usb_pc_guide">1.打开 Windows PC 网络.\n\n2.在想要分享的网络上点击右键，选择属性.\n\n3.点击高级选项,选择\'允许其他网络用户共享此计算机的 Internet 来连接\'(如果出现家庭网络选项,请选择新增的USB网络连接).</string>
+    <string name="os_string_array_value_none">(未指定)</string>
+    <!-- Bug708221 end@} -->
     <string name="homepage_all_settings" msgid="1245540304900512919">"所有设置"</string>
     <string name="homepage_personal_settings" msgid="1570415428680432319">"建议"</string>
     <string name="choose_network_title" msgid="5702586742615861037">"选择网络"</string>
@@ -4474,7 +4498,7 @@
     <string name="mobile_data_settings_summary" msgid="2708261377199805404">"通过移动网络访问数据"</string>
     <string name="mobile_data_settings_summary_auto_switch" msgid="2914985502279794000">"手机会在进入有效范围时自动切换到此运营商"</string>
     <string name="calls_preference" msgid="4628557570999372758">"通话偏好设置"</string>
-    <string name="sms_preference" msgid="3479810211828513772">"短信偏好设置"</string>
+    <string name="sms_preference" msgid="3479810211828513772">"信息偏好设置"</string>
     <string name="calls_and_sms_ask_every_time" msgid="2127802836576375306">"每次都询问"</string>
     <string name="mobile_network_summary_add_a_network" msgid="9148476748420654283">"添加网络"</string>
     <plurals name="mobile_network_summary_count" formatted="false" msgid="4505694491027023039">
@@ -4482,8 +4506,8 @@
       <item quantity="one"><xliff:g id="COUNT_0">%1$d</xliff:g> 个 SIM 卡</item>
     </plurals>
     <string name="default_for_calls" msgid="6732520879241581841">"默认用于通话"</string>
-    <string name="default_for_sms" msgid="294276190503132313">"默认用于短信"</string>
-    <string name="default_for_calls_and_sms" msgid="3862322027700754792">"默认用于通话与短信"</string>
+    <string name="default_for_sms" msgid="294276190503132313">"默认用于信息"</string>
+    <string name="default_for_calls_and_sms" msgid="3862322027700754792">"默认用于通话与信息"</string>
     <string name="default_for_mobile_data" msgid="955987144209828344">"默认用于移动数据"</string>
     <string name="mobile_data_active" msgid="5108294051762397700">"已开启移动数据"</string>
     <string name="mobile_data_off" msgid="5831854766113105657">"移动数据已关闭"</string>
@@ -4616,9 +4640,32 @@
     <string name="enable_sending_mms_notification_title" msgid="3852773093703966351">"无法发送彩信"</string>
     <string name="enable_mms_notification_summary" msgid="7643379825980866408">"点按即可在移动数据网络关闭时通过<xliff:g id="OPERATOR_NAME">%1$s</xliff:g>收发彩信"</string>
     <string name="enable_mms_notification_channel_title" msgid="4402474709766126987">"彩信"</string>
+    <!-- UNISOC: Limited ownerinfo length -->
+    <string name="name_too_long">"输入内容过长，最大输入字符为50。"</string>
+    <!-- SPRD: Bug#1031099 support GPS automatic update time BEG -->
+    <string name="gps_time_sync_attention_gps_on">使用 GPS 提供时间，必须要等待 GPS 定位成功。GPS 定位最多需要一分钟。\n\n确定要使用GPS 提供时间吗？</string>
+    <string name="gps_time_sync_attention_gps_off">使用 GPS 提供时间，必须要先启用 GPS，并等待 GPS 定位成功。GPS 定位最多需要一分钟。如果 GPS 信号弱，可能会定位失败。\n\n确定现在要启用 GPS 并使用 GPS 提供时间吗？</string>
+    <!-- support GPS automatic update time END -->
+    <!-- SPRD: Bug#1031760 support AGPS settings BEG -->
+    <string name="location_gps_config">AGPS 开启选项</string>
+    <string name="location_gps_config_summary">设置在不同网络环境中是否使用 AGPS</string>
+    <string name="agps_enable_option_tailebar">AGPS 开启选项</string>
+    <string name="agps_enable_option_registered">在注册网络中使用AGPS</string>
+    <string name="agps_enable_option_all">在所有网络中使用AGPS</string>
+    <string name="agps_enable_option_none">不使用AGPS</string>
+    <string name="agps_enable_default_set_text">点击恢复默认值按钮，将恢复 AGPS 的默认参数设置。</string>
+    <string name="agps_enable_default_set_button">恢复默认值</string>
+    <string name="agps_config_help_tailebar">AGPS 帮助</string>
+    <string name="agps_config_help_text">如果设置了在所有网络中使用 AGPS，在国际漫游网络中，AGPS 将因数据连接产生国际漫游资费。</string>
+    <string name="settings_other">其他</string>
+    <!-- support AGPS settings END -->
+    <string name="location_disabled_toast_info">设备不支持定位功能。</string>
     <string name="sim_combination_warning_notification_title" msgid="3717178238465948430">"SIM 卡组合功能发生问题"</string>
     <string name="dual_cdma_sim_warning_notification_summary" msgid="2602011424635850202">"如果您使用<xliff:g id="OPERATOR_NAMES">%1$s</xliff:g>，这项功能可能会因此受限。点按即可了解详情。"</string>
     <string name="dual_cdma_sim_warning_notification_channel_title" msgid="4144088600737896010">"SIM 卡组合"</string>
     <string name="work_policy_privacy_settings" msgid="2348992644755730215">"您的工作政策信息"</string>
     <string name="work_policy_privacy_settings_summary" msgid="2236899807429121767">"由 IT 管理员管理的设置"</string>
+    <string name="master_slave_mode">蓝牙模式</string>
+    <string name="master">主设备</string>
+    <string name="slave">从设备</string>
 </resources>

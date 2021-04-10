@@ -117,6 +117,25 @@
                 style="@style/wifi_section"
                 android:visibility="gone">
 
+            <!-- SPRD: Bug #590380 Porting WEP feature to AndroidN BEG-->
+            <LinearLayout android:id="@+id/wep_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/wifi_item"
+                    android:visibility="gone">
+                <TextView android:id="@+id/key_index"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/wifi_item_label"
+                        android:text="@string/key_index" />
+                <Spinner android:id="@+id/wep_key_index"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/wifi_item_content"
+                        android:prompt="@string/key_index" />
+            </LinearLayout>
+            <!--  Porting WEP feature to AndroidN END -->
+
             <LinearLayout android:id="@+id/eap"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -141,6 +160,25 @@
                             android:prompt="@string/wifi_eap_method"
                             android:entries="@array/wifi_eap_method" />
                 </LinearLayout>
+
+                <!-- NOTE: Bug #475482 Add sim slot selection support for eap-sim and eap-aka BEG -->
+                <LinearLayout android:id="@+id/l_sim_slot"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/wifi_item"
+                        android:visibility="gone">
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            style="@style/wifi_item_label"
+                            android:text="@string/wifi_eap_sim_slots" />
+                    <Spinner android:id="@+id/eap_sim_slots"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            style="@style/wifi_item_content"
+                            android:prompt="@string/wifi_eap_sim_slots" />
+                </LinearLayout>
+                <!-- Add sim slot selection support for eap-sim and eap-aka END -->
 
                 <LinearLayout android:id="@+id/l_phase2"
                         android:layout_width="match_parent"
@@ -278,6 +316,53 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- SPRD: Bug #474464 Porting WAPI feature BEG -->
+            <LinearLayout android:id="@+id/wapi_psk"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/wifi_item"
+                    android:visibility="gone">
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            style="@style/wifi_item_label"
+                            android:text="@string/wifi_wapi_psk_type" />
+                    <Spinner android:id="@+id/wapi_psk_type"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            style="@style/wifi_item_spinner"
+                            android:prompt="@string/wifi_wapi_psk_type"
+                            android:entries="@array/wifi_wapi_psk_type" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/wapi_cert"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/wifi_item"
+                        android:visibility="gone">
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/wifi_item_label"
+                        android:text="@string/wifi_wapi_as_certificate" />
+                <Spinner android:id="@+id/wapi_as_cert"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/wifi_item_spinner"
+                        android:prompt="@string/wifi_wapi_as_certificate" />
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/wifi_item_label"
+                        android:text="@string/wifi_wapi_user_certificate" />
+                <Spinner android:id="@+id/wapi_user_cert"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        style="@style/wifi_item_spinner"
+                        android:prompt="@string/wifi_wapi_user_certificate" />
+            </LinearLayout>
+            <!--  Porting WAPI feature END -->
+
             <LinearLayout android:id="@+id/password_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -287,6 +372,16 @@
                         android:layout_height="wrap_content"
                         style="@style/wifi_item_label"
                         android:text="@string/wifi_password" />
+
+                <!-- SPRD: Bug #590380 Porting WEP feature to AndroidN BEG-->
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/wep_password_tip"
+                        style="@style/wifi_item_label"
+                        android:text="@string/wep_password_tip_text"
+                        android:visibility="gone" />
+                <!--  Porting WEP feature to AndroidN END -->
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     xmlns:app="http://schemas.android.com/apk/res-auto"

@@ -17,14 +17,17 @@ package com.android.settings.network;
 
 import static com.android.settings.network.MobilePlanPreferenceController.MANAGE_MOBILE_PLAN_DIALOG_ID;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
+import android.os.Bundle;
 import android.provider.SearchIndexableResource;
 import android.util.Log;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceScreen;
 
 import com.android.settings.R;
 import com.android.settings.core.FeatureFlags;
@@ -48,6 +51,16 @@ public class NetworkDashboardFragment extends DashboardFragment implements
 
     private static final String TAG = "NetworkDashboardFrag";
 
+    public static final String ARG_SHOW_EXPAND_BUTTON = "showExpandButton";
+
+    private static final int COUNT_INVALID = -1;
+
+    /*UNISOC: bug for 966475 @{*/
+    private AlertDialog mMobilePlanDialog;
+    /*UNISOC: @}*/
+
+    private int mChildrenCount = COUNT_INVALID;
+
     @Override
     public int getMetricsCategory() {
         return SettingsEnums.SETTINGS_NETWORK_CATEGORY;
@@ -70,10 +83,20 @@ public class NetworkDashboardFragment extends DashboardFragment implements
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
-        if (FeatureFlagPersistent.isEnabled(context, FeatureFlags.NETWORK_INTERNET_V2)) {
-            use(MultiNetworkHeaderController.class).init(getSettingsLifecycle());
+        /*UNISOC: Modify for bug1145683, We do not want to display an advanced button if
+         * linking to this screen from condition @{*/
+        Bundle args = getArguments();
+        if (args != null) {
+            if (!args.getBoolean(ARG_SHOW_EXPAND_BUTTON, true)) {
+                mChildrenCount = Integer.MAX_VALUE;
+            }
         }
+        if (FeatureFlagPersistent.isEnabled(context, FeatureFlags.NETWORK_INTERNET_V2)) {
+            // UNISOC:Improve the function of turning on and off the Sub
+            use(MultiNetworkHeaderController.class).init(getSettingsLifecycle(),
+                   getFragmentManager(), mChildrenCount);
+        }
+        /* @} */
         use(AirplaneModePreferenceController.class).setFragment(this);
     }
 
@@ -134,24 +157,39 @@ public class NetworkDashboardFragment extends DashboardFragment implements
 
     @Override
     public void showMobilePlanMessageDialog() {
+        /* UNISOC: BUG1113271 Quick click @{ */
+        final MobilePlanPreferenceController controller =
+                use(MobilePlanPreferenceController.class);
+        setController(controller);
+        final Preference pref = getPreferenceScreen().findPreference(controller.getPreferenceKey());
+        pref.setEnabled(false);
+        /* UNISOC:  @} */
         showDialog(MANAGE_MOBILE_PLAN_DIALOG_ID);
     }
 
-    @Override
     public Dialog onCreateDialog(int dialogId) {
-        Log.d(TAG, "onCreateDialog: dialogId=" + dialogId);
+        Log.d(TAG, "onCreateDialog: dialogId = " + dialogId);
         switch (dialogId) {
             case MANAGE_MOBILE_PLAN_DIALOG_ID:
                 final MobilePlanPreferenceController controller =
                         use(MobilePlanPreferenceController.class);
-                return new AlertDialog.Builder(getActivity())
+                AlertDialog.Builder alertDialogBuilder =  new AlertDialog.Builder(getActivity());
+                mMobilePlanDialog = alertDialogBuilder
                         .setMessage(controller.getMobilePlanDialogMessage())
                         .setCancelable(false)
                         .setPositiveButton(com.android.internal.R.string.ok,
                                 (dialog, id) -> controller.setMobilePlanDialogMessage(null))
                         .create();
+                return mMobilePlanDialog;
         }
         return super.onCreateDialog(dialogId);
+    }
+
+    @Override
+    public void dismissMobilePlanMessageDialog(){
+        if (mMobilePlanDialog != null){
+            removeDialog(MANAGE_MOBILE_PLAN_DIALOG_ID);
+        }
     }
 
     @Override

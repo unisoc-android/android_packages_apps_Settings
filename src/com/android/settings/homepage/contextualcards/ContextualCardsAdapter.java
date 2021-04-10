@@ -104,6 +104,11 @@ public class ContextualCardsAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
                 @Override
                 public int getSpanSize(int position) {
+                    /* bug 1180851 Array index is out of bounds that caused crash @*/
+                    if (position < 0 || position >= mContextualCards.size()) {
+                        return FULL_WIDTH;
+                    }
+                    /* @} */
                     final int viewType = mContextualCards.get(position).getViewType();
                     switch (viewType) {
                         case ConditionContextualCardRenderer.VIEW_TYPE_HALF_WIDTH:
@@ -126,11 +131,14 @@ public class ContextualCardsAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mContextualCards.clear();
             notifyDataSetChanged();
         } else {
-            final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
+            /*final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
                     new ContextualCardsDiffCallback(mContextualCards, contextualCards));
             mContextualCards.clear();
             mContextualCards.addAll(contextualCards);
-            diffResult.dispatchUpdatesTo(this);
+            diffResult.dispatchUpdatesTo(this);*/
+            mContextualCards.clear();
+            mContextualCards.addAll(contextualCards);
+            notifyDataSetChanged();
         }
 
         if (mRecyclerView != null && previouslyEmpty && !nowEmpty) {

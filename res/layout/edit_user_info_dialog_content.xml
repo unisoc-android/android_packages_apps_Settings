@@ -44,6 +44,7 @@
         android:labelFor="@id/user_photo"
         android:inputType="text|textCapWords"
         android:selectAllOnFocus="true"
+        android:maxLength="30"
         android:hint="@string/user_nickname"/>
 
 </LinearLayout>

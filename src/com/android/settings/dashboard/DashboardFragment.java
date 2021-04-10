@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -33,6 +34,7 @@ import androidx.preference.PreferenceScreen;
 
 import com.android.settings.R;
 import com.android.settings.SettingsPreferenceFragment;
+import com.android.settings.backup.UserBackupSettingsActivity;
 import com.android.settings.core.BasePreferenceController;
 import com.android.settings.core.PreferenceControllerListHelper;
 import com.android.settings.core.SettingsBaseActivity;
@@ -43,7 +45,6 @@ import com.android.settingslib.core.lifecycle.Lifecycle;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settingslib.drawer.DashboardCategory;
 import com.android.settingslib.drawer.Tile;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,6 +72,7 @@ public abstract class DashboardFragment extends SettingsPreferenceFragment
     private List<String> mSuppressInjectedTileKeys;
     @VisibleForTesting
     UiBlockerController mBlockerController;
+    private boolean mIsEnableWifiDisplay = false;
 
     @Override
     public void onAttach(Context context) {
@@ -91,6 +93,8 @@ public abstract class DashboardFragment extends SettingsPreferenceFragment
                 PreferenceControllerListHelper.filterControllers(
                         controllersFromXml, controllersFromCode);
 
+        mIsEnableWifiDisplay = context.getResources()
+                .getBoolean(com.android.internal.R.bool.config_enableWifiDisplay);
         // Add unique controllers to list.
         if (controllersFromCode != null) {
             controllers.addAll(controllersFromCode);
@@ -297,6 +301,18 @@ public abstract class DashboardFragment extends SettingsPreferenceFragment
         }
         return true;
     }
+    /**
+     * Returns true if this tile is wifiDisplay
+     */
+    protected boolean isContainsWifiDisplay(String key) {
+        if (key != null) {
+            if (key.contains("WifiDisplaySettingsActivity")) {
+                Log.d(TAG, "isContainsWifiDisplay true");
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Displays resource based tiles.
@@ -421,14 +437,29 @@ public abstract class DashboardFragment extends SettingsPreferenceFragment
         mSummaryLoader.setSummaryConsumer(this);
         // Install dashboard tiles.
         final boolean forceRoundedIcons = shouldForceRoundedIcon();
-        for (Tile tile : tiles) {
+        int size = tiles.size();
+        for (int i = 0; i < size; i++) {
+            Tile tile = tiles.get(i);
             final String key = mDashboardFeatureProvider.getDashboardKeyForTile(tile);
             if (TextUtils.isEmpty(key)) {
                 Log.d(TAG, "tile does not contain a key, skipping " + tile);
                 continue;
             }
+            /* UNISOC:1154937 Hide before the backup menu is displayed @{ */
+            if ((key.endsWith(UserBackupSettingsActivity.class.getSimpleName()) &&
+                    SystemProperties.get("ro.com.google.gmsversion").isEmpty())) {
+                continue;
+            }
+            /* @} */
             if (!displayTile(tile)) {
                 continue;
+            }
+            if (!mIsEnableWifiDisplay) {
+                Log.d(TAG, "WiFi Display is disabled");
+                if (isContainsWifiDisplay(key)) {
+                    Log.d(TAG, "Ignore WiFi Display's tile");
+                    continue;
+                }
             }
             if (mDashboardTilePrefKeys.contains(key)) {
                 // Have the key already, will rebind.
@@ -448,7 +479,9 @@ public abstract class DashboardFragment extends SettingsPreferenceFragment
             remove.remove(key);
         }
         // Finally remove tiles that are gone.
-        for (String key : remove) {
+        int removeSize = remove.size();
+        for (int i = 0; i < removeSize; i++) {
+            String key = remove.get(i);
             mDashboardTilePrefKeys.remove(key);
             final Preference preference = screen.findPreference(key);
             if (preference != null) {

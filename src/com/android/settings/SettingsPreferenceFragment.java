@@ -55,6 +55,7 @@ import com.android.settingslib.CustomEditTextPreferenceCompat;
 import com.android.settingslib.core.instrumentation.Instrumentable;
 import com.android.settingslib.widget.FooterPreferenceMixinCompat;
 import com.android.settingslib.widget.LayoutPreference;
+import com.android.settings.network.MobilePlanPreferenceController;
 
 import java.util.UUID;
 
@@ -77,7 +78,9 @@ public abstract class SettingsPreferenceFragment extends InstrumentedPreferenceF
     private SettingsDialogFragment mDialogFragment;
     // Cache the content resolver for async callbacks
     private ContentResolver mContentResolver;
-
+    /* UNISOC: BUG1113271 Quick click @{ */
+    private MobilePlanPreferenceController mMobilePlanController;
+    /* UNISOC:  @} */
     private RecyclerView.Adapter mCurrentRootAdapter;
     private boolean mIsDataSetObserverRegistered = false;
     private RecyclerView.AdapterDataObserver mDataSetObserver =
@@ -408,7 +411,10 @@ public abstract class SettingsPreferenceFragment extends InstrumentedPreferenceF
      * users won't misunderstand its meaning.
      */
     public final void finishFragment() {
-        getActivity().onBackPressed();
+        Activity activity = getActivity();
+        if (activity != null) {
+            activity.onBackPressed();
+        }
     }
 
     // Some helpers for functions used by the settings fragments when they were activities
@@ -428,14 +434,22 @@ public abstract class SettingsPreferenceFragment extends InstrumentedPreferenceF
      * Returns the specified system service from the owning Activity.
      */
     protected Object getSystemService(final String name) {
-        return getActivity().getSystemService(name);
+        Activity activity = getActivity();
+        if (activity != null) {
+            return activity.getSystemService(name);
+        }
+        return null;
     }
 
     /**
      * Returns the PackageManager from the owning Activity.
      */
     protected PackageManager getPackageManager() {
-        return getActivity().getPackageManager();
+        Activity activity = getActivity();
+        if (activity != null) {
+            return activity.getPackageManager();
+        }
+        return null;
     }
 
     @Override
@@ -456,7 +470,18 @@ public abstract class SettingsPreferenceFragment extends InstrumentedPreferenceF
             Log.e(TAG, "Old dialog fragment not null!");
         }
         mDialogFragment = SettingsDialogFragment.newInstance(this, dialogId);
-        mDialogFragment.show(getChildFragmentManager(), Integer.toString(dialogId));
+        /* UNISOC: BUG11132715 Quick click @{ */
+        if (mMobilePlanController != null) {
+            Log.d(TAG, " setControllerListener");
+            mDialogFragment.setControllerListener(mMobilePlanController);
+        }
+        /* UNISOC:  @} */
+        // UNISOC: add for Bug 1120868
+        if(getActivity() != null && isAdded() && getChildFragmentManager() != null){
+            mDialogFragment.show(getChildFragmentManager(), Integer.toString(dialogId));
+        } else {
+            Log.e(TAG, "Fragment has not been attached yet or getChildFragmentManager is null.");
+        }
     }
 
     @Override
@@ -531,12 +556,19 @@ public abstract class SettingsPreferenceFragment extends InstrumentedPreferenceF
         f.setTargetFragment(this, 0);
         f.show(getFragmentManager(), "dialog_preference");
         onDialogShowing();
+        //UNISOC:fix for bug 1113358
+        getFragmentManager().executePendingTransactions();
     }
 
     public static class SettingsDialogFragment extends InstrumentedDialogFragment {
         private static final String KEY_DIALOG_ID = "key_dialog_id";
         private static final String KEY_PARENT_FRAGMENT_ID = "key_parent_fragment_id";
-
+        /* UNISOC: BUG1113271 Quick click @{ */
+        public interface MobilePlanDialogListener {
+            void onDialogDismiss(InstrumentedDialogFragment dialog);
+        }
+        private MobilePlanDialogListener mMobilePlanListener;
+        /* UNISOC:  @} */
         private Fragment mParentFragment;
 
         private DialogInterface.OnCancelListener mOnCancelListener;
@@ -626,6 +658,11 @@ public abstract class SettingsPreferenceFragment extends InstrumentedPreferenceF
             if (mOnDismissListener != null) {
                 mOnDismissListener.onDismiss(dialog);
             }
+            /* UNISOC: BUG1113271 Quick click @{ */
+            if (mMobilePlanListener != null) {
+                mMobilePlanListener.onDialogDismiss(this);
+            }
+            /* UNISOC:  @} */
         }
 
         public int getDialogId() {
@@ -652,14 +689,35 @@ public abstract class SettingsPreferenceFragment extends InstrumentedPreferenceF
         private void setDialogId(int dialogId) {
             mDialogId = dialogId;
         }
+
+        /* UNISOC: BUG1113271 Quick click @{ */
+        public void setControllerListener(MobilePlanPreferenceController mobilePlanPreferenceController) {
+            mMobilePlanListener = (MobilePlanDialogListener)mobilePlanPreferenceController;
+        }
+        /* UNISOC:  @} */
     }
 
+    /* UNISOC: BUG1113271 Quick click @{ */
+    public void setController(MobilePlanPreferenceController mobilePlanPreferenceController) {
+        Log.d(TAG, " setController");
+        mMobilePlanController = mobilePlanPreferenceController;
+    }
+    /* UNISOC:  @} */
+
     protected boolean hasNextButton() {
-        return ((ButtonBarHandler) getActivity()).hasNextButton();
+        Activity activity = getActivity();
+        if (activity != null) {
+            return ((ButtonBarHandler) activity).hasNextButton();
+        }
+        return false;
     }
 
     protected Button getNextButton() {
-        return ((ButtonBarHandler) getActivity()).getNextButton();
+        Activity activity = getActivity();
+        if (activity != null) {
+            return ((ButtonBarHandler) activity).getNextButton();
+        }
+        return null;
     }
 
     public void finish() {

@@ -23,6 +23,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiFeaturesUtils;
 import android.provider.Settings;
 import android.text.BidiFormatter;
 
@@ -43,6 +44,10 @@ public class WifiTetherPreferenceController extends AbstractPreferenceController
         implements PreferenceControllerMixin, LifecycleObserver, OnStart, OnStop {
 
     private static final String WIFI_TETHER_SETTINGS = "wifi_tether";
+    private static final String WIFI_TETHER_SPRD_SETTINGS = "sprd_wifi_tether";
+    private static final IntentFilter AIRPLANE_INTENT_FILTER = new IntentFilter(
+            Intent.ACTION_AIRPLANE_MODE_CHANGED);
+    private static final int ID_NULL = -1;
 
     private final ConnectivityManager mConnectivityManager;
     private final String[] mWifiRegexs;
@@ -85,7 +90,17 @@ public class WifiTetherPreferenceController extends AbstractPreferenceController
     @Override
     public void displayPreference(PreferenceScreen screen) {
         super.displayPreference(screen);
-        mPreference = screen.findPreference(WIFI_TETHER_SETTINGS);
+        if (WifiFeaturesUtils.FeatureProperty.SUPPORT_SPRD_SOFTAP_FEATURES) {
+            if (screen.findPreference(WIFI_TETHER_SETTINGS) != null) {
+                screen.removePreference(screen.findPreference(WIFI_TETHER_SETTINGS));
+            }
+            mPreference = screen.findPreference(WIFI_TETHER_SPRD_SETTINGS);
+        } else {
+            if (screen.findPreference(WIFI_TETHER_SPRD_SETTINGS) != null) {
+                screen.removePreference(screen.findPreference(WIFI_TETHER_SPRD_SETTINGS));
+            }
+            mPreference = screen.findPreference(WIFI_TETHER_SETTINGS);
+        }
         if (mPreference == null) {
             // unavailable
             return;
@@ -94,7 +109,11 @@ public class WifiTetherPreferenceController extends AbstractPreferenceController
 
     @Override
     public String getPreferenceKey() {
-        return WIFI_TETHER_SETTINGS;
+        if (WifiFeaturesUtils.FeatureProperty.SUPPORT_SPRD_SOFTAP_FEATURES) {
+            return WIFI_TETHER_SPRD_SETTINGS;
+        } else {
+            return WIFI_TETHER_SETTINGS;
+        }
     }
 
     @Override

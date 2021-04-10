@@ -29,7 +29,7 @@ import com.android.settings.core.SubSettingLauncher;
 import com.android.settings.datausage.CellDataPreference.DataStateListener;
 
 public class BillingCyclePreference extends Preference implements TemplatePreference {
-
+    private static final String KEY_SUBID = "sub_id";
     private NetworkTemplate mTemplate;
     private NetworkServices mServices;
     private int mSubId;
@@ -59,9 +59,11 @@ public class BillingCyclePreference extends Preference implements TemplatePrefer
         setSummary(null);
 
         setIntent(getIntent());
+        // Add for bug1113462, update status when displayPreference
+        updateEnabled();
     }
 
-    private void updateEnabled() {
+    public void updateEnabled() {
         try {
             setEnabled(mServices.mNetworkService.isBandwidthControlEnabled()
                     && mServices.mTelephonyManager.getDataEnabled(mSubId)
@@ -75,6 +77,7 @@ public class BillingCyclePreference extends Preference implements TemplatePrefer
     public Intent getIntent() {
         Bundle args = new Bundle();
         args.putParcelable(DataUsageList.EXTRA_NETWORK_TEMPLATE, mTemplate);
+        args.putInt(KEY_SUBID, mSubId);
         return new SubSettingLauncher(getContext())
                 .setDestination(BillingCycleSettings.class.getName())
                 .setArguments(args)

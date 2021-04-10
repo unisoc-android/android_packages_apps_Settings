@@ -131,8 +131,7 @@
 
         <activity android:name=".network.telephony.MobileNetworkActivity"
                   android:label="@string/network_settings_title"
-                  android:theme="@style/Theme.Settings.Home"
-                  android:launchMode="singleTask">
+                  android:theme="@style/Theme.Settings.Home">
             <intent-filter android:priority="1">
                 <action android:name="android.settings.NETWORK_OPERATOR_SETTINGS" />
                 <action android:name="android.settings.DATA_ROAMING_SETTINGS" />
@@ -489,7 +488,7 @@
         </activity>
 
         <activity
-            android:name="Settings$WifiTetherSettingsActivity"
+            android:name=".wifi.WifiTetherSettingsActivity"
             android:label="@string/wifi_hotspot_checkbox_text"
             android:icon="@drawable/ic_wifi_tethering"
             android:parentActivityName="Settings">
@@ -699,7 +698,8 @@
 
         <activity android:name=".inputmethod.InputMethodAndSubtypeEnablerActivity"
                 android:label=""
-                android:clearTaskOnLaunch="true">
+                android:clearTaskOnLaunch="true"
+                android:taskAffinity="com.android.settings.inputmethod">
             <intent-filter android:priority="1">
                 <action android:name="android.settings.INPUT_METHOD_SUBTYPE_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -848,7 +848,7 @@
         </activity>
 
         <activity android:name=".wallpaper.StyleSuggestionActivity"
-                  android:label="@string/style_suggestion_title"
+                  android:label="@string/unisoc_style_suggestion_title"
                   android:icon="@drawable/ic_theme"
                   android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
@@ -856,13 +856,21 @@
                 <category android:name="com.android.settings.suggested.category.FIRST_IMPRESSION" />
             </intent-filter>
             <meta-data android:name="com.android.settings.title"
-                       android:resource="@string/style_suggestion_title" />
-            <meta-data android:name="com.android.settings.summary"
-                       android:resource="@string/style_suggestion_summary" />
+                       android:resource="@string/unisoc_style_suggestion_title" />
+            <meta-data android:name="com.android.settings.summary_uri"
+                android:value="content://com.android.settings.wallpaper.StyleSuggestionContentProvider/summary" />
+            <!--<meta-data android:name="com.android.settings.summary"
+                       android:resource="@string/style_suggestion_summary" />-->
             <meta-data android:name="com.android.settings.dismiss"
                        android:value="3,7,30" />
             <meta-data android:name="com.android.settings.icon_tintable" android:value="true" />
         </activity>
+
+        <provider
+            android:name=".wallpaper.StyleSuggestionContentProvider"
+            android:authorities="com.android.settings.wallpaper.StyleSuggestionContentProvider"
+            android:exported="true">
+        </provider>
 
         <activity
             android:name="Settings$ZenModeScheduleRuleSettingsActivity"
@@ -934,6 +942,18 @@
             <meta-data android:name="com.android.settings.PRIMARY_PROFILE_CONTROLLED"
                 android:value="true" />
         </activity>
+
+        <!-- UNISOC: Add for Color Temperature Adjusting @{ -->
+        <activity
+            android:name=".display.SprdColorTemperatureActivity"
+            android:configChanges="keyboardHidden|screenSize|orientation"
+            android:enabled="@bool/config_support_colorTemperatureAdjusting">
+            <intent-filter >
+                <action android:name="com.android.settings.display.SprdColorTemperatureActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!-- UNISOC: Add for Color Temperature Adjusting @} -->
 
         <activity
             android:name="Settings$NightDisplaySuggestionActivity"
@@ -1403,9 +1423,10 @@
                 android:name="com.android.settings.FRAGMENT_CLASS"
                 android:value="com.android.settings.applications.UsageAccessDetails"/>
         </activity>
-
+        <!--UNISOC: modify for bug904035-->
         <activity android:name="Settings$IccLockSettingsActivity"
                 android:label="@string/sim_lock_settings"
+                android:configChanges="orientation|screenSize"
                 android:process="com.android.phone">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1799,6 +1820,7 @@
             android:name=".Settings$StorageDashboardActivity"
             android:label="@string/storage_settings"
             android:icon="@drawable/ic_homepage_storage"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:parentActivityName="Settings">
             <intent-filter android:priority="1">
                 <action android:name="android.settings.INTERNAL_STORAGE_SETTINGS" />
@@ -1825,6 +1847,7 @@
         <activity
             android:name="Settings$PublicVolumeSettingsActivity"
             android:label="@string/storage_settings_title"
+            android:resizeableActivity="false"
             android:parentActivityName="Settings">
             <intent-filter>
                 <action android:name="android.provider.action.DOCUMENT_ROOT_SETTINGS" />
@@ -1850,31 +1873,39 @@
         <!-- Exported for SystemUI to launch into -->
         <activity android:name=".deviceinfo.StorageWizardInit"
                 android:theme="@style/GlifV3Theme.Light"
+                android:taskAffinity="com.android.settings.storage_wizard"
                 android:exported="true"
                 android:permission="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
         <activity android:name=".deviceinfo.StorageWizardFormatProgress"
                 android:theme="@style/GlifV3Theme.Light"
+                android:taskAffinity="com.android.settings.storage_wizard"
                 android:exported="false" />
         <activity android:name=".deviceinfo.StorageWizardFormatSlow"
                 android:theme="@style/GlifV3Theme.Light"
+                android:taskAffinity="com.android.settings.storage_wizard"
                 android:exported="false" />
         <activity android:name=".deviceinfo.StorageWizardMigrateConfirm"
                 android:theme="@style/GlifV3Theme.Light"
+                android:taskAffinity="com.android.settings.storage_wizard"
                 android:exported="false" />
         <activity android:name=".deviceinfo.StorageWizardMigrateProgress"
                 android:theme="@style/GlifV3Theme.Light"
+                android:taskAffinity="com.android.settings.storage_wizard"
                 android:exported="true"
                 android:permission="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
         <activity android:name=".deviceinfo.StorageWizardReady"
                 android:theme="@style/GlifV3Theme.Light"
+                android:taskAffinity="com.android.settings.storage_wizard"
                 android:exported="true"
                 android:permission="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
 
         <activity android:name=".deviceinfo.StorageWizardMoveConfirm"
                 android:theme="@style/GlifV3Theme.Light"
+                android:taskAffinity="com.android.settings.storage_wizard"
                 android:exported="false" />
         <activity android:name=".deviceinfo.StorageWizardMoveProgress"
                 android:theme="@style/GlifV3Theme.Light"
+                android:taskAffinity="com.android.settings.storage_wizard"
                 android:exported="true"
                 android:permission="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
 
@@ -1974,7 +2005,7 @@
 
         <activity android:name=".development.AppPicker"
                   android:label="@string/select_application"
-                  android:theme="@android:style/Theme.DeviceDefault.Light.Dialog" />
+                  android:theme="@style/Theme.Dialog" />
 
         <activity android:name="Settings$WebViewAppPickerActivity"
                   android:label="@string/select_webview_provider_dialog_title" />
@@ -2018,6 +2049,19 @@
             <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
                 android:value="com.android.settings.connecteddevice.usb.UsbDetailsFragment"/>
         </activity>
+
+        <!-- Add for SPRD 692660 Andrdoido porting Add new entrance-->
+        <activity
+            android:name=".Settings$SprdUsbSettingsActivity"
+            android:label="@string/storage_title_usb"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:permission="android.permission.MANAGE_USB"
+            android:excludeFromRecents="true">
+            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
+                       android:value="com.sprd.settings.SprdUsbSettingsFragment" />
+        </activity>
+        <!--692660 end @}-->
 
         <activity android:name=".RemoteBugreportActivity"
                   android:excludeFromRecents="true"
@@ -2164,6 +2208,7 @@
 
         <activity android:name="UsageStatsActivity"
                   android:label="@string/usage_stats_label"
+                  android:theme="@style/Theme.SettingsBase"
                   android:parentActivityName="Settings">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2202,6 +2247,21 @@
             <meta-data android:name="com.android.settings.PRIMARY_PROFILE_CONTROLLED"
                 android:value="true" />
         </activity>
+
+        <activity android:name="com.sprd.settings.superresolution.SprdSuperResolutionSettingsActivity"
+            android:exported="false"
+            android:configChanges="screenSize|density|screenLayout"
+            android:enabled="@bool/config_support_superResolution"
+            android:resizeableActivity="false">
+         </activity>
+
+        <!-- UNISOC: modify for bug 1113855, move super resolution from power usage summary fragment to sprd battery saver manage fragment @{ -->
+        <activity android:name=".fuelgauge.SprdBatterySaverManageActivity"
+            android:exported="false">
+            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
+                android:value="com.android.settings.fuelgauge.SprdBatterySaverManageFragment" />
+         </activity>
+         <!-- @} -->
 
         <activity android:name=".fuelgauge.BatterySaverModeVoiceActivity"
                 android:label="@string/power_usage_summary_title"
@@ -2282,6 +2342,7 @@
         <activity android:name=".FallbackHome"
                   android:excludeFromRecents="true"
                   android:label=""
+                  android:configChanges="mnc|mcc|keyboard|keyboardHidden|uiMode"
                   android:screenOrientation="nosensor"
                   android:taskAffinity="com.android.settings.FallbackHome"
                   android:theme="@style/FallbackHome">
@@ -2349,8 +2410,8 @@
         <activity
             android:name="Settings$DreamSettingsActivity"
             android:label="@string/screensaver_settings_title"
-            android:icon="@drawable/ic_settings_display"
-            android:parentActivityName="Settings">
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:icon="@drawable/ic_settings_display">
             <intent-filter android:priority="1">
                 <action android:name="android.settings.DREAM_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -2963,6 +3024,20 @@
                        android:value="com.android.settings.applications.AppAndNotificationDashboardFragment"/>
         </activity>
 
+        <!-- Add for Smart Controls -->
+        <activity
+            android:name=".Settings$SmartControlsSettingsActivity"
+            android:label="@string/smart_controls"
+            android:icon="@drawable/ic_settings_smart_controls"
+            android:taskAffinity="com.android.settings"
+            android:parentActivityName="Settings">
+            <intent-filter>
+                <action android:name="com.android.settings.action.SETTINGS"/>
+            </intent-filter>
+            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
+                       android:value="com.sprd.settings.smartcontrols.SmartControlsSettings"/>
+        </activity>
+
         <activity
             android:name=".Settings$AccountDashboardActivity"
             android:label="@string/account_dashboard_title"
@@ -3082,6 +3157,15 @@
             android:permission="android.permission.DUMP"
             android:excludeFromRecents="true"
             android:enabled="@bool/config_has_help" />
+
+        <activity
+            android:name="com.sprd.settings.SprdChooseOS"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:excludeFromRecents="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
 
         <activity android:name=".applications.autofill.AutofillPickerActivity"
                 android:excludeFromRecents="true"
@@ -3263,7 +3347,37 @@
             <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
                 android:value="com.android.settings.fuelgauge.batterysaver.BatterySaverScheduleSettings" />
         </activity>
+        <!-- UNISOC: bug 1072213 add for assistant handle @{ -->
+        <activity android:name="Settings$AssistantHandleSettingsActivity"
+                android:label="@string/assistant_title"
+                android:taskAffinity=""
+                android:parentActivityName="Settings$AccessibilitySettingsActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.settings.ASSISTANT_HANDLE_SETTINGS"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
+                android:value="com.sprd.settings.accessibility.ToggleAssistantFragment" />
+            <meta-data android:name="com.android.settings.TOP_LEVEL_HEADER_ID"
+                android:resource="@xml/accessibility_settings" />
+            <meta-data android:name="com.android.settings.PRIMARY_PROFILE_CONTROLLED"
+                android:value="true" />
+        </activity>
+        <!-- UNISOC: add for assistant handle @} -->
 
+        <!-- UNISOC: add for new featrue:Smart Dual SIM @{ -->
+        <activity
+            android:name="com.android.settings.smartcallforward.SmartDualSIMActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/smart_dual_sim_title"
+            android:process="com.android.phone">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!-- @} -->
         <activity android:name="Settings$GlobalActionsPanelSettingsActivity"
             android:label="@string/global_actions_panel_title">
             <intent-filter>
@@ -3274,6 +3388,100 @@
                 android:value="com.android.settings.gestures.GlobalActionsPanelSettings" />
         </activity>
 
+        <!-- SPRD: Bug 1072090 ,1071183,1178937,1224283 Dynamic navigationbar feature, Settings side.BEG-->
+        <activity
+            android:name="Settings$NavigationBarSettingsActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/navigation_bar_title"
+            android:icon="@drawable/ic_settings_navigation_bar">
+            <intent-filter android:priority="7">
+                <action android:name="com.android.settings.action.SETTINGS" />
+            </intent-filter>
+            <meta-data android:name="com.android.settings.order" android:value="-50"/>
+            <meta-data android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.system" />
+             <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
+                android:value="com.sprd.settings.navigation.NavigationBarSettings" />
+            <meta-data android:name="com.android.settings.summary"
+                android:resource="@string/navibar_settings"/>
+        </activity>
+        <!-- SPRD: Bug 1072090 Dynamic navigationbar feature, Settings side.END-->
         <!-- This is the longest AndroidManifest.xml ever. -->
+
+        <!-- UNISOC:1072221 Support "Scheduled power on/off" start -->
+        <activity
+            android:name=".Settings$TimerPowerActivity"
+            android:label="@string/swtichmachine"
+            android:icon="@drawable/ic_homepage_timerpower"
+            android:excludeFromRecents="true"
+            android:enabled="@bool/config_support_scheduledPowerOnOff"
+            android:taskAffinity="com.android.settings"
+            android:parentActivityName="Settings">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
+                android:value="com.sprd.settings.timerpower.TimerPower" />
+        </activity>
+
+        <service
+            android:name="com.sprd.settings.timerpower.AlarmKlaxon"
+            android:enabled="@bool/config_support_scheduledPowerOnOff"
+            android:description="@string/alarm_klaxon_service_desc" >
+            <intent-filter>
+                <action android:name="com.android.settings.timerpower.ALARM_ALERT" />
+            </intent-filter>
+        </service>
+
+        <provider
+            android:name="com.sprd.settings.timerpower.AlarmProvider"
+            android:authorities="com.android.settings.alarm"
+            android:enabled="@bool/config_support_scheduledPowerOnOff"
+            android:exported="false" />
+
+        <receiver android:name="com.sprd.settings.timerpower.AlarmReceiver"
+            android:enabled="@bool/config_support_scheduledPowerOnOff" >
+            <intent-filter>
+                <action android:name="com.android.settings.timerpower.ALARM_ALERT" />
+                <action android:name="com.android.settings.timerpower.SHUTDOWN" />
+                <action android:name="alarm_killed" />
+                <action android:name="cancel_snooze" />
+                <action android:name="android.intent.action.ACTION_SHUTDOWN" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="com.sprd.settings.timerpower.AlarmInitReceiver"
+            android:enabled="@bool/config_support_scheduledPowerOnOff" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <!-- UNISOC:1072221 Support "Scheduled power on/off" end -->
+
+        <activity
+            android:name="com.sprd.settings.wifi.WifiConnectedWarningActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Material.Light.Dialog" >
+        </activity>
+
+        <receiver android:name="com.android.settings.network.telephony.PsDataOffDialogFragment$BootCompletedReceiver" >
+            <intent-filter>
+                <action android:name="android.telephony.action.SIM_APPLICATION_STATE_CHANGED"  />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="com.android.settings.biometrics.fingerprint.FingerprintReceiver">
+            <intent-filter>
+                <action android:name="com.sprd.fingerprint.startBIOManager" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -26,6 +26,9 @@ import android.net.Uri;
 import android.os.BatteryStats;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemProperties;
+import android.os.UserHandle;
+import android.util.Log;
 import android.provider.SearchIndexableResource;
 import android.provider.Settings;
 import android.provider.Settings.Global;
@@ -41,6 +44,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.app.LoaderManager.LoaderCallbacks;
 import androidx.loader.content.Loader;
+import androidx.preference.Preference;
 
 import com.android.settings.R;
 import com.android.settings.SettingsActivity;
@@ -76,6 +80,9 @@ public class PowerUsageSummary extends PowerUsageBase implements OnLongClickList
     private static final String KEY_SCREEN_USAGE = "screen_usage";
     private static final String KEY_TIME_SINCE_LAST_FULL_CHARGE = "last_full_charge";
     private static final String KEY_BATTERY_SAVER_SUMMARY = "battery_saver_summary";
+    //UNISOC: 1073195 add for Power saving management, if support sprd power manager, hide preferenceCategory
+    private static final String KEY_APP_BATTERY_SAVER_SETTING = "app_battery_saver_setting";
+    private final boolean isSupportSprdPowerManager = (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1));
 
     @VisibleForTesting
     static final int BATTERY_INFO_LOADER = 1;
@@ -236,6 +243,11 @@ public class PowerUsageSummary extends PowerUsageBase implements OnLongClickList
         restartBatteryInfoLoader();
         mBatteryTipPreferenceController.restoreInstanceState(icicle);
         updateBatteryTipFlag(icicle);
+        /* UNISOC: 1073195 add for Power saving management @{*/
+        if (!isSupportSprdPowerManager || UserHandle.myUserId() != UserHandle.USER_OWNER) {
+            removePreference(KEY_APP_BATTERY_SAVER_SETTING);
+        }
+        /* @} */
     }
 
     @Override

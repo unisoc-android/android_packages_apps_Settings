@@ -69,8 +69,10 @@ public class SavedNetworkSettingsTest {
     @Test
     public void launchSavedNetworkSettings_shouldHaveAddNetworkField() {
         launchSavedNetworksSettings();
+        /** The saved networks page no "Add Network" in Android Q.
         onView(withText(resourceId(STRING, WIFI_ADD_NETWORK))).check(matches(isDisplayed()))
                 .perform(click());
         onView(withText(resourceId(STRING, WIFI_NETWORK_LABEL))).check(matches(isDisplayed()));
+        */
     }
 }

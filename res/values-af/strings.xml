@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Stel ontsluitpatroon"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Verander ontsluitpatroon"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Hoe om \'n ontsluitpatroon te teken"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Te veel verkeerde pogings. Probeer oor <xliff:g id="NUMBER">%d</xliff:g> sekondes weer."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Te veel verkeerde pogings. Probeer oor <xliff:g id="NUMBER">%d</xliff:g> sekondes weer.</item>
+        <item quantity="one">Te veel verkeerde pogings. Probeer oor 1 sekonde weer.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Die program is nie op jou foon geïnstalleer nie."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Werkprofielsekuriteit"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Werkprofiel se skermslot"</string>

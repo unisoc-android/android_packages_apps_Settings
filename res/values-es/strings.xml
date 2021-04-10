@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Patrón de desbloqueo"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Cambiar patrón desbloqueo"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Cómo crear un patrón de desbloqueo"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Demasiados intentos fallidos. Vuelve a intentarlo en <xliff:g id="NUMBER">%d</xliff:g> segundos."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Demasiados intentos fallidos. Vuelve a intentarlo en <xliff:g id="NUMBER">%d</xliff:g> segundos.</item>
+        <item quantity="one">Demasiados intentos fallidos. Vuelve a intentarlo en 1 segundo.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"La aplicación no está instalada en el teléfono."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Seguridad del perfil de trabajo"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Bloqueo de pantalla del perfil de trabajo"</string>

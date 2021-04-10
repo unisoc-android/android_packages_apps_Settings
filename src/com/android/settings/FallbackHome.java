@@ -35,6 +35,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 import android.view.animation.AnimationUtils;
@@ -200,4 +201,17 @@ public class FallbackHome extends Activity {
             maybeFinish();
         }
     };
+
+    /* UNISOC:1186856 Settings crashed in monkey test @{ */
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        switch (event.getKeyCode()) {
+             case KeyEvent.KEYCODE_SEARCH:
+                 return true;
+             default:
+                 break;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+    /* @} */
 }

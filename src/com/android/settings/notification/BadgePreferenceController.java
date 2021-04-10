@@ -18,6 +18,7 @@ package com.android.settings.notification;
 
 import static android.provider.Settings.Secure.NOTIFICATION_BADGING;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.provider.Settings;
 
@@ -54,6 +55,10 @@ public class BadgePreferenceController extends NotificationPreferenceController
         }
         if (Settings.Secure.getInt(mContext.getContentResolver(),
                 NOTIFICATION_BADGING, SYSTEM_WIDE_ON) == SYSTEM_WIDE_OFF) {
+            return false;
+        }
+        //Add for bug1121939, remove notificationBadging in go board
+        if (ActivityManager.isLowRamDeviceStatic()) {
             return false;
         }
         if (mChannel != null) {

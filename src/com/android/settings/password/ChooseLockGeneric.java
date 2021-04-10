@@ -450,6 +450,9 @@ public class ChooseLockGeneric extends SettingsActivity {
             final Intent intent =
                     new Intent(context, BiometricEnrollActivity.InternalActivity.class);
             intent.putExtra(BiometricEnrollActivity.EXTRA_SKIP_INTRO, true);
+            // UNISOC: Fix for bug 1211381
+            intent.putExtra(ChooseLockSettingsHelper.EXTRA_KEY_FOR_FACE,
+                    mForFace);
             return intent;
         }
 
@@ -783,7 +786,9 @@ public class ChooseLockGeneric extends SettingsActivity {
             if (quality == DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED) {
                 mChooseLockSettingsHelper.utils().clearLock(mUserPassword, mUserId);
                 mChooseLockSettingsHelper.utils().setLockScreenDisabled(disabled, mUserId);
-                getActivity().setResult(Activity.RESULT_OK);
+                if (getActivity() != null) {
+                    getActivity().setResult(Activity.RESULT_OK);
+                }
                 removeAllBiometricsForUserAndFinish(mUserId);
             } else {
                 removeAllBiometricsForUserAndFinish(mUserId);
@@ -880,8 +885,16 @@ public class ChooseLockGeneric extends SettingsActivity {
             if (mFaceManager != null && mFaceManager.isHardwareDetected()) {
                 if (mFaceManager.hasEnrolledTemplates(userId)) {
                     mFaceManager.setActiveUser(userId);
-                    Face face = new Face(null, 0, 0);
-                    mFaceManager.remove(face, userId,
+                    // Fix for bug 1137786
+                    final List<Face> faces = mFaceManager.getEnrolledFaces(mUserId);
+                    if (faces.isEmpty()) {
+                        Log.e(TAG, "No faces");
+                        return;
+                    }
+                    if (faces.size() > 1) {
+                        Log.e(TAG, "Multiple enrollments: " + faces.size());
+                    }
+                    mFaceManager.remove(faces.get(0), userId,
                             new FaceManager.RemovalCallback() {
                         @Override
                         public void onRemovalError(Face face, int errMsgId, CharSequence err) {

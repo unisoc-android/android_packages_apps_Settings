@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  Copyright (C) 2007 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+
+     Add resource for UNISOC
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- UNISOC: Add for network type menu. @{ -->
+    <string name="network_5G">5G/4G/3G/2G 自动</string>
+    <string name="network_5G_only">仅5G</string>
+    <string name="network_4g_auto" >4G/3G/2G 自动</string>
+    <string name="network_4G_3G" >4G/3G 自动</string>
+    <string name="network_4G_2G" >4G/2G 自动</string>
+    <string name="network_4G_only" >仅4G</string>
+    <string name="network_3G_auto">3G/2G 自动</string>
+    <string name="network_3G_only">仅3G</string>
+    <string name="network_2G_only">仅2G</string>
+    <string name="network_gsm_only">仅GSM</string>
+    <string name="network_wcdma_only">仅WCDMA</string>
+    <string name="network_wcdma_pref">WCDMA/GSM 自动</string>
+    <string name="network_mode_setting_prompt">"需要关闭下拉状态栏中来自工程模式的通知才能设置。"</string>
+    <!-- @} -->
+    <!-- @UNISOC: Set default data sub pop dialog -->
+    <string name="confirm_data_dialog_title">选择SIM <xliff:g id="d">%1$d</xliff:g>为数据卡</string>
+    <string name="confirm_data_dialog_message">切换数据卡将停止所有的LTE服务，请确认是否继续？</string>
+    <!-- UNISOC: add for new featrue:Smart Dual SIM @{ -->
+    <string name="smart_dual_sim_title">"智能双卡"</string>
+    <string name="smart_dual_sim_summary">"管理智能双卡状态"</string>
+    <string name="smart_dual_sim_number_null">"SIM卡为空号。"</string>
+    <string name="smart_forwarding_show_dialog">"请勿再显示。"</string>
+    <string name="number_sim">"SIM <xliff:g id="SIM_NUMER" example="1">%d</xliff:g> 号："</string>
+    <string name="cfu_is_on">"始终来电转接已开启。"</string>
+    <string name="updating_settings">"更新设置..."</string>
+    <string name="reading_settings">"读取设置..."</string>
+    <string name="smart_dual_sim_hint">"请输入SIM卡号码。"</string>
+    <string name="smart_dual_sim_warning_message">"启用双卡?\n因某些服务功能，此功能可能无法正常工作或者可能需要收取费用。"</string>
+    <string name="response_error">网络响应异常。</string>
+    <string name="radio_off_error">查看这些设置之前，请先打开无线网络。</string>
+    <string name="fdn_check_failure">固定拨号设置已开启，导致一些拨打电话相关的功能无法正常工作。</string>
+    <string name="exception_error">网络或SIM卡异常。</string>
+    <!-- @} -->
+    <!-- @UNISOC:  for IccLockSetting -->
+    <string name="attempts_remaining_times">(剩余次数:<xliff:g id="d">%1$d</xliff:g>)</string>
+    <string name="icc_pin_enabled">"SIM <xliff:g id="card_number">%1$d</xliff:g> PIN码已锁定!"</string>
+    <string name="icc_pin_disabled">"SIM <xliff:g id="card_number">%1$d</xliff:g> PIN码已解锁!"</string>
+    <!-- @} -->
+    <!-- SPRD:887137 Vodafone VoWIFI settings and notification display feature -->
+    <string name="turn_off_ims_error">"WLAN 通话打开时%s开关不可关闭，请先关闭WLAN 通话。"</string>
+    <!-- @} -->
+    <!-- UNISOC: Add feature for primary and secondary sub distinguishing identifier-->
+    <string name="primary_sub_summary">"主卡 "</string>
+    <string name="secondary_sub_summary">"副卡 "</string>
+    <!-- UNISOC: Add feature: Enable or Disable SIM card-->
+    <string name="cannot_disable_two_sim_card">"不能同时禁用所有SIM卡"</string>
+    <string name="sim_disabled">未启用</string>
+    <string name="sim_disable_prompt">此操作将改变SIM卡的激活状态，是否继续？</string>
+    <!-- UNISOC: remind user do not switch data during call -->
+    <string name="do_not_switch_default_data_subscription">请不要在通话过程中切换数据卡</string>
+    <!-- UNISOC: mobile data always online -->
+    <string name="mobile_data_always_online_title">"移动数据始终在线"</string>
+    <string name="mobile_data_always_online_summary">"某些移动网络耗用更多电量"</string>
+    <string name="mobile_data_always_online_dialog">"取消始终连接数据业务可能断开某些应用连接。请在应用中使用手动刷新功能获取网上数据。"</string>
+    <!-- UNISOC: national data roaming -->
+    <string name="preferred_data_roaming_title">"数据漫游"</string>
+    <string name="preferred_data_roaming_summary">"仅限国内漫游"</string>
+    <string name="preferred_data_roaming_dialogtitle">"数据漫游"</string>
+    <string name="preferred_data_roaming_disable">"不允许"</string>
+    <string name="preferred_data_roaming_national">"仅限国内漫游"</string>
+    <string name="preferred_data_roaming_all_networks">"所有网络"</string>
+    <!-- UNISOC: ps data off -->
+    <string name="ps_data_off_title">"PS数据关闭"</string>
+    <string name="ps_data_off_summary">"IP数据包会被拦截"</string>
+    <string name="ps_data_off_dialog">"启用PS数据关闭功能会阻止通过3gpp接入网络中的pdn连接传输所有IP数据包，除3gpp PS data off豁免服务 "</string>
+    <!-- UNISOC: add for vt resolution choices @{ -->
+    <string name="vt_resolution_setting">VoLTE视频分辨率选择</string>
+    <!-- UNISOC: FL0108030015 If manually selection failed, try auto select @{-->
+    <string name="network_registration_fail_title">注册网络失败</string>
+    <string name="network_registration_fail">注册网络失败，是否开启自动选择运营商功能？</string>
+    <string name="dialog_network_selection_message">在手动选网的条件下，手机不会选择其它运营商网络。所以注册网络失败后，需要重新手动选网或使用自动选网。请问要使用手动选网吗？</string>
+    <!-- @} -->
+    <!-- UNISOC: FL0108090007 UPLMN Preference @{ -->
+    <string name="uplmn_preference_title">UPLMN 偏好设置</string>
+    <!-- @} -->
+    <!-- UNISOC: Bug 929604 Not allowed selecting operator during a call -->
+    <string name="select_during_call_prohibited">无法在通话中进行搜网、选网。</string>
+    <!-- @} -->
+    <!-- UNISOC: Bug 1106414: change default toast @{ -->
+    <string name="mobile_select_default_voice_sim">请先选择默认语音卡。</string>
+    <!-- @} -->
+    <!-- UNISOC: Bug 978574 Mobile network does not support screen-split -->
+    <string name="screen_split_not_support">移动网络无法在分屏模式下正常运行。</string>
+    <!-- @} -->
+    <!-- UNISOC: Disable edit sim name menu -->
+    <string name="edit_sim_name_disabled">请先关闭飞行模式</string>
+    <!-- @} -->
+    <!-- UNISOC: Bug1083042 LTE network selection is prohibited if LTE switch is off @{ -->
+    <string name="select_lte_prohibited">无法选择该网络，请先打开4G开关。</string>
+    <!-- @} -->
+    <!-- UNISOC: Bug1125702 Disabled network select @{ -->
+    <string name="select_under_airplane_prohibited">请先关闭飞行模式。</string>
+    <!-- @} -->
+    <!-- UNISOC: add for bug1118484 -->
+    <string name="enhanced_4g_lte_cannot_be_enabled">当前网络模式不支持4G，打开后将无法正常拨打和接听电话，请将首选网络类型切换为4G后重试</string>
+    <string name="mobile_data_not_allowed">搜网过程中将无法使用移动数据业务。</string>
+    <!-- UNISOC: Add for Bug1173725 -->
+    <string name="invalid_subscription_preference_setting">无效的设置。</string>
+    <!-- UNISOC: Add for Bug1205908 -->
+    <string name="roaming_warning_in_roaming_state">您目前处于国际漫游状态，移动数据已打开，请注意当地资费</string>
+</resources>

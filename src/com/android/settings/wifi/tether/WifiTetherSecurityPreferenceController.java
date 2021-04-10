@@ -45,7 +45,10 @@ public class WifiTetherSecurityPreferenceController extends WifiTetherBasePrefer
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         mSecurityValue = Integer.parseInt((String) newValue);
         preference.setSummary(getSummaryForSecurityType(mSecurityValue));
-        mListener.onTetherConfigUpdated();
+        WifiConfiguration config = mWifiManager.getWifiApConfiguration();
+        if (mSecurityValue != config.getAuthType()) {
+            mListener.onTetherConfigUpdated();
+        }
         return true;
     }
 

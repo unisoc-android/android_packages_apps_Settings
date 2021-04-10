@@ -161,7 +161,7 @@ public class MobileNetworkActivityTest {
         Activity activity = Robolectric.setupActivity(Activity.class);
         final int[] onChangeCallbackCount = {0};
         MobileNetworkActivity.PhoneChangeReceiver receiver =
-                new MobileNetworkActivity.PhoneChangeReceiver(activity, () -> {
+                new MobileNetworkActivity.PhoneChangeReceiver(activity, (subId) -> {
                     onChangeCallbackCount[0]++;
                 });
         Intent intent = new Intent(TelephonyIntents.ACTION_RADIO_TECHNOLOGY_CHANGED);

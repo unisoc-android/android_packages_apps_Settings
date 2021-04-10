@@ -16,27 +16,34 @@ package com.android.settings.datausage;
 
 import android.app.Activity;
 import android.app.settings.SettingsEnums;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.NetworkTemplate;
 import android.os.Bundle;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
+import android.telephony.TelephonyManager;
 import android.text.BidiFormatter;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.text.style.RelativeSizeSpan;
+import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 
+import com.android.internal.telephony.TelephonyIntents;
 import com.android.settings.R;
 import com.android.settings.Utils;
 import com.android.settings.dashboard.SummaryLoader;
 import com.android.settingslib.NetworkPolicyEditor;
+import com.android.settingslib.WirelessUtils;
 import com.android.settingslib.core.AbstractPreferenceController;
 import com.android.settingslib.net.DataUsageController;
 
@@ -70,6 +77,36 @@ public class DataUsageSummary extends DataUsageBaseFragment implements DataUsage
     private DataUsageSummaryPreferenceController mSummaryController;
     private NetworkTemplate mDefaultTemplate;
 
+    /* UNISOC: bug 1137297: When simcard removed, exit this page @{ */
+    private int mSubListSize = 0;
+    private int mDefaultDataSubId = -1;
+    private BillingCyclePreference mBillingCyclePreferences;
+    private CellDataPreference mCellDataPreference;
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Log.d(TAG, "onReceive() action = " + action);
+            if (TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED.equals(action)) {
+                int defaultDataSubId = DataUsageUtils.getDefaultSubscriptionId(context);
+                Log.d(TAG, "defaultDataSubId = " + defaultDataSubId + " mDefaultDataSubId = "
+                        + mDefaultDataSubId);
+                if (mDefaultDataSubId != -1 && defaultDataSubId != -1
+                        && mDefaultDataSubId != defaultDataSubId
+                        && mCellDataPreference != null) {
+                    finish();
+                }
+            //UNISOC:bug 1140502: when airplane mode on, disable the mobile data option in data usage
+            } else if ((Intent.ACTION_AIRPLANE_MODE_CHANGED).equals(action)) {
+                if (mCellDataPreference != null) {
+                    boolean isAirplaneModeOn = WirelessUtils.isAirplaneModeOn(context);
+                    mCellDataPreference.updateAirplaneMode(isAirplaneModeOn);
+                }
+            }
+        }
+    };
+    /* @} */
+
     @Override
     public int getHelpResource() {
         return R.string.help_url_data_usage;
@@ -86,15 +123,25 @@ public class DataUsageSummary extends DataUsageBaseFragment implements DataUsage
         if (defaultSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
             hasMobileData = false;
         }
+        //Add for bug1146403, init default subId.
+        mDefaultDataSubId = defaultSubId;
         mDefaultTemplate = DataUsageUtils.getDefaultTemplate(context, defaultSubId);
         mSummaryPreference = findPreference(KEY_STATUS_HEADER);
 
+        /*Deleted for bug1165381, No need to delete the Data Saver menu in guest mode or without a mobile network.
         if (!hasMobileData || !isAdmin()) {
             removePreference(KEY_RESTRICT_BACKGROUND);
-        }
+        }*/
         boolean hasWifiRadio = DataUsageUtils.hasWifiRadio(context);
         if (hasMobileData) {
             addMobileSection(defaultSubId);
+            /* UNISOC: bug 1137297: When simcard removed, exit this page @{ */
+            List<SubscriptionInfo> subInfoList = services.
+                    mSubscriptionManager.getActiveSubscriptionInfoList();
+            if (subInfoList != null) {
+                mSubListSize = subInfoList.size();
+            }
+            /* @} */
             if (DataUsageUtils.hasSim(context) && hasWifiRadio) {
                 // If the device has a SIM installed, the data usage section shows usage for mobile,
                 // and the WiFi section is added if there is a WiFi radio - legacy behavior.
@@ -110,7 +157,45 @@ public class DataUsageSummary extends DataUsageBaseFragment implements DataUsage
             addEthernetSection();
         }
         setHasOptionsMenu(true);
+
+        /* UNISOC: bug 1137297,1140502: When simcard removed, exit this page @{ */
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        intentFilter.addAction(TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED);
+        context.registerReceiver(mReceiver, intentFilter);
+        services.mSubscriptionManager.addOnSubscriptionsChangedListener(mOnSubscriptionsChangeListener);
+        /* @} */
     }
+
+    /* UNISOC: bug 1137297: When simcard removed, exit this page @{ */
+    private final SubscriptionManager.OnSubscriptionsChangedListener mOnSubscriptionsChangeListener
+               = new SubscriptionManager.OnSubscriptionsChangedListener() {
+        @Override
+        public void onSubscriptionsChanged() {
+            Log.d(TAG,"onSubscriptionsChanged:");
+            List<SubscriptionInfo> subscriptions =
+                 services.mSubscriptionManager.getActiveSubscriptionInfoList();
+            int size = (subscriptions != null) ? subscriptions.size() : 0;
+            Log.d(TAG, " size = " + size
+                 + ",  mSubscriptionSize = " + mSubListSize);
+
+            if (size != mSubListSize) {
+                Log.d(TAG, "SubscriptionsChanged finish");
+                finish();
+            }
+        }
+    };
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Context context = getContext();
+        if (context != null) {
+            context.unregisterReceiver(mReceiver);
+        }
+        services.mSubscriptionManager.removeOnSubscriptionsChangedListener(mOnSubscriptionsChangeListener);
+    }
+    /* @} */
 
     @Override
     public boolean onPreferenceTreeClick(Preference preference) {
@@ -151,6 +236,8 @@ public class DataUsageSummary extends DataUsageBaseFragment implements DataUsage
     private void addMobileSection(int subId, SubscriptionInfo subInfo) {
         TemplatePreferenceCategory category = (TemplatePreferenceCategory)
                 inflatePreferences(R.xml.data_usage_cellular);
+        //UNISOC: bug 1137297,1145647 update the checked status when creating the activity
+        mCellDataPreference = (CellDataPreference)category.findPreference(KEY_MOBILE_DATA_USAGE_TOGGLE);
         category.setTemplate(DataUsageUtils.getMobileTemplate(getContext(), subId),
                 subId, services);
         category.pushTemplates(services);
@@ -158,6 +245,8 @@ public class DataUsageSummary extends DataUsageBaseFragment implements DataUsage
             Preference title  = category.findPreference(KEY_MOBILE_USAGE_TITLE);
             title.setTitle(subInfo.getDisplayName());
         }
+        mBillingCyclePreferences = (BillingCyclePreference)category.findPreference(KEY_MOBILE_BILLING_CYCLE);
+        mBillingCyclePreferences.updateEnabled();
     }
 
     @VisibleForTesting

@@ -474,8 +474,17 @@ public class ChooseLockPattern extends SettingsActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
+            /* UNISOC: Modify for Bug 1147820 {@ */
+            int resId = 0;
+            if (getActivity().isInMultiWindowMode()) {
+               Log.d(TAG, "onCreateView isInMultiWindowMode");
+               resId =  R.layout.choose_lock_pattern_splitscreen;
+            }else {
+               resId = R.layout.choose_lock_pattern;
+            }
+            /* @} */
             final GlifLayout layout = (GlifLayout) inflater.inflate(
-                    R.layout.choose_lock_pattern, container, false);
+                    resId, container, false);
             layout.setHeaderText(getActivity().getTitle());
             if (getResources().getBoolean(R.bool.config_lock_pattern_minimal_ui)) {
                 View iconView = layout.findViewById(R.id.sud_layout_icon);
@@ -641,11 +650,21 @@ public class ChooseLockPattern extends SettingsActivity {
         }
 
         protected void onSkipOrClearButtonClick(View view) {
-            handleLeftButton();
+            // Unisoc: Fix for bug 1105791
+            try {
+                handleLeftButton();
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "onSkipOrClearButtonClick Illegal state, just ignore.");
+            }
         }
 
         protected void onNextButtonClick(View view) {
-            handleRightButton();
+            // Unisoc: Fix for bug 1105791
+            try {
+                handleRightButton();
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "onNextButtonClick Illegal state, just ignore.");
+            }
         }
 
         public boolean onKeyDown(int keyCode, KeyEvent event) {

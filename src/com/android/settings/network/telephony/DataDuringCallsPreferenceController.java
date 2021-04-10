@@ -20,8 +20,11 @@ import static androidx.lifecycle.Lifecycle.Event.ON_PAUSE;
 import static androidx.lifecycle.Lifecycle.Event.ON_RESUME;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
@@ -30,6 +33,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreference;
 
+import com.android.settings.network.DefaultDataSubIdContentObserver;
 import com.android.settings.network.SubscriptionsChangeListener;
 
 public class DataDuringCallsPreferenceController extends TelephonyTogglePreferenceController
@@ -39,11 +43,21 @@ public class DataDuringCallsPreferenceController extends TelephonyTogglePreferen
     private SwitchPreference mPreference;
     private SubscriptionsChangeListener mChangeListener;
     private TelephonyManager mManager;
+    /*UNISOC： modify for bug 1111204, when default data card is
+     * changed, need to remove this preference @{ */
+    private DefaultDataSubIdContentObserver mDefaultDataSubIdContentObserver;
+    /*UNISOC: @} */
 
     public DataDuringCallsPreferenceController(Context context,
             String preferenceKey) {
         super(context, preferenceKey);
         mChangeListener = new SubscriptionsChangeListener(mContext, this);
+        /*UNISOC： modify for bug 1111204, when default data card is
+        * changed, need to remove this preference @{ */
+        mDefaultDataSubIdContentObserver = new DefaultDataSubIdContentObserver(
+                new Handler(Looper.getMainLooper()));
+        mDefaultDataSubIdContentObserver.setOnDefaultDataSubIdChangedListener(()->updateState(mPreference));
+        /*UNISOC: @} */
     }
 
     public void init(Lifecycle lifecycle, int subId) {
@@ -55,11 +69,23 @@ public class DataDuringCallsPreferenceController extends TelephonyTogglePreferen
     @OnLifecycleEvent(ON_RESUME)
     public void onResume() {
         mChangeListener.start();
+        /*UNISOC： modify for bug 1111204, when default data card is
+        * changed, need to remove this preference @{ */
+        if (mSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            mDefaultDataSubIdContentObserver.register(mContext);
+        }
+        /*UNISOC: @} */
     }
 
     @OnLifecycleEvent(ON_PAUSE)
     public void onPause() {
         mChangeListener.stop();
+        /*UNISOC： modify for bug 1111204, when default data card is
+        * changed, need to remove this preference @{ */
+        if (mSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            mDefaultDataSubIdContentObserver.unRegister(mContext);
+        }
+        /*UNISOC: @} */
     }
 
     @Override
@@ -92,6 +118,10 @@ public class DataDuringCallsPreferenceController extends TelephonyTogglePreferen
     public void updateState(Preference preference) {
         super.updateState(preference);
         preference.setVisible(isAvailable());
+        /*UNISOC： modify for bug 1111204, when default data card is
+        * changed, need to remove this preference @{ */
+        ((SwitchPreference) preference).setChecked(isChecked());
+        /*UNISOC: @} */
     }
 
     @Override

@@ -19,6 +19,7 @@ package com.android.settings.bluetooth;
 import android.app.settings.SettingsEnums;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.provider.Settings;
@@ -152,4 +153,9 @@ public final class Utils {
         return Settings.Global.getInt(context.getContentResolver(),
                 Settings.Global.BLE_SCAN_ALWAYS_AVAILABLE, 0) == 1;
     }
+
+    public static boolean isBluetoothSupported(Context context) {
+        return BluetoothAdapter.isBluetoothSupported(context);
+    }
+
 }

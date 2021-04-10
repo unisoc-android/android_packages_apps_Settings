@@ -54,6 +54,7 @@ import androidx.preference.PreferenceScreen;
 
 import com.android.settings.R;
 import com.android.settings.dashboard.DashboardFragment;
+import com.android.settings.wifi.WifiUtils;
 import com.android.settingslib.core.AbstractPreferenceController;
 
 import java.util.ArrayList;
@@ -106,6 +107,8 @@ public class WifiP2pSettings extends DashboardFragment
 
     private String mSavedDeviceName;
 
+    private AlertDialog mWifiP2pDialog;
+
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -127,9 +130,10 @@ public class WifiP2pSettings extends DashboardFragment
                         WifiP2pManager.EXTRA_WIFI_P2P_INFO);
                 if (networkInfo.isConnected()) {
                     if (DBG) Log.d(TAG, "Connected");
-                } else if (mLastGroupFormed != true) {
+                } else if (mLastGroupFormed != true || mWifiP2pSearching) {
                     //start a search when we are disconnected
                     //but not on group removed broadcast event
+                    mWifiP2pSearching = false;
                     startSearch();
                 }
                 mLastGroupFormed = wifip2pinfo.groupFormed;
@@ -224,19 +228,20 @@ public class WifiP2pSettings extends DashboardFragment
             public void onClick(DialogInterface dialog, int which) {
                 if (which == DialogInterface.BUTTON_POSITIVE) {
                     if (mWifiP2pManager != null) {
-                        String name = mDeviceNameText.getText().toString();
+                        /* String name = mDeviceNameText.getText().toString();
                         if (name != null) {
                             for (int i = 0; i < name.length(); i++) {
                                 char cur = name.charAt(i);
                                 if(!Character.isDigit(cur) && !Character.isLetter(cur)
-                                        && cur != '-' && cur != '_' && cur != ' ') {
+                                        && cur != '-' && cur != '_' && cur != ' '
+                                        && getActivity() != null) {
                                     Toast.makeText(getActivity(),
                                             R.string.wifi_p2p_failed_rename_message,
                                             Toast.LENGTH_LONG).show();
                                     return;
                                 }
                             }
-                        }
+                        }*/
                         mWifiP2pManager.setDeviceName(mChannel,
                                 mDeviceNameText.getText().toString(),
                                 new WifiP2pManager.ActionListener() {
@@ -244,9 +249,11 @@ public class WifiP2pSettings extends DashboardFragment
                                 if (DBG) Log.d(TAG, " device rename success");
                             }
                             public void onFailure(int reason) {
-                                Toast.makeText(getActivity(),
-                                        R.string.wifi_p2p_failed_rename_message,
-                                        Toast.LENGTH_LONG).show();
+                                if (getActivity() != null) {
+                                    Toast.makeText(getActivity(),
+                                            R.string.wifi_p2p_failed_rename_message,
+                                            Toast.LENGTH_LONG).show();
+                                }
                             }
                         });
                     }
@@ -417,6 +424,10 @@ public class WifiP2pSettings extends DashboardFragment
 
     @Override
     public boolean onPreferenceTreeClick(Preference preference) {
+        if (mWifiP2pDialog != null && mWifiP2pDialog.isShowing()) {
+            mWifiP2pDialog.dismiss();
+            mWifiP2pDialog = null;
+        }
         if (preference instanceof WifiP2pPeer) {
             mSelectedWifiPeer = (WifiP2pPeer) preference;
             if (mSelectedWifiPeer.device.status == WifiP2pDevice.CONNECTED) {
@@ -480,6 +491,7 @@ public class WifiP2pSettings extends DashboardFragment
                 .setPositiveButton(getActivity().getString(R.string.dlg_ok), mDisconnectListener)
                 .setNegativeButton(getActivity().getString(R.string.dlg_cancel), null)
                 .create();
+            mWifiP2pDialog = dialog;
             return dialog;
         } else if (id == DIALOG_CANCEL_CONNECT) {
             int stringId = R.string.wifi_p2p_cancel_connect_message;
@@ -493,10 +505,11 @@ public class WifiP2pSettings extends DashboardFragment
                 .setPositiveButton(getActivity().getString(R.string.dlg_ok), mCancelConnectListener)
                 .setNegativeButton(getActivity().getString(R.string.dlg_cancel), null)
                 .create();
+            mWifiP2pDialog = dialog;
             return dialog;
         } else if (id == DIALOG_RENAME) {
             mDeviceNameText = new EditText(getActivity());
-            mDeviceNameText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(30)});
+            mDeviceNameText.setFilters(new InputFilter[] {new WifiUtils.WifiDeviceNameFilter()});
             if (mSavedDeviceName != null) {
                 mDeviceNameText.setText(mSavedDeviceName);
                 mDeviceNameText.setSelection(mSavedDeviceName.length());
@@ -511,6 +524,7 @@ public class WifiP2pSettings extends DashboardFragment
                 .setPositiveButton(getActivity().getString(R.string.dlg_ok), mRenameListener)
                 .setNegativeButton(getActivity().getString(R.string.dlg_cancel), null)
                 .create();
+            mWifiP2pDialog = dialog;
             return dialog;
         } else if (id == DIALOG_DELETE_GROUP) {
             int stringId = R.string.wifi_p2p_delete_group_message;
@@ -520,6 +534,7 @@ public class WifiP2pSettings extends DashboardFragment
                 .setPositiveButton(getActivity().getString(R.string.dlg_ok), mDeleteGroupListener)
                 .setNegativeButton(getActivity().getString(R.string.dlg_cancel),
                         mDeleteGroupListener).create();
+            mWifiP2pDialog = dialog;
             return dialog;
         }
         return null;
@@ -604,6 +619,10 @@ public class WifiP2pSettings extends DashboardFragment
     }
 
     private void handleP2pStateChanged() {
+        if (!mWifiP2pEnabled && mWifiP2pDialog != null && mWifiP2pDialog.isShowing()) {
+            mWifiP2pDialog.dismiss();
+            mWifiP2pDialog = null;
+        }
         updateSearchMenu(false);
         mThisDevicePreferenceController.setEnabled(mWifiP2pEnabled);
         mPersistentCategoryController.setEnabled(mWifiP2pEnabled);

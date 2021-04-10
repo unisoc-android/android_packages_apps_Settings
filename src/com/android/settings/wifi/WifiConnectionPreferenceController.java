@@ -116,6 +116,7 @@ public class WifiConnectionPreferenceController extends AbstractPreferenceContro
     private void updatePreference(AccessPoint accessPoint) {
         if (mPreference != null) {
             mPreferenceGroup.removePreference(mPreference);
+            mPreference.setOnPreferenceClickListener(null);
             mPreference = null;
         }
         if (accessPoint == null) {

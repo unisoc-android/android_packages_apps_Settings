@@ -102,7 +102,13 @@ public class AppWidgetLoader<Item extends AppWidgetLoader.LabelledItem> {
             }
         }
 
-        if (LOGD) Log.d(TAG, "Using " + customInfo.size() + " custom items");
+        if (LOGD) {
+            if (customInfo == null) {
+                Log.d(TAG, "Can not get custom info");
+            } else {
+                Log.d(TAG, "Using " + customInfo.size() + " custom items");
+            }
+        }
         putAppWidgetItems(customInfo, customExtras, items, 0, true);
     }
 

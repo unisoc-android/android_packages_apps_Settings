@@ -56,6 +56,8 @@ import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiFeaturesUtils;
+
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -63,6 +65,7 @@ import android.os.IBinder;
 import android.os.INetworkManagementService;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.sprdpower.IPowerManagerEx;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.storage.StorageManager;
@@ -106,6 +109,7 @@ import com.android.settings.development.featureflags.FeatureFlagPersistent;
 import com.android.settings.password.ChooseLockSettingsHelper;
 import com.android.settingslib.widget.ActionBarShadowController;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.util.Iterator;
 import java.util.List;
@@ -123,6 +127,11 @@ public final class Utils extends com.android.settingslib.Utils {
     public static final String SETTINGS_PACKAGE_NAME = "com.android.settings";
 
     public static final String OS_PKG = "os";
+
+    /* bug 1104944 : on Ultra power saving mode, need to hide SearchMenu and Multiuser settings @} */
+    public static final boolean SUPPORT_ULTRA_POWER_SAVING = (1 == android.os.SystemProperties.getInt("ro.sys.pwctl.ultrasaving",0));
+    public static final int MODE_ULTRA_POWER_SAVING = 4;
+    /* @} */
 
     /**
      * Whether to disable the new device identifier access restrictions.
@@ -229,6 +238,10 @@ public final class Utils extends com.android.settingslib.Utils {
             return formatIpAddresses(prop);
         }
         return null;
+    }
+
+    public static boolean disabledWifiFeature(Context context) {
+        return !WifiFeaturesUtils.getInstance(context).isSupportWifiFeature();
     }
 
     private static String formatIpAddresses(LinkProperties prop) {
@@ -1060,4 +1073,61 @@ public final class Utils extends com.android.settingslib.Utils {
             ActionBarShadowController.attachToView(activity, lifecycle, scrollView);
         }
     }
+
+    /**
+     * Add for RGB light indication function
+     *@{
+     */
+    private static final String LED_RED_PATH = "/sys/class/leds/red/brightness";
+    private static final String LED_PMIC_RED_PATH = "/sys/class/leds/sc27xx:red/brightness";
+    public static boolean ledFileIsExists() {
+        return fileIsExists(LED_RED_PATH) || fileIsExists(LED_PMIC_RED_PATH);
+    }
+
+    private static boolean fileIsExists(String path) {
+        try {
+            File file = new File(path);
+            Log.d(TAG, "brightness fileIsExists");
+            if (!file.exists()) {
+                Log.d(TAG, " brightness fileIsExists false");
+                return false;
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+            Log.d(TAG, " brightness fileIsExists Exception e = " + e);
+            return false;
+        }
+        Log.d(TAG, "brightness fileIsExists true");
+        return true;
+    }
+    /* @} */
+
+   /**
+    * Bug1106941: This method is used to check whether an intent can be resolved
+    */
+   public static boolean isIntentCanBeResolved(Context context, Intent intent) {
+       ResolveInfo result = context.getPackageManager().resolveActivity(intent, 0);
+       return result != null;
+   }
+
+    /**
+     * bug 1104944:on Ultra power saving mode, need to hide SearchMenu and Multiuser settings
+     * Returns true if on Ultra power saving mode.
+     * @{
+     */
+    public static boolean inUtraPowerSavingMode() {
+        if (SUPPORT_ULTRA_POWER_SAVING) {
+            IPowerManagerEx mPowerManagerEx;
+            mPowerManagerEx = IPowerManagerEx.Stub.asInterface(ServiceManager.getService("power_ex"));
+            int mPowerSavingMode = -1;
+            try {
+                mPowerSavingMode = mPowerManagerEx.getPowerSaveMode();
+            } catch (RemoteException e) {
+                // Not much we can do here
+            }
+            return mPowerSavingMode == MODE_ULTRA_POWER_SAVING;
+        }
+        return false;
+    }
+    /* @} */
 }

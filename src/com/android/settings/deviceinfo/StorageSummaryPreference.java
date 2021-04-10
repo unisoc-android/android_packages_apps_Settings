@@ -16,8 +16,10 @@
 
 package com.android.settings.deviceinfo;
 
+import android.app.UiModeManager;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.PowerManager;
 import android.util.MathUtils;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -30,15 +32,27 @@ import com.android.settings.R;
 
 public class StorageSummaryPreference extends Preference {
     private int mPercent = -1;
+    private TextView mSummary;
+    private UiModeManager mUiModeManager;
+    private PowerManager mPowerManager;
 
     public StorageSummaryPreference(Context context) {
         super(context);
 
+        mUiModeManager = context.getSystemService(UiModeManager.class);
+        //bug 1145820 : update summary text color when power save mode is on
+        mPowerManager = context.getSystemService(PowerManager.class);
         setLayoutResource(R.layout.storage_summary);
         setEnabled(false);
     }
 
     public void setPercent(long usedBytes, long totalBytes) {
+        /*UNISOC:1156388 If the SD card is damaged, cannot get the correct totalBytes @{*/
+        if (totalBytes <= 0) {
+            mPercent = 0;
+            return;
+        }
+        /* @} */
         mPercent = MathUtils.constrain((int) ((usedBytes * 100) / totalBytes),
                 (usedBytes > 0) ? 1 : 0, 100);
     }
@@ -54,9 +68,28 @@ public class StorageSummaryPreference extends Preference {
             progress.setVisibility(View.GONE);
         }
 
-        final TextView summary = (TextView) view.findViewById(android.R.id.summary);
-        summary.setTextColor(Color.parseColor("#8a000000"));
+        mSummary = (TextView) view.findViewById(android.R.id.summary);
+        updateSummaryTextColor();
 
         super.onBindViewHolder(view);
     }
+
+    /*bug 1138566 : update summary text color with ui night mode @{ */
+    private void updateSummaryTextColor() {
+        int mode = mUiModeManager.getNightMode();
+        if (mSummary != null) {
+            if (mode == UiModeManager.MODE_NIGHT_YES || isPowerSaveMode()) {
+                mSummary.setTextColor(Color.parseColor("#8aFFFFFF"));
+            } else {
+                mSummary.setTextColor(Color.parseColor("#8a000000"));
+            }
+        }
+    }
+    /* @} */
+
+    /* bug 1145820 : update summary text color when power save mode is on@{ */
+    boolean isPowerSaveMode() {
+        return mPowerManager.isPowerSaveMode();
+    }
+    /* @} */
 }

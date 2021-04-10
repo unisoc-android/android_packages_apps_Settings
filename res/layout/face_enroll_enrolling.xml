@@ -62,7 +62,20 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal|bottom"
                 android:accessibilityLiveRegion="polite"
+                android:textSize="16sp"
                 android:gravity="center"
+                android:visibility="invisible"/>
+
+            <TextView
+                style="@style/TextAppearance.ErrorText"
+                android:id="@+id/help_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal|bottom"
+                android:accessibilityLiveRegion="polite"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:lines="2"
                 android:visibility="invisible"/>
 
         </LinearLayout>

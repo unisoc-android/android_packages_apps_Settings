@@ -65,6 +65,11 @@ public class BluetoothPairingDialog extends FragmentActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
+        //SPRD:bug#786611 If there is no device, there is no need to show the dialog
+        if (intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) == null) {
+            finish();
+            return;
+        }
         mBluetoothPairingController = new BluetoothPairingController(intent, this);
         // build the dialog fragment
         boolean fragmentFound = true;

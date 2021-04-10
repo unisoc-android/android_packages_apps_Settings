@@ -40,6 +40,7 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.os.sprdpower.PowerManagerEx;
 import android.provider.ContactsContract;
 import android.provider.SearchIndexableResource;
 import android.util.Log;
@@ -74,6 +75,7 @@ import com.android.settingslib.RestrictedLockUtils;
 import com.android.settingslib.RestrictedLockUtils.EnforcedAdmin;
 import com.android.settingslib.RestrictedLockUtilsInternal;
 import com.android.settingslib.RestrictedPreference;
+import com.android.settingslib.RestrictedSwitchPreference;
 import com.android.settingslib.drawable.CircleFramedDrawable;
 import com.android.settingslib.search.SearchIndexable;
 
@@ -155,6 +157,7 @@ public class UserSettings extends SettingsPreferenceFragment
     private int mRemovingUserId = -1;
     private int mAddedUserId = 0;
     private boolean mAddingUser;
+    private RestrictedSwitchPreference mAddUserWhenLockedPreference;
     private String mAddingUserName;
     private UserCapabilities mUserCaps;
     private boolean mShouldUpdateUserList = true;
@@ -203,6 +206,24 @@ public class UserSettings extends SettingsPreferenceFragment
         }
     };
 
+    /**
+     * bug 1104944:on Ultra power saving mode, need to hide SearchMenu and Multiuser settings
+     * @{
+     */
+    private static final int MODE_POWERSAVING = 2;
+    private static final int MODE_ULTRASAVING = 4;
+    private BroadcastReceiver mPowerSaveModeChangeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (PowerManagerEx.ACTION_POWEREX_SAVE_MODE_CHANGED.equals(intent.getAction())) {
+                int mMode = intent.getIntExtra(PowerManagerEx.EXTRA_POWEREX_SAVE_MODE, MODE_POWERSAVING);
+                if (MODE_ULTRASAVING == mMode) {
+                    mHandler.sendEmptyMessage(MESSAGE_UPDATE_LIST);
+                }
+            }
+        }
+    };
+
     @Override
     public int getMetricsCategory() {
         return SettingsEnums.USER;
@@ -233,6 +254,8 @@ public class UserSettings extends SettingsPreferenceFragment
 
         mAddUserWhenLockedPreferenceController = new AddUserWhenLockedPreferenceController(
                 activity, KEY_ADD_USER_WHEN_LOCKED);
+        //bug 1104944:on Ultra power saving mode, need to hide SearchMenu and Multiuser settings
+        mAddUserWhenLockedPreference = (RestrictedSwitchPreference) findPreference(KEY_ADD_USER_WHEN_LOCKED);
         mMultiUserFooterPreferenceController = new MultiUserFooterPreferenceController(activity)
                 .setFooterMixin(mFooterPreferenceMixin);
 
@@ -279,7 +302,10 @@ public class UserSettings extends SettingsPreferenceFragment
 
         activity.registerReceiverAsUser(
                 mUserChangeReceiver, UserHandle.ALL, USER_REMOVED_INTENT_FILTER, null, mHandler);
-
+        /* bug 1104944:on Ultra power saving mode, need to hide SearchMenu and Multiuser settings @{ */
+        activity.registerReceiver(mPowerSaveModeChangeReceiver,
+                new IntentFilter(PowerManagerEx.ACTION_POWEREX_SAVE_MODE_CHANGED));
+        /* @} */
         updateUI();
         mShouldUpdateUserList = false;
     }
@@ -316,6 +342,8 @@ public class UserSettings extends SettingsPreferenceFragment
         }
 
         getActivity().unregisterReceiver(mUserChangeReceiver);
+        //bug 1163283: missing unregisterReceiver for PowerSaveModeChangeReceiver
+        getActivity().unregisterReceiver(mPowerSaveModeChangeReceiver);
     }
 
     @Override
@@ -404,6 +432,7 @@ public class UserSettings extends SettingsPreferenceFragment
 
     private void finishLoadProfile(String profileName) {
         if (getActivity() == null) return;
+        if (mMePreference == null) return;
         mMePreference.setTitle(getString(R.string.user_you, profileName));
         int myUserId = UserHandle.myUserId();
         Bitmap b = mUserManager.getUserIcon(myUserId);
@@ -735,15 +764,25 @@ public class UserSettings extends SettingsPreferenceFragment
             Log.w(TAG, "Cannot remove current user when switching is disabled");
             return;
         }
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
         try {
             ActivityManager.getService().switchUser(UserHandle.USER_SYSTEM);
-            getContext().getSystemService(UserManager.class).removeUser(UserHandle.myUserId());
+            context.getSystemService(UserManager.class).removeUser(UserHandle.myUserId());
         } catch (RemoteException re) {
             Log.e(TAG, "Unable to remove self user");
         }
     }
 
     private void addUserNow(final int userType) {
+        /*bug 1121006 : check if fragment has attached to a activity before add user @{ */
+        if (!isAdded()) {
+            return;
+        }
+        /* @} */
+
         synchronized (mUserLock) {
             mAddingUser = true;
             mAddingUserName = userType == USER_TYPE_USER ? getString(R.string.user_new_user_name)
@@ -944,6 +983,11 @@ public class UserSettings extends SettingsPreferenceFragment
             loadIconsAsync(missingIcons);
         }
 
+        //bug 1169802: NPE occurs when dismiss dialog after activity has destoryed
+        if (null == mUserListCategory) {
+            return;
+        }
+
         // If profiles are supported, mUserListCategory will have a special title
         if (mUserCaps.mCanAddRestrictedProfile) {
             mUserListCategory.setTitle(R.string.user_list_title);
@@ -962,6 +1006,15 @@ public class UserSettings extends SettingsPreferenceFragment
         mUserListCategory.setVisible(mUserCaps.mUserSwitcherEnabled);
 
         updateAddUser(context);
+        /* bug 1104944:on Ultra power saving mode, need to hide SearchMenu and Multiuser settings @{ */
+        if (Utils.inUtraPowerSavingMode()) {
+            mAddUser.setEnabled(false);
+            mAddUserWhenLockedPreference.setEnabled(false);
+            for (UserPreference userPreference : userPreferences) {
+                userPreference.setEnabled(false);
+            }
+        }
+        /* @} */
 
         if (!mUserCaps.mUserSwitcherEnabled) {
             return;

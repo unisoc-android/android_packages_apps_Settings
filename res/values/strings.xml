@@ -2997,7 +2997,7 @@
     <!-- SIM card lock settings screen, SIM PIN dialog message instruction  [CHAR LIMIT=40] -->
     <string name="sim_change_pin">SIM PIN</string>
     <!-- SIM card lock settings screen, SIM PIN dialog message when wrong PIN is entered  [CHAR LIMIT=40] -->
-    <string name="sim_bad_pin">Incorrect PIN</string>
+    <string name="sim_bad_pin">Type a PIN that is 4 to 8 numbers</string>
     <!-- SIM card lock settings screen, SIM PIN dialog message when PINs don't match  [CHAR LIMIT=40] -->
     <string name="sim_pins_dont_match">PINs don\u2019t match</string>
     <!-- SIM card lock settings screen, toast after not entering correct SIM PIN  [CHAR LIMIT=40] -->
@@ -3788,7 +3788,7 @@
     <!-- Tethering setting summary when Wi-Fi hotspot is off and tether is on [CHAR LIMIT=NONE]-->
     <string name="tether_settings_summary_hotspot_off_tether_on">Tethering</string>
     <!-- Tethering controls, footer note displayed when tethering is disabled because Data Saver mode is on [CHAR LIMIT=none]-->
-    <string name="tether_settings_disabled_on_data_saver">"Can\u2019t tether or use portable hotspots while Data Saver is on"</string>
+    <string name="tether_settings_disabled_on_data_saver">"Can\u2019t tether or use portable hotspots while Data saver is on"</string>
 
     <!-- USB Tethering options -->
     <string name="usb_title">USB</string>
@@ -4181,7 +4181,11 @@
     <string name="lockpattern_settings_help_how_to_record">How to draw an unlock pattern</string>
     <!-- Security & location settings screen, confirm unlock pattern screen hint at the bottom after
          too many incorrect attempts [CHAR LIMIT=120]-->
-    <string name="lockpattern_too_many_failed_confirmation_attempts">Too many incorrect attempts. Try again in <xliff:g id="number">%d</xliff:g> seconds.</string>
+    <!-- Countdown message shown after too many failed unlock attempts -->
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts">
+        <item quantity="one">Too many incorrect attempts.Try again in 1 second.</item>
+        <item quantity="other">Too many incorrect attempts.Try again in <xliff:g id="number">%d</xliff:g> seconds.</item>
+    </plurals>
     <!-- Displayed when user launches a widget configuration activity that was uninstalled -->
     <string name="activity_not_found">Application is not installed on your phone.</string>
 
@@ -9508,7 +9512,7 @@
     <!-- Summary of display with screen sleep timeout [CHAR LIMIT=NONE] -->
     <string name="display_summary">Sleep after <xliff:g id="timeout_description" example="10 minutes">%1$s</xliff:g> of inactivity</string>
     <!-- Summary for Display settings, explaining a few important settings under it [CHAR LIMIT=NONE]-->
-    <string name="display_dashboard_summary">Wallpaper, sleep, font size</string>
+    <string name="display_dashboard_summary">Wallpaper, screen timeout, font size</string>
 
     <!-- Summary for Display settings, explaining a few important settings under it [CHAR LIMIT=NONE]-->
     <string name="display_dashboard_summary_with_style">Styles, wallpapers, screen timeout, font size</string>
@@ -9610,7 +9614,7 @@
     <string name="condition_cellular_summary">Internet only available via Wi\u2011Fi</string>
 
     <!-- Title of condition that background data is off [CHAR LIMIT=30] -->
-    <string name="condition_bg_data_title">Data Saver</string>
+    <string name="condition_bg_data_title">Data saver</string>
 
     <!-- Summary of condition that background data is off [CHAR LIMIT=NONE] -->
     <string name="condition_bg_data_summary">Features restricted</string>
@@ -9795,8 +9799,8 @@
 
     <!-- Description of number of apps allowed to ignore Data Saver [CHAR LIMIT=NONE] -->
     <plurals name="data_saver_unrestricted_summary">
-        <item quantity="one">1 app allowed to use unrestricted data when Data Saver is on</item>
-        <item quantity="other"><xliff:g id="count" example="10">%1$d</xliff:g> apps allowed to use unrestricted data when Data Saver is on</item>
+        <item quantity="one">1 app allowed to use unrestricted data when Data saver is on</item>
+        <item quantity="other"><xliff:g id="count" example="10">%1$d</xliff:g> apps allowed to use unrestricted data when Data saver is on</item>
     </plurals>
 
     <!-- Data usage title text [CHAR LIMIT=30] -->
@@ -9848,7 +9852,7 @@
     <string name="launch_wifi_text">View details</string>
 
     <!-- Name of Data Saver screens [CHAR LIMIT=30] -->
-    <string name="data_saver_title">Data Saver</string>
+    <string name="data_saver_title">Data saver</string>
 
     <!-- Button that leads to list of apps with unrestricted data access [CHAR LIMIT=60] -->
     <string name="unrestricted_data_saver">Unrestricted data</string>
@@ -9863,13 +9867,13 @@
     <string name="data_saver_off">Off</string>
 
     <!-- Switch label to enable the Data Saver feature [CHAR LIMIT=NONE] -->
-    <string name="data_saver_switch_title">Use Data Saver</string>
+    <string name="data_saver_switch_title">Use Data saver</string>
 
     <!-- Title for switch to allow app unrestricted data usage [CHAR LIMIT=30] -->
     <string name="unrestricted_app_title">Unrestricted data usage</string>
 
     <!-- Title for switch to allow app unrestricted data usage [CHAR LIMIT=30] -->
-    <string name="unrestricted_app_summary">Allow unrestricted data access when Data Saver is on</string>
+    <string name="unrestricted_app_summary">Allow unrestricted data access when Data saver is on</string>
 
     <!-- Button to switch the default home app [CHAR LIMIT=60] -->
     <string name="home_app">Home app</string>
@@ -10781,6 +10785,30 @@
 
     <!-- Title for Connected device shortcut [CHAR LIMIT=30] -->
     <string name="devices_title">Devices</string>
+    <!--SPRD:Add for bug692660 :androido porting sprd new UI for usb settings @{-->
+    <string name="usb_charge_only">Charge only</string>
+    <string name="usb_charge_only_summary">Use charge only mode when USB connected</string>
+    <string name="usb_virtual_drive">"USB virtual drive"</string>
+    <string name="usb_virtual_drive_summary">"Enable USB virtual drive"</string>
+    <string name="usb_virtual_drive_summary_power">"Enable USB virtual drive and supplying power"</string>
+    <string name="usb_storage">USB storage </string>
+    <string name="usb_storage_summary">Enable USB mass storage </string>
+    <string name="usb_storage_summary_power">Enable USB mass storage and supplying power</string>
+    <!--Bug692660 end @}-->
+    <!-- SPRD: Bug#474460 Add for SPRD USB Feature BEG @{ -->
+    <string name="usb_pc_internet_share">USB-PC internet share</string>
+    <string name="usb_pc_internet_share_available_subtext">USB connected, check to share USB-PC internet</string>
+    <string name="usb_pc_internet_share_active_subtext">"USB PC Internet access function is turned on"</string>
+    <string name="usb_pc_internet_share_errored_subtext">"USB-PC internet share error"</string>
+    <string name="usb_pc_internet_share_storage_active_subtext">Can\'t share internet when USB storage is in use</string>
+    <string name="usb_pc_choose_os">Please choose Operating System</string>
+    <string name="usb_pc_cancel">Cancel</string>
+    <string name="usb_pc_ok">OK</string>
+    <string name="usb_pc_next">Next</string>
+    <string name="usb_pc_back">Back</string>
+    <string name="usb_pc_guide">1.Open the Windows PC network.\n\n2.On the network you want to share right click and select Properties.\n\n3.Click Advanced Options, select \'Allow other network users to share Internet this computer to connect to \' (If your home network option appears, select the new USB network connection).</string>
+    <string name="os_string_array_value_none">None</string>
+    <!-- Add for SPRD USB Feature END -->
 
     <!-- Homepage bottom menu. Title for display all Settings [CHAR LIMIT=30] -->
     <string name="homepage_all_settings">All Settings</string>
@@ -10912,7 +10940,7 @@
     <string name="calls_preference">Calls preference</string>
     <!-- Mobile network settings screen, title of item showing the name of the default subscription
      that will be used for SMS messages. This only appears in multi-SIM mode. [CHAR LIMIT=NONE] -->
-    <string name="sms_preference">SMS preference</string>
+    <string name="sms_preference">Messages preference</string>
     <!-- Mobile network settings screen, a label in a chooser dialog that appears when choosing the
     default subscription to use for either calls or SMS when in multi-SIM mode. This label means
     that the user will be asked which mobile network subscription to use every time they place a
@@ -10936,10 +10964,10 @@
     <string name="default_for_calls">Default for calls</string>
     <!-- Network & internet page. Summary indicating that a SIM is used by default for SMS messages
          when multiple SIMs are present. [CHAR LIMIT=50] -->
-    <string name="default_for_sms">Default for SMS</string>
+    <string name="default_for_sms">Default for messages</string>
     <!-- Network & internet page. Summary indicating that a SIM is used by default for calls and SMS
          messages when multiple SIMs are present. [CHAR LIMIT=50] -->
-    <string name="default_for_calls_and_sms">Default for calls &amp; SMS</string>
+    <string name="default_for_calls_and_sms">Default for calls &amp; messages</string>
     <!-- Network & internet page. Summary indicating that a SIM is used by default for mobile data
          when multiple SIMs are present. [CHAR LIMIT=50] -->
     <string name="default_for_mobile_data">Default for mobile data</string>
@@ -11301,6 +11329,26 @@
 
     <!-- Title for enable MMS notification channel.  [CHAR LIMIT=40] -->
     <string name="enable_mms_notification_channel_title">MMS message</string>
+    <!-- UNISOC: Limited ownerinfo length -->
+    <string name="name_too_long">"Name is too long,it must be less than 50."</string>
+    <!-- SPRD: Bug#1031099 support GPS automatic update time BEG -->
+    <string name="gps_time_sync_attention_gps_on">It will take at most 1 minute to obtain GPS fix. Besides, GPS may fail to provide time due to weak environmental signal.\n\nAre you sure to use GPS provided time?</string>
+    <string name="gps_time_sync_attention_gps_off">To use GPS provided time, you must enable GPS first. It then take at most 1 minute to obtain GPS fix. Besides, GPS may fail to provide time due to weak environmental signal. \n\nAre you sure to enable GPS now and wait for GPS provided time?</string>
+    <!-- support GPS automatic update time END -->
+    <!-- SPRD:  Bug#692740 support AGPS settings BEG -->
+    <string name="location_gps_config">AGPS enable option</string>
+    <string name="location_gps_config_summary">Whether to enable AGPS in different network environment.</string>
+    <string name="agps_enable_option_tailebar">AGPS enable option</string>
+    <string name="agps_enable_option_registered">Registered network</string>
+    <string name="agps_enable_option_all">All networks</string>
+    <string name="agps_enable_option_none">Do not use AGPS</string>
+    <string name="agps_enable_default_set_text">Clicking for restore the default settings.</string>
+    <string name="agps_enable_default_set_button">Default settings</string>
+    <string name="agps_config_help_tailebar">AGPS help</string>
+    <string name="agps_config_help_text">Using AGPS will generate international roaming fees if you selected All networks in AGPS enable option, when your phone is international roaming.</string>
+    <string name="settings_other">Other</string>
+    <!-- support AGPS settings END -->
+    <string name="location_disabled_toast_info">The device does not support location.</string>
 
     <!-- Title for SIM combination warning. [CHAR LIMIT=80] -->
     <string name="sim_combination_warning_notification_title">Issue with SIM combination</string>
@@ -11315,4 +11363,7 @@
     <!-- Summary for Enterprise Privacy settings, explaining what the user can expect to find under it [CHAR LIMIT=NONE]-->
     <string name="work_policy_privacy_settings_summary">Settings managed by your IT admin</string>
 
+    <string name="master_slave_mode">Bluetooth Mode</string>
+    <string name="master">Master</string>
+    <string name="slave">Slave</string>
 </resources>

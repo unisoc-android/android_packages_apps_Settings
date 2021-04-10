@@ -306,6 +306,13 @@ public abstract class ConfirmDeviceCredentialBaseFragment extends InstrumentedFr
         }
     }
 
+    //Unisoc: fix for bug 899978
+    protected void resetErrorRunnableTimeout() {
+        if(mHandler != null) {
+            mHandler.removeCallbacks(mResetErrorRunnable);
+        }
+    }
+
     protected abstract void onShowError();
 
     protected void showError(int msg, long timeout) {

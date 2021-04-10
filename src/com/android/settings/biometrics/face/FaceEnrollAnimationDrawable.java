@@ -16,6 +16,7 @@
 
 package com.android.settings.biometrics.face;
 
+import android.app.UiModeManager;
 import android.animation.TimeAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -29,6 +30,8 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
 import com.android.settings.biometrics.BiometricEnrollSidecar;
+
+import static android.content.Context.UI_MODE_SERVICE;
 
 /**
  * A drawable containing the circle cutout as well as the animations.
@@ -56,7 +59,8 @@ public class FaceEnrollAnimationDrawable extends Drawable
         public void onEnrolled() {
             if (mTimeAnimator != null && mTimeAnimator.isStarted()) {
                 mTimeAnimator.end();
-                mListener.onEnrolled();
+                // UNISOC: Fix for bug 1201395, do not onEnrolled after face animator end.
+                // mListener.onEnrolled();
             }
         }
     };
@@ -66,7 +70,14 @@ public class FaceEnrollAnimationDrawable extends Drawable
         mListener = listener;
 
         mSquarePaint = new Paint();
-        mSquarePaint.setColor(Color.WHITE);
+        final UiModeManager uiManager =
+                (UiModeManager) mContext.getSystemService(UI_MODE_SERVICE);
+        final int currentNightMode = uiManager.getNightMode();
+        if (currentNightMode == UiModeManager.MODE_NIGHT_YES) {
+            mSquarePaint.setColor(Color.BLACK);
+        } else {
+            mSquarePaint.setColor(Color.WHITE);
+        }
         mSquarePaint.setAntiAlias(true);
 
         mCircleCutoutPaint = new Paint();

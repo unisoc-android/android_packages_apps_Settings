@@ -83,16 +83,18 @@ public class UserDictionaryCursorLoader extends CursorLoader {
                     new String[]{queryLocale}, "UPPER(" + UserDictionary.Words.WORD + ")");
         }
         final Set<Integer> hashSet = new ArraySet<>();
-        for (candidate.moveToFirst(); !candidate.isAfterLast(); candidate.moveToNext()) {
-            final int id = candidate.getInt(0);
-            final String word = candidate.getString(1);
-            final String shortcut = candidate.getString(2);
-            final int hash = Objects.hash(word, shortcut);
-            if (hashSet.contains(hash)) {
-                continue;
+        if (candidate != null) {
+            for (candidate.moveToFirst(); !candidate.isAfterLast(); candidate.moveToNext()) {
+                final int id = candidate.getInt(0);
+                final String word = candidate.getString(1);
+                final String shortcut = candidate.getString(2);
+                final int hash = Objects.hash(word, shortcut);
+                if (hashSet.contains(hash)) {
+                    continue;
+                }
+                hashSet.add(hash);
+                result.addRow(new Object[]{id, word, shortcut});
             }
-            hashSet.add(hash);
-            result.addRow(new Object[]{id, word, shortcut});
         }
         return result;
     }

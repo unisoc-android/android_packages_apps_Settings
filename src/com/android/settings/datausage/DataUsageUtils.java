@@ -119,7 +119,7 @@ public final class DataUsageUtils extends com.android.settingslib.net.DataUsageU
         // require both supported network and ready SIM
         boolean isReady = true;
         for (SubscriptionInfo subInfo : subInfoList) {
-            isReady = isReady & tele.getSimState(subInfo.getSimSlotIndex()) == SIM_STATE_READY;
+            isReady = isReady && tele.getSimState(subInfo.getSimSlotIndex()) == SIM_STATE_READY;
             if (LOGD) {
                 Log.d(TAG, "hasReadyMobileRadio: subInfo=" + subInfo);
             }

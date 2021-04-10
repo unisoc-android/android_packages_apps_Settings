@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"अनलॉक आकार सेट करें"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"अनलॉक आकार बदलें"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"अनलॉक आकार कैसे आरेखित करें"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"बहुत सारे गलत प्रयास. <xliff:g id="NUMBER">%d</xliff:g> सेकंड में फिर से प्रयास करें."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">बहुत सारे गलत प्रयास. <xliff:g id="NUMBER">%d</xliff:g> सेकंड में फिर से कोशिश करें.</item>
+        <item quantity="other">बहुत सारे गलत प्रयास. <xliff:g id="NUMBER">%d</xliff:g> सेकंड में फिर से कोशिश करें.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"आपके फ़ोन पर ऐप्लिकेशन  इंस्टॉल नहीं है."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"वर्क प्रोफ़ाइल सुरक्षा"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"वर्क प्रोफ़ाइल स्क्रीन लॉक"</string>

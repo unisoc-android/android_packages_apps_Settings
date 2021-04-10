@@ -68,7 +68,8 @@ public class SettingsPanelActivity extends FragmentActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        createOrUpdatePanel(false /* shouldForceCreation */);
+        //Bug 1163173: volume panel can not show up after continuously click
+        //createOrUpdatePanel(false /* shouldForceCreation */);
     }
 
     private void createOrUpdatePanel(boolean shouldForceCreation) {
@@ -106,5 +107,11 @@ public class SettingsPanelActivity extends FragmentActivity {
             panelFragment.setArguments(mBundle);
             fragmentManager.beginTransaction().add(R.id.main_content, panelFragment).commit();
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        finish();
     }
 }

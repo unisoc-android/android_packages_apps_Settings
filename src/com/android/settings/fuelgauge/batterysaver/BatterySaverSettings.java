@@ -18,7 +18,9 @@ package com.android.settings.fuelgauge.batterysaver;
 
 import android.app.settings.SettingsEnums;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.provider.SearchIndexableResource;
 import android.text.Annotation;
 import android.text.Spannable;
@@ -41,6 +43,7 @@ import com.android.settingslib.search.SearchIndexable;
 import com.android.settingslib.widget.FooterPreference;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -52,6 +55,18 @@ public class BatterySaverSettings extends DashboardFragment {
     public static final String KEY_FOOTER_PREFERENCE = "footer_preference";
     private SpannableStringBuilder mFooterText;
     private String mHelpUri;
+
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        /* UNISOC 1114352: 1073195 add for Power saving management, jump to battery interface instead of  battery saver interface @}*/
+        if (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1)) {
+            getActivity().startActivity(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
+            getActivity().finish();
+        }
+        /*@}*/
+    }
 
     @Override
     public void onStart() {
@@ -87,6 +102,12 @@ public class BatterySaverSettings extends DashboardFragment {
                 @Override
                 public List<SearchIndexableResource> getXmlResourcesToIndex(
                         Context context, boolean enabled) {
+                    /* UNISOC 1104340: 1073195 add for Power saving management, remove battery saver settings search if support sprd power manager @}*/
+                    final ArrayList<SearchIndexableResource> result = new ArrayList<>();
+                    if (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1)) {
+                        return result;
+                    }
+                    /*@}*/
                     final SearchIndexableResource sir = new SearchIndexableResource(context);
                     sir.xmlResId = R.xml.battery_saver_settings;
                     return Arrays.asList(sir);

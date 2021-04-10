@@ -96,11 +96,16 @@ public class DiscoverableFooterPreferenceController extends BasePreferenceContro
     @Override
     public void displayPreference(PreferenceScreen screen) {
         super.displayPreference(screen);
-        addFooterPreference(screen);
+        if (getAvailabilityStatus() == AVAILABLE) {
+            addFooterPreference(screen);
+        }
     }
 
     @Override
     public int getAvailabilityStatus() {
+        if (!Utils.isBluetoothSupported(mContext)) {
+           return UNSUPPORTED_ON_DEVICE;
+        }
         return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
                 ? AVAILABLE
                 : UNSUPPORTED_ON_DEVICE;
@@ -133,6 +138,9 @@ public class DiscoverableFooterPreferenceController extends BasePreferenceContro
     }
 
     private void updateFooterPreferenceTitle (int bluetoothState) {
+        if (mPreference == null) {
+            return;
+        }
         if (bluetoothState == BluetoothAdapter.STATE_ON) {
             mPreference.setTitle(getPreferenceTitle());
         } else {

@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"അൺലോക്ക് പാറ്റേൺ സജ്ജീകരിക്കുക"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"അൺലോക്ക് പാറ്റേൺ മാറ്റുക"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"ഒരു അൺലോക്ക് പാറ്റേൺ വരയ്‌ക്കേണ്ടതെങ്ങനെ"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"നിരവധി തെറ്റായ ശ്രമങ്ങൾ. <xliff:g id="NUMBER">%d</xliff:g> നിമിഷത്തിനുള്ളിൽ വീണ്ടും ശ്രമിക്കുക."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">നിരവധി തെറ്റായ ശ്രമങ്ങൾ. <xliff:g id="NUMBER">%d</xliff:g> നിമിഷത്തിനുള്ളിൽ വീണ്ടും ശ്രമിക്കുക.</item>
+        <item quantity="one">നിരവധി തെറ്റായ ശ്രമങ്ങൾ. ഒരു സെക്കൻഡിനുള്ളിൽ വീണ്ടും ശ്രമിക്കുക.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"അപ്ലിക്കേഷൻ നിങ്ങളുടെ ഫോണിൽ ഇൻസ്റ്റാളുചെയ്‌തിട്ടില്ല."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"ഔദ്യോഗിക പ്രൊഫൈൽ സുരക്ഷ"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"ഔദ്യോഗിക പ്രൊഫൈൽ സ്ക്രീൻ ലോക്ക്"</string>

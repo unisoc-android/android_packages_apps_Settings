@@ -21,6 +21,7 @@ import android.database.ContentObserver;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.SystemProperties;
 import android.provider.Settings;
 import android.provider.Settings.Global;
 
@@ -41,6 +42,8 @@ public class BatterySaverController extends BasePreferenceController
     private final BatterySaverReceiver mBatteryStateChangeReceiver;
     private final PowerManager mPowerManager;
     private Preference mBatterySaverPref;
+    //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp battery saver
+    private final boolean isSupportSprdPowerManager = (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1));
 
     public BatterySaverController(Context context) {
         super(context, KEY_BATTERY_SAVER);
@@ -53,7 +56,8 @@ public class BatterySaverController extends BasePreferenceController
 
     @Override
     public int getAvailabilityStatus() {
-        return AVAILABLE_UNSEARCHABLE;
+        //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp battery saver
+        return isSupportSprdPowerManager ? UNSUPPORTED_ON_DEVICE : AVAILABLE_UNSEARCHABLE;
     }
 
     @Override

@@ -37,7 +37,9 @@ import java.util.List;
 /**
  * Controls the USB device details and provides updates to individual controllers.
  */
-@SearchIndexable(forTarget = SearchIndexable.ALL & ~SearchIndexable.ARC)
+// Removed for bug1104318, This fragment is not currently in use,
+// removing the entrance to its search
+//@SearchIndexable(forTarget = SearchIndexable.ALL & ~SearchIndexable.ARC)
 public class UsbDetailsFragment extends DashboardFragment {
     private static final String TAG = UsbDetailsFragment.class.getSimpleName();
 

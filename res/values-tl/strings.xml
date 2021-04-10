@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Itakda ang naka-unlock na pattern"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Baguhin ang naka-unlock na pattern"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Paano kumuha ng isang naka-unlock na pattern"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Masyadong maraming maling pagsubok. Subukang muli sa loob ng <xliff:g id="NUMBER">%d</xliff:g> (na) segundo."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">Masyadong maraming maling pagsubok. Subukang muli sa loob ng <xliff:g id="NUMBER">%d</xliff:g> segundo.</item>
+        <item quantity="other">Masyadong maraming maling pagsubok. Subukang muli sa loob ng <xliff:g id="NUMBER">%d</xliff:g> na segundo.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Hindi naka-install ang application sa iyong telepono."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Seguridad ng profile sa trabaho"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Screen lock ng profile sa trabaho"</string>

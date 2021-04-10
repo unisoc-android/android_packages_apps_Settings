@@ -175,7 +175,8 @@ public class BluetoothPairingController implements OnCheckedChangeListener,
             case BluetoothDevice.ACCESS_REJECTED:
                 return false;
             default:
-                if (mDevice.getBluetoothClass().getDeviceClass()
+                final BluetoothClass btClass = mDevice.getBluetoothClass();
+                if (btClass != null && btClass.getDeviceClass()
                         == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE) {
                     return true;
                 }
@@ -189,9 +190,10 @@ public class BluetoothPairingController implements OnCheckedChangeListener,
      */
      public void  setContactSharingState() {
          final int permission = mDevice.getPhonebookAccessPermission();
+         final BluetoothClass btClass = mDevice.getBluetoothClass();
          if (permission == BluetoothDevice.ACCESS_ALLOWED
-                 || (permission == BluetoothDevice.ACCESS_UNKNOWN && mDevice.getBluetoothClass().
-                        getDeviceClass() == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE)) {
+                 || (permission == BluetoothDevice.ACCESS_UNKNOWN && btClass != null &&
+                     btClass.getDeviceClass() == BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE)) {
              onCheckedChanged(null, true);
          } else {
              onCheckedChanged(null, false);

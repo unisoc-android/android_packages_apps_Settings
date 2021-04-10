@@ -189,6 +189,10 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
     Preference mDataUsageSummaryPref;
     WifiDataUsageSummaryPreferenceController mSummaryHeaderController;
 
+    // add Disconnect button
+    private ActionButtonsPreference mDisconnectButtonPref;
+    static final String KEY_BUTTONS_DISCONNECT_PREF = "disconnect_buttons";
+
     private final IconInjector mIconInjector;
     private final IntentFilter mFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -291,6 +295,13 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
         }
     };
 
+    private final Runnable failedStateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateConnectingState(STATE_FAILED);
+        }
+    };
+
     public static WifiDetailPreferenceController newInstance(
             AccessPoint accessPoint,
             ConnectivityManager connectivityManager,
@@ -346,7 +357,7 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
         // When lost the network connection, WifiInfo/NetworkInfo will be clear. So causes we
         // could not check if the AccessPoint is ephemeral. Need to cache it in first.
         mIsEphemeral = mAccessPoint.isEphemeral();
-        mConnectingState = STATE_NONE;
+        mConnectingState = mConnected ? STATE_CONNECTED : STATE_NONE;
         mConnectListener = new WifiManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -355,7 +366,7 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
 
             @Override
             public void onFailure(int reason) {
-                updateConnectingState(STATE_FAILED);
+                mHandler.post(failedStateRunnable);
             }
         };
     }
@@ -391,6 +402,34 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
                 .setButton4Text(R.string.share)
                 .setButton4Icon(R.drawable.ic_qrcode_24dp)
                 .setButton4OnClickListener(view -> shareNetwork());
+
+        mDisconnectButtonPref = (ActionButtonsPreference) screen.findPreference(KEY_BUTTONS_DISCONNECT_PREF);
+        if (WifiUtils.isDisableNetworkSupported(mContext)) {
+            mDisconnectButtonPref.setButton1Text(R.string.wifi_disconnect_button_text)
+                                 .setButton1Icon(R.drawable.ic_settings_disable)
+                                 .setButton1OnClickListener(view -> disableNetwork());
+        } else {
+            mDisconnectButtonPref.setButton1Visible(false);
+        }
+
+        if (WifiUtils.isDisconnectNetworkSupported(mContext)) {
+            mDisconnectButtonPref.setButton2Text(R.string.wifi_disconnect_button_text)
+                                 .setButton2OnClickListener(view -> disconnectNetwork());
+        } else {
+            mDisconnectButtonPref.setButton2Visible(false);
+        }
+
+        if (WifiUtils.isDisableNetworkSupported(mContext) || WifiUtils.isDisconnectNetworkSupported(mContext)) {
+            if (mAccessPoint != null && mAccessPoint.isActive()) {
+                mDisconnectButtonPref.setButton3Visible(false);
+                mDisconnectButtonPref.setButton4Visible(false);
+            } else {
+                mDisconnectButtonPref.setVisible(false);
+            }
+        } else {
+            mDisconnectButtonPref.setVisible(false);
+        }
+
 
         mSignalStrengthPref = screen.findPreference(KEY_SIGNAL_STRENGTH_PREF);
         mTxLinkSpeedPref = screen.findPreference(KEY_TX_LINK_SPEED);
@@ -516,13 +555,15 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
             updateNetworkInfo();
             mNetworkInfo = mConnectivityManager.getNetworkInfo(mNetwork);
             mWifiInfo = mWifiManager.getConnectionInfo();
+            changed |= mAccessPoint.update(mWifiConfig, mWifiInfo, mNetworkInfo);
             if (mNetwork == null || mNetworkInfo == null || mWifiInfo == null) {
                 // Once connected, can't get mNetwork immediately, return false and wait for
                 // next time to update UI. also reset {@code mIsOutOfRange}
                 mIsOutOfRange = oldState;
                 return false;
             }
-            changed |= mAccessPoint.update(mWifiConfig, mWifiInfo, mNetworkInfo);
+        } else {
+            mIsOutOfRange = true;
         }
 
         // signal level changed
@@ -809,6 +850,9 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
      * Returns whether the network represented by this preference can be forgotten.
      */
     private boolean canForgetNetwork() {
+        if (mWifiConfig != null && !mWifiConfig.canForget) {
+            return false;
+        }
         return (mWifiInfo != null && mWifiInfo.isEphemeral()) || canModifyNetwork()
                 || mAccessPoint.isPasspoint() || mAccessPoint.isPasspointConfig();
     }
@@ -817,7 +861,7 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
      * Returns whether the network represented by this preference can be modified.
      */
     public boolean canModifyNetwork() {
-        return mWifiConfig != null && !WifiUtils.isNetworkLockedDown(mContext, mWifiConfig);
+        return mWifiConfig != null && mWifiConfig.canModify && !WifiUtils.isNetworkLockedDown(mContext, mWifiConfig);
     }
 
     /**
@@ -1136,5 +1180,23 @@ public class WifiDetailPreferenceController extends AbstractPreferenceController
 
         mTimer.cancel();
         mTimer = null;
+    }
+
+    /**
+     * disable current network
+     */
+    private void disableNetwork() {
+        if (mWifiConfig != null) {
+            mWifiManager.disableNetwork(mWifiConfig.networkId);
+        }
+    }
+
+    /**
+     * disconnect current network
+     */
+    private void disconnectNetwork() {
+        if (mWifiInfo != null) {
+            mWifiManager.disconnect();
+        }
     }
 }

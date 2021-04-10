@@ -27,6 +27,7 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:maxLength="18"
             android:paddingEnd="@dimen/sim_content_padding"
             android:paddingStart="@dimen/sim_content_padding">
 
@@ -97,11 +98,15 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:text="@string/status_number_sim_status"/>
 
-            <TextView
+            <!--UNISOC:Feature edit phone number in Settings - -->
+            <EditText
                 android:id="@+id/number_value"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/device_info_not_available"/>
+                android:inputType="phone"
+                android:maxLength="20"
+                android:text="@string/device_info_not_available">
+            </EditText>
 
         </LinearLayout>
 

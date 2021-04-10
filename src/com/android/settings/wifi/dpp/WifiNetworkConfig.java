@@ -272,9 +272,13 @@ public class WifiNetworkConfig {
             final int length = mPreSharedKey.length();
             if ((length == 10 || length == 26 || length == 58)
                     && mPreSharedKey.matches("[0-9A-Fa-f]*")) {
-                wifiConfiguration.wepKeys[0] = mPreSharedKey;
+                if (wifiConfiguration.wepTxKeyIndex >= 0) {
+                    wifiConfiguration.wepKeys[wifiConfiguration.wepTxKeyIndex] = mPreSharedKey;
+                }
             } else {
-                wifiConfiguration.wepKeys[0] = addQuotationIfNeeded(mPreSharedKey);
+                if (wifiConfiguration.wepTxKeyIndex >= 0) {
+                    wifiConfiguration.wepKeys[wifiConfiguration.wepTxKeyIndex] = addQuotationIfNeeded(mPreSharedKey);
+                }
             }
         } else if (mSecurity.startsWith(SECURITY_WPA_PSK)) {
             wifiConfiguration.allowedKeyManagement.set(KeyMgmt.WPA_PSK);

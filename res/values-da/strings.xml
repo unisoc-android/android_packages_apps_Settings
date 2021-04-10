@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Angiv oplåsningsmønster"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Skift oplåsningsmønster"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Sådan tegnes et oplåsningsmønster"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"For mange mislykkede forsøg. Prøv igen om <xliff:g id="NUMBER">%d</xliff:g> sekunder."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">For mange mislykkede forsøg. Prøv igen om <xliff:g id="NUMBER">%d</xliff:g> sekund.</item>
+        <item quantity="other">For mange mislykkede forsøg. Prøv igen om <xliff:g id="NUMBER">%d</xliff:g> sekunder.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Applikationen er ikke installeret på din telefon."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Beskyttelse af arbejdsprofil"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Skærmlås for arbejdsprofil"</string>

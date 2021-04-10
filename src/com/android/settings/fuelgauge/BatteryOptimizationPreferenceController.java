@@ -15,6 +15,7 @@
 package com.android.settings.fuelgauge;
 
 import android.os.Bundle;
+import android.os.SystemProperties;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.preference.Preference;
@@ -42,6 +43,8 @@ public class BatteryOptimizationPreferenceController extends AbstractPreferenceC
     private DashboardFragment mFragment;
     private SettingsActivity mSettingsActivity;
     private String mPackageName;
+    //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp battery optimization
+    private final boolean isSupportSprdPowerManager = (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1));
 
     public BatteryOptimizationPreferenceController(SettingsActivity settingsActivity,
             DashboardFragment fragment, String packageName) {
@@ -64,7 +67,8 @@ public class BatteryOptimizationPreferenceController extends AbstractPreferenceC
 
     @Override
     public boolean isAvailable() {
-        return true;
+        //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp battery optimization
+        return !isSupportSprdPowerManager ? true : false;
     }
 
     @Override

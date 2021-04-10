@@ -47,6 +47,7 @@ import androidx.preference.PreferenceCategory;
 
 import com.android.settings.R;
 import com.android.settings.SettingsPreferenceFragment;
+import com.android.settings.Utils;
 import com.android.settings.core.SubSettingLauncher;
 import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
 import com.android.settings.search.BaseSearchIndexProvider;
@@ -142,6 +143,10 @@ public class StorageSettings extends SettingsPreferenceFragment implements Index
     }
 
     private synchronized void refresh() {
+        // Add for bug1113285,Settings sometimes crash when inserting or deleting an SD card
+        if (!isAdded()) {
+            return;
+        }
         final Context context = getPrefContext();
 
         getPreferenceScreen().removeAll();
@@ -281,8 +286,8 @@ public class StorageSettings extends SettingsPreferenceFragment implements Index
                 } else {
                     // TODO: Go to the StorageDashboardFragment once it fully handles all of the
                     //       SD card cases and other private internal storage cases.
-                    PrivateVolumeSettings.setVolumeSize(args, PrivateStorageInfo.getTotalSize(vol,
-                            sTotalInternalStorage));
+                    // Modify for bug1105465, sdcard size display error
+                    PrivateVolumeSettings.setVolumeSize(args, 0);
                     new SubSettingLauncher(getContext())
                             .setDestination(PrivateVolumeSettings.class.getCanonicalName())
                             .setTitleRes(-1)
@@ -401,6 +406,10 @@ public class StorageSettings extends SettingsPreferenceFragment implements Index
         @Override
         protected Exception doInBackground(Void... params) {
             try {
+                // Do not unmount storage during monkey testing
+                if (Utils.isMonkeyRunning()) {
+                    return null;
+                }
                 mStorageManager.unmount(mVolumeId);
                 return null;
             } catch (Exception e) {
@@ -437,6 +446,19 @@ public class StorageSettings extends SettingsPreferenceFragment implements Index
             return SettingsEnums.DIALOG_VOLUME_UNMOUNT;
         }
 
+        /* bug 1144002: when sd card is not inserted, NPE occurs when create dialog.@ {*/
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            StorageManager storageManager = getActivity().getSystemService(StorageManager.class);
+            String volumeId = getArguments().getString(VolumeInfo.EXTRA_VOLUME_ID);
+            VolumeInfo volumeInfo = storageManager.findVolumeById(volumeId);
+            if (volumeInfo == null) {
+                setShowsDialog(false);
+            }
+        }
+        /* @} */
+
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Context context = getActivity();
@@ -461,13 +483,13 @@ public class StorageSettings extends SettingsPreferenceFragment implements Index
                          */
                         private boolean wasAdminSupportIntentShown(@NonNull String restriction) {
                             EnforcedAdmin admin = RestrictedLockUtilsInternal
-                                    .checkIfRestrictionEnforced(getActivity(), restriction,
+                                    .checkIfRestrictionEnforced(context, restriction,
                                             UserHandle.myUserId());
                             boolean hasBaseUserRestriction =
                                     RestrictedLockUtilsInternal.hasBaseUserRestriction(
-                                            getActivity(), restriction, UserHandle.myUserId());
+                                            context, restriction, UserHandle.myUserId());
                             if (admin != null && !hasBaseUserRestriction) {
-                                RestrictedLockUtils.sendShowAdminSupportDetailsIntent(getActivity(),
+                                RestrictedLockUtils.sendShowAdminSupportDetailsIntent(context,
                                         admin);
                                 return true;
                             }

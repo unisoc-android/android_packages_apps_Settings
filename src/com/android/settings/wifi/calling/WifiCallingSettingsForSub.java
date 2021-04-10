@@ -21,12 +21,17 @@ import android.app.settings.SettingsEnums;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.ContentObserver;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PersistableBundle;
+import android.telecom.TelecomManager;
 import android.telephony.CarrierConfigManager;
+import android.telephony.CarrierConfigManagerEx;
 import android.telephony.PhoneStateListener;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -36,24 +41,33 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
 import androidx.preference.Preference.OnPreferenceClickListener;
 import androidx.preference.PreferenceScreen;
+import android.provider.SettingsEx;
+import android.provider.Settings;
 
 import com.android.ims.ImsConfig;
 import com.android.ims.ImsException;
 import com.android.ims.ImsManager;
+import com.android.ims.internal.ImsManagerEx;
 import com.android.internal.annotations.VisibleForTesting;
+import com.android.internal.telephony.TelephonyIntents;
 import com.android.internal.telephony.Phone;
 import com.android.settings.R;
 import com.android.settings.SettingsActivity;
 import com.android.settings.SettingsPreferenceFragment;
 import com.android.settings.Utils;
 import com.android.settings.core.SubSettingLauncher;
+import com.android.settings.network.SimStateChangeListener;
+import com.android.settings.network.telephony.MobileNetworkUtils;
 import com.android.settings.widget.SwitchBar;
 
 /**
@@ -62,7 +76,7 @@ import com.android.settings.widget.SwitchBar;
  */
 public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
         implements SwitchBar.OnSwitchChangeListener,
-        Preference.OnPreferenceChangeListener {
+        Preference.OnPreferenceChangeListener, SimStateChangeListener.SimStateChangeListenerClient {
     private static final String TAG = "WifiCallingForSub";
 
     //String keys for preference lookup
@@ -82,7 +96,11 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
 
     public static final int LAUCH_APP_ACTIVATE = 0;
     public static final int LAUCH_APP_UPDATE = 1;
-
+    /* UNISOC: modify for bug1158424 @{ */
+    private static final int VARIANT_TITLE_VOLTE = 0;
+    private static final int VARIANT_TITLE_ADVANCED_CALL = 1;
+    private static final int VARIANT_TITLE_4G_CALLING = 2;
+    /* @} */
     //UI objects
     private SwitchBar mSwitchBar;
     private Switch mSwitch;
@@ -90,6 +108,8 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
     private ListWithEntrySummaryPreference mButtonWfcRoamingMode;
     private Preference mUpdateAddress;
     private TextView mEmptyView;
+    private String mSyncVolte = null;
+    private CharSequence[] mVariantTitles;
 
     private boolean mValidListener = false;
     private boolean mEditableWfcMode = true;
@@ -97,8 +117,31 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
     private boolean mUseWfcHomeModeForRoaming = false;
 
     private int mSubId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+    private int mPhoneId = SubscriptionManager.INVALID_PHONE_INDEX;
     private ImsManager mImsManager;
     private TelephonyManager mTelephonyManager;
+    private boolean mShowWfcPref = true;
+    /* UNISOC: add for bug887137 @{ */
+    private boolean mShowWfcOnNotification = false;
+    // UNISOC: fix for bug 1123034,listen to sim state change
+    private SimStateChangeListener mSimStateChangeListener;
+
+    private ContentObserver mWfcEnableObserver = new ContentObserver(new Handler()) {
+        @Override
+        public void onChange(boolean selfChange) {
+            /* SPRD: add for bug732845 @{ */
+            Log.d(TAG,"[mWfcEnableObserver] getActivity: " + getActivity());
+            if (getActivity() == null) {
+                return;
+            }
+            /* @} */
+            // UNISOC: add for bug1141089
+            boolean enabled = mImsManager.isWfcEnabledByUser()
+                    && mImsManager.isNonTtyOrTtyOnVolteEnabled();
+            Log.d(TAG,"[mWfcEnableObserver][wfcEnabled]: " + enabled);
+            mSwitchBar.setChecked(enabled);
+        }
+    };
 
     private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
         /*
@@ -114,13 +157,15 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
             boolean isWfcEnabled = mSwitchBar.isChecked()
                     && isNonTtyOrTtyOnVolteEnabled;
 
-            mSwitchBar.setEnabled((state == TelephonyManager.CALL_STATE_IDLE)
-                    && isNonTtyOrTtyOnVolteEnabled);
+            //UNISOC:fix for bug 1108698
+            mSwitchBar.setEnabled(!isInCall() && isNonTtyOrTtyOnVolteEnabled);
 
             boolean isWfcModeEditable = true;
             boolean isWfcRoamingModeEditable = false;
-            final CarrierConfigManager configManager = (CarrierConfigManager)
-                    activity.getSystemService(Context.CARRIER_CONFIG_SERVICE);
+            /* UNISOC: modify for bug900260*/
+            final CarrierConfigManager configManager =
+                    (activity == null) ? null : (CarrierConfigManager) activity
+                            .getSystemService(Context.CARRIER_CONFIG_SERVICE);
             if (configManager != null) {
                 PersistableBundle b =
                         configManager.getConfigForSubId(WifiCallingSettingsForSub.this.mSubId);
@@ -186,11 +231,32 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
         mSwitchBar = getView().findViewById(R.id.switch_bar);
         mSwitchBar.show();
         mSwitch = mSwitchBar.getSwitch();
+        /* UNISOC: bug 915591 @{ */
+        if (mImsManager.isWfcEnabledByPlatform()) {
+            TelephonyManager tm =
+                    (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+            tm.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+
+            mSwitchBar.addOnSwitchChangeListener(this);
+
+            mValidListener = true;
+        }
+        /* @} */
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        /* UNISOC: bug 915591 @{ */
+        if (mValidListener) {
+            mValidListener = false;
+
+            TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+            tm.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
+
+            mSwitchBar.removeOnSwitchChangeListener(this);
+        }
+        /* @} */
         mSwitchBar.hide();
     }
 
@@ -226,6 +292,16 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
 
                 showAlert(intent);
             }
+            /* UNISOC:fix for bug 1172650{ */
+            if (action.equals(TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED)) {
+                //add for unisoc 1172699 finish activity when data card change
+                if (mSubId != SubscriptionManager.getDefaultDataSubscriptionId()
+                        && SubscriptionManager.getDefaultDataSubscriptionId() != SubscriptionManager.INVALID_SUBSCRIPTION_ID && (getActivity() != null)) {
+                    getActivity().finish();
+
+                }
+            }
+            /* @} */
         }
     };
 
@@ -250,7 +326,6 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
         super.onCreate(savedInstanceState);
 
         addPreferencesFromResource(R.xml.wifi_calling_settings);
-
         // SubId should always be specified when creating this fragment. Either through
         // fragment.setArguments() or through savedInstanceState.
         if (getArguments() != null && getArguments().containsKey(FRAGMENT_BUNDLE_SUBID)) {
@@ -264,9 +339,30 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
 
         mTelephonyManager = ((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE))
                 .createForSubscriptionId(mSubId);
+        mPhoneId = SubscriptionManager.getPhoneId(mSubId);
 
         mButtonWfcMode = findPreference(BUTTON_WFC_MODE);
         mButtonWfcMode.setOnPreferenceChangeListener(this);
+        /* UNISOC:fix for bug 1122730{ */
+        mVariantTitles = getActivity().getResources()
+                .getTextArray(R.array.enhanced_4g_lte_mode_title_variant);
+        mSyncVolte = String.format(getResources().getString(R.string.vowifi_service_volte_open_auto_synchronously), getVolteTitle());
+        Log.d(TAG,"[mSyncVolte]: " + mSyncVolte);
+        /* @} */
+        /* SPRD: add for bug843265 @{ */
+        CarrierConfigManager configManager = (CarrierConfigManager)
+                getSystemService(Context.CARRIER_CONFIG_SERVICE);
+        if (configManager != null) {
+            PersistableBundle b = configManager.getConfigForSubId(mSubId);
+            if (b != null) {
+                mShowWfcPref = b.getBoolean(
+                    CarrierConfigManagerEx.KEY_SUPPORT_SHOW_WIFI_CALLING_PREFERENCE);
+            }
+        }
+        /*  @} */
+        if(!mShowWfcPref) {
+            getPreferenceScreen().removePreference(mButtonWfcMode);
+        }
 
         mButtonWfcRoamingMode =  findPreference(BUTTON_WFC_ROAMING_MODE);
         mButtonWfcRoamingMode.setOnPreferenceChangeListener(this);
@@ -276,6 +372,11 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
 
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(ImsManager.ACTION_IMS_REGISTRATION_ERROR);
+        mIntentFilter.addAction(TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED);
+        /* SPRD: Add for wifi-call show toast demand in bug 691804. @{ */
+        mShowWfcOnNotification = getActivity().getResources().getBoolean(R.bool.show_wfc_on_notification);
+        Log.d(TAG,"[mShowWfcOnNotification]: " + mShowWfcOnNotification);
+        /* @} */
     }
 
     @Override
@@ -359,15 +460,10 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
 
         updateBody();
 
-        if (mImsManager.isWfcEnabledByPlatform()) {
-            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
-
-            mSwitchBar.addOnSwitchChangeListener(this);
-
-            mValidListener = true;
-        }
-
         context.registerReceiver(mIntentReceiver, mIntentFilter);
+        context.getContentResolver().registerContentObserver(
+                MobileNetworkUtils.getNotifyContentUri(SubscriptionManager.WFC_ENABLED_CONTENT_URI, true, mSubId),
+                true, mWfcEnableObserver);
 
         Intent intent = getActivity().getIntent();
         if (intent.getBooleanExtra(Phone.EXTRA_KEY_ALERT_SHOW, false)) {
@@ -381,6 +477,9 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
             Log.w(TAG, "onResume: Unable to register callback for provisioning changes.");
         }
 
+        // UNISOC: fix for bug 1123034 ,listen to sim state change
+        mSimStateChangeListener = new SimStateChangeListener(context, this);
+        mSimStateChangeListener.start();
     }
 
     @Override
@@ -389,16 +488,8 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
 
         final Context context = getActivity();
 
-        if (mValidListener) {
-            mValidListener = false;
-
-            TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            tm.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-
-            mSwitchBar.removeOnSwitchChangeListener(this);
-        }
-
         context.unregisterReceiver(mIntentReceiver);
+        context.getContentResolver().unregisterContentObserver(mWfcEnableObserver);
 
         // Remove callback for provisioning changes.
         try {
@@ -408,6 +499,8 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
             Log.w(TAG, "onPause: Unable to remove callback for provisioning changes");
         }
 
+        // UNISOC: fix for bug 1123034,Stop listen to sim state change
+        mSimStateChangeListener.stop();
     }
 
     /**
@@ -484,8 +577,9 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
         super.onActivityResult(requestCode, resultCode, data);
 
         final Context context = getActivity();
+        boolean enabled = ImsManager.isWfcEnabledByUser(context) && ImsManager.isNonTtyOrTtyOnVolteEnabled(context);
 
-        Log.d(TAG, "WFC activity request = " + requestCode + " result = " + resultCode);
+        Log.d(TAG, "WFC activity request = " + requestCode + " result = " + resultCode +" enabled = "+ enabled);
 
         switch (requestCode) {
             case REQUEST_CHECK_WFC_EMERGENCY_ADDRESS:
@@ -502,7 +596,20 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
                         startActivityForResult(carrierAppIntent,
                                 REQUEST_CHECK_WFC_EMERGENCY_ADDRESS);
                     } else {
-                        updateWfcMode(true);
+                        /*UNISOC: Add for bug 1073296*/
+                        if (!mShowWfcOnNotification && ImsManagerEx.synSettingForWFCandVoLTE(context)) {
+                            Log.d(TAG,"[onActivityResult][isEnhanced4g]: " + mImsManager.isEnhanced4gLteModeSettingEnabledByUser());
+                            if (mImsManager.isVolteEnabledByPlatform()
+                                    && !mImsManager.isEnhanced4gLteModeSettingEnabledByUser()) {
+                                mImsManager.setEnhanced4gLteModeSetting(true);
+                                showToast(context, mSyncVolte, Toast.LENGTH_LONG);
+                            }
+                        }
+                        if (mShowWfcOnNotification && !enabled) {
+                            showVowifiRegisterToast(context);
+                        } else {
+                            updateWfcMode(true);
+                        }
                     }
                 }
                 break;
@@ -511,6 +618,84 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
                 break;
         }
     }
+
+    /*UNISOC: Add for wifi-call show toast demand in bug 691804*/
+    public void showVowifiRegisterToast(Context context) {
+        int enabled = Settings.Global.getInt(context.getContentResolver(), SettingsEx.GlobalEx.ENHANCED_VOWIFI_TOAST_SHOW_ENABLED,0);
+        Log.d(TAG, "[showVowifiRegisterToast] enabled: " + enabled);
+        if (enabled == 1) {
+            Log.d(TAG,"showVoWifiNotification nomore ");
+            updateWfcMode(true);
+            /*UNISOC: Add for bug 770787 and 827265*/
+            if (mImsManager.isVolteEnabledByPlatform()
+                    && !mImsManager.isEnhanced4gLteModeSettingEnabledByUser()
+                    && ImsManagerEx.synSettingForWFCandVoLTE(context)) {
+                mImsManager.setEnhanced4gLteModeSetting(true);
+                showToast(context, mSyncVolte, Toast.LENGTH_LONG);
+            }
+            /* @} */
+            return ;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = inflater.inflate(R.xml.vowifi_register_dialog, null);
+
+        builder.setView(view);
+        builder.setTitle(context.getString(R.string.vowifi_connected_title));
+        builder.setMessage(context.getString(R.string.vowifi_connected_message));
+        CheckBox cb = (CheckBox) view.findViewById(R.id.nomore);
+
+        builder.setPositiveButton(context.getString(R.string.vowifi_connected_continue), new android.content.DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                if (cb.isChecked()) {
+                    Settings.Global.putInt(context.getContentResolver(), SettingsEx.GlobalEx.ENHANCED_VOWIFI_TOAST_SHOW_ENABLED, 1);
+                }
+                Log.d(TAG,"Vowifi service Continue, cb.isChecked = " + cb.isChecked());
+                updateWfcMode(true);
+                /*UNISOC: Add for bug 770787 and 827265*/
+                if (mImsManager.isVolteEnabledByPlatform()
+                        && !mImsManager.isEnhanced4gLteModeSettingEnabledByUser()
+                        && ImsManagerEx.synSettingForWFCandVoLTE(context)) {
+                    mImsManager.setEnhanced4gLteModeSetting(true);
+                    showToast(context, mSyncVolte, Toast.LENGTH_LONG);
+                }
+                /* @} */
+                if (dialog != null) {
+                    dialog.dismiss();
+                    dialog = null;
+                }
+            }
+        });
+        builder.setNegativeButton(context.getString(R.string.vowifi_connected_disable), new android.content.DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                if (cb.isChecked()) {
+                    Settings.Global.putInt(context.getContentResolver(), SettingsEx.GlobalEx.ENHANCED_VOWIFI_TOAST_SHOW_ENABLED, 1);
+                }
+                Log.d(TAG,"Vowifi service disable, cb.isChecked = " + cb.isChecked());
+                mSwitch.setChecked(false);
+                if (dialog != null) {
+                    dialog.dismiss();
+                    dialog = null;
+                }
+            }
+        });
+        builder.setCancelable(false);
+        AlertDialog dialog = builder.create();
+        dialog = builder.create();
+        dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG);
+        dialog.show();
+    }
+    /* @} */
+
+    /*UNISOC: Add for bug 770787*/
+    private static void showToast(Context context, String text, int duration) {
+        Toast mToast = Toast.makeText(context, text, duration);
+        mToast.getWindowParams().type = WindowManager.LayoutParams.TYPE_STATUS_BAR_PANEL;
+        mToast.getWindowParams().flags |= WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+        mToast.show();
+    }
+    /* @} */
 
     private void updateButtonWfcMode(boolean wfcEnabled,
             int wfcMode, int wfcRoamingMode) {
@@ -522,7 +707,7 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
         final PreferenceScreen preferenceScreen = getPreferenceScreen();
         boolean updateAddressEnabled = (getCarrierActivityIntent() != null);
         if (wfcEnabled) {
-            if (mEditableWfcMode) {
+            if (mEditableWfcMode && mShowWfcPref) {
                 preferenceScreen.addPreference(mButtonWfcMode);
             } else {
                 // Don't show WFC (home) preference if it's not editable.
@@ -579,7 +764,9 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
     private int getWfcModeSummary(int wfcMode) {
         int resId = com.android.internal.R.string.wifi_calling_off_summary;
         if (mImsManager.isWfcEnabledByUser()) {
-            switch (wfcMode) {
+            //UNISOC:fix for bug 1084169
+            if(mShowWfcPref) {
+                switch (wfcMode) {
                 case ImsConfig.WfcModeFeatureValueConstants.WIFI_ONLY:
                     resId = com.android.internal.R.string.wfc_mode_wifi_only_summary;
                     break;
@@ -591,6 +778,9 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
                     break;
                 default:
                     Log.e(TAG, "Unexpected WFC mode value: " + wfcMode);
+                }
+            } else {
+                resId = com.android.internal.R.string.wifi_calling_on_summary;
             }
         }
         return resId;
@@ -600,4 +790,46 @@ public class WifiCallingSettingsForSub extends SettingsPreferenceFragment
     Resources getResourcesForSubId() {
         return SubscriptionManager.getResourcesForSubId(getContext(), mSubId, false);
     }
+
+    /*UNISOC: Add for bug 1107670 @{ */
+    private boolean isInCall() {
+        return getTelecommManager().isInCall();
+    }
+
+    private TelecomManager getTelecommManager() {
+        return (TelecomManager) getPrefContext().getSystemService(Context.TELECOM_SERVICE);
+    }
+    /* @} */
+
+    /*UNISOC: Add for bug 1123034 To handle the case SIM is removed @{ */
+    @Override
+    public void onSimAbsent(int phoneId) {
+        if (phoneId == mPhoneId && getActivity() != null) {
+            getActivity().finish();
+        }
+    }
+    /* @} */
+    /* UNISOC:fix for bug 1122730{ */
+    private String getVolteTitle(){
+        final SettingsActivity activity = (SettingsActivity) getActivity();
+        final CarrierConfigManager configManager =
+                (activity == null) ? null : (CarrierConfigManager) activity
+                        .getSystemService(Context.CARRIER_CONFIG_SERVICE);
+        if (configManager != null) {
+            PersistableBundle b =
+                    configManager.getConfigForSubId(WifiCallingSettingsForSub.this.mSubId);
+            if (b != null) {
+                boolean show4GForLTE = b.getBoolean(
+                    CarrierConfigManager.KEY_SHOW_4G_FOR_LTE_DATA_ICON_BOOL);
+                int variant4glteTitleIndex = b.getInt(
+                    CarrierConfigManager.KEY_ENHANCED_4G_LTE_TITLE_VARIANT_INT);
+                if (variant4glteTitleIndex != VARIANT_TITLE_ADVANCED_CALL) {
+                    variant4glteTitleIndex = show4GForLTE ? VARIANT_TITLE_4G_CALLING : VARIANT_TITLE_VOLTE;
+                }
+                return mVariantTitles[variant4glteTitleIndex].toString();
+            }
+        }
+        return null;
+    }
+    /* @} */
 }

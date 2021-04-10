@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Set unlock pattern"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Change unlock pattern"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"How to draw an unlock pattern"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Too many incorrect attempts. Try again in <xliff:g id="NUMBER">%d</xliff:g> seconds."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Too many incorrect attempts. Try again in <xliff:g id="NUMBER">%d</xliff:g> seconds.</item>
+        <item quantity="one">Too many incorrect attempts. Try again in 1 second.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Application is not installed on your phone."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Work profile security"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Work profile screen lock"</string>

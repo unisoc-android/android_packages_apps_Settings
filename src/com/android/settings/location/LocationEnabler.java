@@ -95,6 +95,8 @@ public class LocationEnabler implements LifecycleObserver, OnStart, OnStop {
     void refreshLocationMode() {
         final int mode = Settings.Secure.getInt(mContext.getContentResolver(),
                 Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF);
+        Log.i(TAG, "refreshLocationMode mode " + mode);
+
         if (Log.isLoggable(TAG, Log.INFO)) {
             Log.i(TAG, "Location mode has been changed");
         }
@@ -106,6 +108,7 @@ public class LocationEnabler implements LifecycleObserver, OnStart, OnStop {
     void setLocationEnabled(boolean enabled) {
         final int currentMode = Settings.Secure.getInt(mContext.getContentResolver(),
             Settings.Secure.LOCATION_MODE, Settings.Secure.LOCATION_MODE_OFF);
+        Log.i(TAG, "setLocationEnabled enabled " + enabled + " , currentMode " + currentMode);
 
         if (isRestricted()) {
             // Location toggling disabled by user restriction. Read the current location mode to

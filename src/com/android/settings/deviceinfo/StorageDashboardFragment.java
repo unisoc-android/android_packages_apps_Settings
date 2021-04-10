@@ -131,6 +131,8 @@ public class StorageDashboardFragment extends DashboardFragment
         getLoaderManager()
                 .restartLoader(VOLUME_SIZE_JOB_ID, Bundle.EMPTY, new VolumeSizeCallbacks());
         getLoaderManager().initLoader(ICON_JOB_ID, Bundle.EMPTY, new IconLoaderCallbacks());
+        //Add for bug1174107, refresh the options menu
+        getActivity().invalidateOptionsMenu();
     }
 
     @Override

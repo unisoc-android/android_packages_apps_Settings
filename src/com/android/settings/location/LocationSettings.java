@@ -19,11 +19,13 @@ package com.android.settings.location;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.location.SettingInjectorService;
+import android.location.LocationFeaturesUtils;
 import android.os.Bundle;
 import android.provider.SearchIndexableResource;
 
 import androidx.preference.Preference;
 import androidx.preference.PreferenceGroup;
+import android.widget.Toast;
 
 import com.android.settings.R;
 import com.android.settings.SettingsActivity;
@@ -66,10 +68,21 @@ public class LocationSettings extends DashboardFragment {
     private static final String TAG = "LocationSettings";
 
     private LocationSwitchBarController mSwitchBarController;
+    private static boolean SUPPORT_AGPS_SETTING = false;
+    private static boolean GNSS_DISABLED = false;
+    private static boolean LOCATION_DISABLED = false;
 
     @Override
     public int getMetricsCategory() {
         return SettingsEnums.LOCATION;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        SUPPORT_AGPS_SETTING = LocationFeaturesUtils.getInstance(context).isSupportAgpsSettings();
+        GNSS_DISABLED = LocationFeaturesUtils.getInstance(context).isGnssDisabled();
+        LOCATION_DISABLED = LocationFeaturesUtils.getInstance(context).isLocationDisabled();
+        super.onAttach(context);
     }
 
     @Override
@@ -82,11 +95,19 @@ public class LocationSettings extends DashboardFragment {
         mSwitchBarController = new LocationSwitchBarController(activity, switchBar,
                 getSettingsLifecycle());
         switchBar.show();
+        if (LOCATION_DISABLED) {
+            Toast.makeText(activity, R.string.location_disabled_toast_info, Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     @Override
     protected int getPreferenceScreenResId() {
-        return R.xml.location_settings;
+        int resId = R.xml.location_settings;
+        if (!GNSS_DISABLED && SUPPORT_AGPS_SETTING) {
+            resId = R.xml.location_settings_agps;
+        }
+        return resId;
     }
 
     @Override
@@ -120,6 +141,9 @@ public class LocationSettings extends DashboardFragment {
         controllers.add(new LocationForWorkPreferenceController(context, lifecycle));
         controllers.add(new RecentLocationRequestPreferenceController(context, fragment, lifecycle));
         controllers.add(new LocationScanningPreferenceController(context));
+        if (!GNSS_DISABLED && SUPPORT_AGPS_SETTING) {
+            controllers.add(new LocationAssistGnssPreferenceController(context, lifecycle));
+        }
         controllers.add(new LocationServicePreferenceController(context, fragment, lifecycle));
         controllers.add(new LocationFooterPreferenceController(context, lifecycle));
         return controllers;
@@ -134,7 +158,7 @@ public class LocationSettings extends DashboardFragment {
                 public List<SearchIndexableResource> getXmlResourcesToIndex(
                         Context context, boolean enabled) {
                     final SearchIndexableResource sir = new SearchIndexableResource(context);
-                    sir.xmlResId = R.xml.location_settings;
+                    sir.xmlResId = (!GNSS_DISABLED && SUPPORT_AGPS_SETTING) ? R.xml.location_settings_agps : R.xml.location_settings;
                     return Arrays.asList(sir);
                 }
 
@@ -143,6 +167,13 @@ public class LocationSettings extends DashboardFragment {
                         context) {
                     return buildPreferenceControllers(context, null /* fragment */,
                             null /* lifecycle */);
+                }
+
+                @Override
+                protected boolean isPageSearchEnabled(Context context) {
+                  TopLevelLocationPreferenceController controller =
+                    new TopLevelLocationPreferenceController(context,"top_level_location");
+                      return controller.isSearchAble();
                 }
             };
 }

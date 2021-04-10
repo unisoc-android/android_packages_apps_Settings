@@ -35,13 +35,13 @@
         <requestFocus />
     </EditText>
 
-    <GridLayout
+    <LinearLayout
         android:id="@+id/user_dictionary_add_word_grid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dip"
         android:layout_marginStart="8dip"
-        android:columnCount="2" >
+        android:orientation="horizontal" >
 
         <TextView
             android:id="@+id/user_dictionary_add_shortcut_label"
@@ -53,15 +53,15 @@
 
         <EditText
             android:id="@+id/user_dictionary_add_shortcut"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_gravity="fill_horizontal|center_vertical"
             android:layout_marginBottom="8dip"
-            android:layout_marginStart="8dip"
             android:layout_marginTop="8dip"
             android:hint="@string/user_dict_settings_add_shortcut_hint"
             android:imeOptions="flagNoFullscreen"
             android:inputType="textNoSuggestions"
             android:maxLength="@integer/maximum_user_dictionary_word_length" />
-    </GridLayout>
+    </LinearLayout>
 
 </LinearLayout>

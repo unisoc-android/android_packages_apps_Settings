@@ -21,6 +21,7 @@ import android.provider.Settings;
 import androidx.preference.Preference;
 
 import com.android.settings.core.TogglePreferenceController;
+import com.android.settings.Utils;
 import com.android.settingslib.RestrictedSwitchPreference;
 
 public class AddUserWhenLockedPreferenceController extends TogglePreferenceController {
@@ -44,6 +45,10 @@ public class AddUserWhenLockedPreferenceController extends TogglePreferenceContr
             restrictedSwitchPreference.setDisabledByAdmin(
                     mUserCaps.disallowAddUser() ? mUserCaps.getEnforcedAdmin() : null);
             restrictedSwitchPreference.setVisible(mUserCaps.mUserSwitcherEnabled);
+        }
+        // bug 1104944 : on Ultra power saving mode, need to hide SearchMenu and Multiuser settings
+        if (Utils.inUtraPowerSavingMode()) {
+            restrictedSwitchPreference.setEnabled(false);
         }
     }
 

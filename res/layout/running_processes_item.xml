@@ -33,7 +33,7 @@
         android:layout_height="@android:dimen/app_icon_size"
         android:layout_rowSpan="2"
         android:layout_marginEnd="8dip"
-        android:scaleType="centerInside"
+        android:scaleType="fitXY"
         android:contentDescription="@null" />
 
     <LinearLayout

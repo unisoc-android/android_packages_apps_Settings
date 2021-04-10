@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  Copyright (C) 2007 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+
+     Add resource for UNISOC
+ -->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- UNISOC: disable switch default data sim function on specific version -->
+    <string-array name="operator_required_iccid_list" translatable="false">
+    </string-array>
+    <!-- UNISOC: Add for network type menu. @{ -->
+    <string-array name="enabled_5g_NR_networks_choices" translatable="false">
+        <item>@string/network_5G</item>
+        <item>@string/network_4G</item>
+    </string-array>
+    <string-array name="enabled_5g_NR_networks_values" translatable="false">
+        <item>"26"</item>
+        <item>"9"</item>
+    </string-array>
+    <string-array name="carrier_customize_network_choices" translatable="false">
+    </string-array>
+    <string-array name="carrier_customize_network_values" translatable="false">
+    </string-array>
+    <!-- @} -->
+    <!-- UNISOC: FEATURE_SUPPORT_TRAFFIC_CLASS @{ -->
+    <string-array name="traffic_class_entries">
+        <item>Conversational</item>
+        <item>Streaming</item>
+        <item>Interactive</item>
+        <item>Background</item>
+        <item>Subscribed value</item>
+    </string-array>
+    <!-- UNISOC: PS Data Off @{ -->
+    <string-array name="except_service_name">
+        <item>None AP service</item>
+        <item>Management of USIM files over ps service</item>
+        <item>Device management over ps service</item>
+        <item>Device management and Management of USIM files over ps service</item>
+    </string-array>
+    <string-array translatable="false" name="traffic_class_values">
+        <!-- Do not translate. -->
+        <item>0</item>
+        <!-- Do not translate. -->
+        <item>1</item>
+        <!-- Do not translate. -->
+        <item>2</item>
+        <!-- Do not translate. -->
+        <item>3</item>
+        <!-- Do not translate. -->
+        <item>4</item>
+    </string-array>
+    <!-- @} -->
+    <!-- UNISOC: FL0108090026  Customized manually network scan list @{ -->
+    <string-array name="mark_plmns_as_grey" translatable="false">
+    </string-array>
+    <!-- @} -->
+    <!-- UNISOC: national data roaming -->
+    <string-array name="enabled_data_roaming_choices">
+    <item>@string/preferred_data_roaming_disable</item>
+    <item>@string/preferred_data_roaming_national</item>
+    <item>@string/preferred_data_roaming_all_networks</item>
+    </string-array>
+    <string-array name="enabled_data_roaming_values" translatable="false">
+        <item>"0"</item>
+        <item>"2"</item>
+        <item>"1"</item>
+    </string-array>
+</resources>

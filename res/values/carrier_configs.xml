@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Whether or not display software and hardware version, just for CTCC. -->
+    <bool name="config_enableCtccVersion" targetCarriers="ctcc">false</bool>
+</resources>

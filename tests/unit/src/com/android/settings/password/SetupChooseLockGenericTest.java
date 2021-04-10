@@ -29,11 +29,14 @@ import android.content.Intent;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
+import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 import androidx.test.runner.lifecycle.Stage;
+
+import com.android.settings.tests.unit.R;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,9 +52,10 @@ import java.util.Collection;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class SetupChooseLockGenericTest {
-
+    private static final String TAG = "Settings_ut";
     private UiDevice mDevice;
     private Context mContext;
+    private boolean mTestFlag;
 
     @Before
     public void setUp() throws Exception {
@@ -59,6 +63,8 @@ public class SetupChooseLockGenericTest {
         mContext = getInstrumentation().getTargetContext();
         Settings.Global.putInt(
             mContext.getContentResolver(), Settings.Global.DEVICE_PROVISIONED, 0);
+        Context context = getInstrumentation().getContext();
+        mTestFlag = context.getResources().getBoolean(R.bool.config_test_lockscreen);
     }
 
     @After
@@ -70,18 +76,22 @@ public class SetupChooseLockGenericTest {
     @Test
     public void clickSkipFigerprintPreference_deviceNotProvisioned_shouldBeAbleToProceed()
             throws Throwable {
-        final Intent newPasswordIntent =
-            new Intent(getTargetContext(), SetupChooseLockGeneric.class)
-            .putExtra(ChooseLockSettingsHelper.EXTRA_KEY_FOR_FINGERPRINT, true)
-            .setAction(ACTION_SET_NEW_PASSWORD)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        if (mTestFlag) {
+            final Intent newPasswordIntent =
+                new Intent(getTargetContext(), SetupChooseLockGeneric.class)
+                .putExtra(ChooseLockSettingsHelper.EXTRA_KEY_FOR_FINGERPRINT, true)
+                .setAction(ACTION_SET_NEW_PASSWORD)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-        getInstrumentation().getContext().startActivity(newPasswordIntent);
-        mDevice.waitForIdle();
-        mDevice.findObject(new UiSelector().textContains("Continue without ")).click();
+            getInstrumentation().getContext().startActivity(newPasswordIntent);
+            mDevice.waitForIdle();
+            mDevice.findObject(new UiSelector().textContains("Continue without ")).click();
 
-        final Activity activity = getCurrentActivity();
-        assertThat(activity).isInstanceOf(SetupChooseLockGeneric.InternalActivity.class);
+            final Activity activity = getCurrentActivity();
+            assertThat(activity).isInstanceOf(SetupChooseLockGeneric.InternalActivity.class);
+        } else {
+            Log.d(TAG, "clickSkipFigerprintPreference_deviceNotProvisioned_shouldBeAbleToProceed not test");
+        }
     }
 
     private Activity getCurrentActivity() throws Throwable {

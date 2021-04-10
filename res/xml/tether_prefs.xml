@@ -27,11 +27,25 @@
         android:fragment="com.android.settings.wifi.tether.WifiTetherSettings"
         settings:summaryLineCount="2" />
 
+    <com.android.settings.widget.FixedLineSummaryPreference
+        android:key="sprd_wifi_tether"
+        android:title="@string/wifi_hotspot_checkbox_text"
+        android:summary="@string/summary_two_lines_placeholder"
+        android:fragment="com.android.settings.wifi.tether.SprdWifiTetherSettings"
+        settings:summaryLineCount="2" />
+
     <SwitchPreference
         android:key="usb_tether_settings"
         android:title="@string/usb_tethering_button_text"
         android:summary="@string/usb_tethering_subtext"
         settings:keywords="@string/keywords_hotspot_tethering" />
+
+    <!-- SPRD: Bug#692657 Add for SPRD USB Feature BEG -->
+    <SwitchPreference
+        android:key="usb_pc_share_settings"
+        android:title="@string/usb_pc_internet_share"
+        android:persistent="false" />
+    <!-- Add for SPRD USB Feature END -->
 
     <SwitchPreference
         android:key="enable_bluetooth_tethering"

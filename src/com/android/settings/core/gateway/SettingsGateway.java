@@ -80,6 +80,7 @@ import com.android.settings.fuelgauge.AdvancedPowerUsageDetail;
 import com.android.settings.fuelgauge.PowerUsageSummary;
 import com.android.settings.fuelgauge.batterysaver.BatterySaverScheduleSettings;
 import com.android.settings.fuelgauge.batterysaver.BatterySaverSettings;
+import com.android.settings.fuelgauge.SprdBatterySaverManageFragment;
 import com.android.settings.gestures.AssistGestureSettings;
 import com.android.settings.gestures.DoubleTapPowerSettings;
 import com.android.settings.gestures.DoubleTapScreenSettings;
@@ -147,6 +148,16 @@ import com.android.settings.wifi.calling.WifiCallingSettings;
 import com.android.settings.wifi.p2p.WifiP2pSettings;
 import com.android.settings.wifi.savedaccesspoints.SavedAccessPointsWifiSettings;
 import com.android.settings.wifi.tether.WifiTetherSettings;
+import com.sprd.settings.accessibility.ToggleAssistantFragment;
+
+import com.sprd.settings.smartcontrols.SmartControlsSettings;
+import com.sprd.settings.smartcontrols.SmartMotionFragment;
+import com.sprd.settings.smartcontrols.PocketModeFragment;
+import com.android.settings.wifi.tether.SprdWifiTetherSettings;
+
+import com.sprd.settings.navigation.NavigationBarSettings;
+import com.sprd.settings.SprdUsbSettingsFragment;
+import com.sprd.settings.timerpower.TimerPower;
 
 public class SettingsGateway {
 
@@ -159,11 +170,14 @@ public class SettingsGateway {
             CreateShortcut.class.getName(),
             WifiSettings.class.getName(),
             ConfigureWifiSettings.class.getName(),
+            //SPRD: add for usb
+            SprdUsbSettingsFragment.class.getName(),
             SavedAccessPointsWifiSettings.class.getName(),
             SimSettings.class.getName(),
             TetherSettings.class.getName(),
             WifiP2pSettings.class.getName(),
             WifiTetherSettings.class.getName(),
+            SprdWifiTetherSettings.class.getName(),
             BackgroundCheckSummary.class.getName(),
             VpnSettings.class.getName(),
             DataSaverSummary.class.getName(),
@@ -283,7 +297,27 @@ public class SettingsGateway {
             PreviouslyConnectedDeviceDashboardFragment.class.getName(),
             BatterySaverScheduleSettings.class.getName(),
             MobileNetworkListFragment.class.getName(),
-            GlobalActionsPanelSettings.class.getName()
+
+            /**
+             * Add for Smart Controls
+             *@{
+             */
+            SmartControlsSettings.class.getName(),
+            SmartMotionFragment.class.getName(),
+            PocketModeFragment.class.getName(),
+            /*@}*/
+            /*UNISOC: bug 1072213 Assistant touch @{*/
+            ToggleAssistantFragment.class.getName(),
+            /*@}*/
+            GlobalActionsPanelSettings.class.getName(),
+            // Add for "Scheduled power on/off"
+            TimerPower.class.getName(),
+            /* UNISOC Bug 1072090 ,add the search for dynamic navigationbar @{ */
+            NavigationBarSettings.class.getName(),
+            /* @} */
+            /* UNISOC: bug 1113855 add for super resolution @{ */
+            SprdBatterySaverManageFragment.class.getName(),
+            /* @} */
     };
 
     public static final String[] SETTINGS_FOR_RESTRICTED = {
@@ -301,6 +335,8 @@ public class SettingsGateway {
             Settings.AccessibilitySettingsActivity.class.getName(),
             Settings.SystemDashboardActivity.class.getName(),
             SupportDashboardActivity.class.getName(),
+            // Add for "Scheduled power on/off"
+            Settings.TimerPowerActivity.class.getName(),
             // Home page > Network & Internet
             Settings.WifiSettingsActivity.class.getName(),
             Settings.DataUsageSummaryActivity.class.getName(),
@@ -322,5 +358,16 @@ public class SettingsGateway {
             Settings.MyDeviceInfoActivity.class.getName(),
             Settings.ModuleLicensesActivity.class.getName(),
             UserBackupSettingsActivity.class.getName(),
+
+            /**
+             * Add for Smart Controls
+             *@{
+             */
+            Settings.SmartControlsSettingsActivity.class.getName(),
+            /*@}*/
+            //UNISOC: Bug 1072090 ,add the search for dynamic navigationbar
+            NavigationBarSettings.class.getName(),
+            //UNISOC: Add for bug 1224283
+            Settings.NavigationBarSettingsActivity.class.getName(),
     };
 }

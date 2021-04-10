@@ -22,7 +22,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiFeaturesUtils;
 import android.net.wifi.WifiManager;
+import android.os.UserManager;
 import android.provider.SearchIndexableResource;
 
 import com.android.settings.R;
@@ -48,6 +50,8 @@ public class ConfigureWifiSettings extends DashboardFragment {
     private WifiWakeupPreferenceController mWifiWakeupPreferenceController;
     private UseOpenWifiPreferenceController mUseOpenWifiPreferenceController;
 
+    private boolean mSupportAppConnectPolicy = false;
+
     @Override
     public int getMetricsCategory() {
         return SettingsEnums.CONFIGURE_WIFI;
@@ -69,7 +73,11 @@ public class ConfigureWifiSettings extends DashboardFragment {
 
     @Override
     protected int getPreferenceScreenResId() {
-        return R.xml.wifi_configure_settings;
+        if(mSupportAppConnectPolicy) {
+            return R.xml.wifi_configure_settings_ex;
+        } else {
+            return R.xml.wifi_configure_settings;
+        }
     }
 
     @Override
@@ -88,6 +96,9 @@ public class ConfigureWifiSettings extends DashboardFragment {
                 wifiManager));
         controllers.add(new WifiP2pPreferenceController(context, getSettingsLifecycle(),
                 wifiManager));
+        controllers.add(new BgscanRoamingPreferenceController(context, getSettingsLifecycle()));
+
+        mSupportAppConnectPolicy = WifiFeaturesUtils.getInstance(context).isSupportAppConnectPolicy();
         return controllers;
     }
 
@@ -110,6 +121,10 @@ public class ConfigureWifiSettings extends DashboardFragment {
                 @Override
                 public List<SearchIndexableResource> getXmlResourcesToIndex(Context context,
                         boolean enabled) {
+                    UserManager mUserManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
+                    if (mUserManager.isGuestUser()) {
+                        return null;
+                    }
                     final SearchIndexableResource sir = new SearchIndexableResource(context);
                     sir.xmlResId = R.xml.wifi_configure_settings;
                     return Arrays.asList(sir);

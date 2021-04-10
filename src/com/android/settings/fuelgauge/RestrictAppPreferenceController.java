@@ -20,6 +20,7 @@ package com.android.settings.fuelgauge;
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.os.UserManager;
+import androidx.preference.PreferenceScreen;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.preference.Preference;
@@ -61,6 +62,14 @@ public class RestrictAppPreferenceController extends BasePreferenceController {
         return AVAILABLE;
     }
 
+    @Override
+    public void displayPreference (PreferenceScreen screen) {
+        super.displayPreference(screen);
+        final Preference preference = screen.findPreference(getPreferenceKey());
+        if (preference != null) {
+            updateState(preference);
+        }
+    }
     @Override
     public void updateState(Preference preference) {
         super.updateState(preference);

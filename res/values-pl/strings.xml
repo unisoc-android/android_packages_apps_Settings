@@ -1835,7 +1835,12 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Ustaw wzór odblokowania"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Zmień wzór odblokowania"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Jak narysować wzór odblokowania"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Zbyt wiele nieudanych prób. Spróbuj ponownie za <xliff:g id="NUMBER">%d</xliff:g> s."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="few">Zbyt wiele nieudanych prób. Spróbuj ponownie za <xliff:g id="NUMBER">%d</xliff:g> sekundy.</item>
+        <item quantity="many">Zbyt wiele nieudanych prób. Spróbuj ponownie za <xliff:g id="NUMBER">%d</xliff:g> sekund.</item>
+        <item quantity="other">Zbyt wiele nieudanych prób. Spróbuj ponownie za <xliff:g id="NUMBER">%d</xliff:g> sekundy.</item>
+        <item quantity="one">Zbyt wiele nieudanych prób. Spróbuj ponownie za sekundę</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Aplikacja nie jest zainstalowana na telefonie."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Bezpieczeństwo profilu do pracy"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Blokada ekranu w profilu służbowym"</string>

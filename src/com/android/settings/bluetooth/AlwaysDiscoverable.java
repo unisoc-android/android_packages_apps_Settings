@@ -44,6 +44,8 @@ public class AlwaysDiscoverable extends BroadcastReceiver {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
+        mIntentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+
     }
 
     /** After calling start(), consumers should make a matching call to stop() when they no longer
@@ -72,7 +74,9 @@ public class AlwaysDiscoverable extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        if (action != BluetoothAdapter.ACTION_SCAN_MODE_CHANGED) {
+        int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+        if ((action == null) || (action == BluetoothAdapter.ACTION_STATE_CHANGED
+                && state != BluetoothAdapter.STATE_ON)) {
             return;
         }
         if (mBluetoothAdapter.getScanMode()

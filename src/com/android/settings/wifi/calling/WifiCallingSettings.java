@@ -213,9 +213,11 @@ public class WifiCallingSettings extends InstrumentedFragment implements HelpRes
         if (mSil == null) {
             return;
         }
+        //UNISOC:fix for bug 1083551,only data cards are available for WiFi Calling
         for (int i = 0; i < mSil.size(); ) {
             final SubscriptionInfo info = mSil.get(i);
-            if (!isWfcEnabledByPlatform(info) || !isWfcProvisionedOnDevice(info)) {
+            if (!isWfcEnabledByPlatform(info) || !isWfcProvisionedOnDevice(info)
+                || info.getSubscriptionId()!= SubscriptionManager.getDefaultDataSubscriptionId()) {
                 mSil.remove(i);
             } else {
                 i++;

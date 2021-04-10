@@ -27,10 +27,12 @@ import com.android.settingslib.core.AbstractPreferenceController;
 import com.android.settingslib.core.lifecycle.Lifecycle;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settingslib.core.lifecycle.events.OnCreate;
+import com.android.settingslib.core.lifecycle.events.OnDestroy;
 import com.android.settingslib.core.lifecycle.events.OnSaveInstanceState;
 
 public class ResetAppPrefPreferenceController extends AbstractPreferenceController
-        implements PreferenceControllerMixin, LifecycleObserver, OnCreate, OnSaveInstanceState {
+        implements PreferenceControllerMixin, LifecycleObserver, OnCreate,
+        OnDestroy, OnSaveInstanceState {
 
     private ResetAppsHelper mResetAppsHelper;
 
@@ -65,6 +67,13 @@ public class ResetAppPrefPreferenceController extends AbstractPreferenceControll
     public void onCreate(Bundle savedInstanceState) {
         mResetAppsHelper.onRestoreInstanceState(savedInstanceState);
     }
+
+    /* bug 1196769 : crash happened when activity has relaunched and dialog is not dismissed @{*/
+    @Override
+    public void onDestroy() {
+        mResetAppsHelper.stop();
+    }
+    /* @} */
 
     @Override
     public void onSaveInstanceState(Bundle outState) {

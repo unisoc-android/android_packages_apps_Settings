@@ -26,6 +26,9 @@ import android.os.Looper;
 import android.os.PersistableBundle;
 import android.provider.Settings;
 import android.telephony.CarrierConfigManager;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.preference.Preference;
@@ -43,17 +46,22 @@ import com.android.settingslib.core.lifecycle.events.OnStop;
  * Preference controller for "Apn settings"
  */
 public class ApnPreferenceController extends TelephonyBasePreferenceController implements
-        LifecycleObserver, OnStart, OnStop {
+        LifecycleObserver, OnStart, OnStop, BroadcastReceiverChanged.BroadcastReceiverChangedClient {
 
+    private static final String TAG = "ApnPreferenceController";
     @VisibleForTesting
     CarrierConfigManager mCarrierConfigManager;
     private Preference mPreference;
     private DpcApnEnforcedObserver mDpcApnEnforcedObserver;
+    // UNISOC: fix for bug 1194942
+    private BroadcastReceiverChanged mBroadcastReceiverChanged;
+    private PreferenceScreen mPreferenceScreen;
 
     public ApnPreferenceController(Context context, String key) {
         super(context, key);
         mCarrierConfigManager = new CarrierConfigManager(context);
         mDpcApnEnforcedObserver = new DpcApnEnforcedObserver(new Handler(Looper.getMainLooper()));
+        mBroadcastReceiverChanged = new BroadcastReceiverChanged(context,this);
     }
 
     @Override
@@ -77,16 +85,19 @@ public class ApnPreferenceController extends TelephonyBasePreferenceController i
     @Override
     public void onStart() {
         mDpcApnEnforcedObserver.register(mContext);
+        mBroadcastReceiverChanged.start();
     }
 
     @Override
     public void onStop() {
         mDpcApnEnforcedObserver.unRegister(mContext);
+        mBroadcastReceiverChanged.stop();
     }
 
     @Override
     public void displayPreference(PreferenceScreen screen) {
         super.displayPreference(screen);
+        mPreferenceScreen = screen;
         mPreference = screen.findPreference(getPreferenceKey());
     }
 
@@ -140,6 +151,22 @@ public class ApnPreferenceController extends TelephonyBasePreferenceController i
         @Override
         public void onChange(boolean selfChange) {
             updateState(mPreference);
+        }
+    }
+
+    @Override
+    public void onPhoneStateChanged() {}
+
+    @Override
+    public void onCarrierConfigChanged(int phoneId) {
+        if(SubscriptionManager.isValidPhoneId(phoneId) && SubscriptionManager.getPhoneId(mSubId) == phoneId) {
+            if(SubscriptionManager.getSimStateForSlotIndex(phoneId) == TelephonyManager.SIM_STATE_LOADED) {
+                Log.d(TAG, "onCarrierConfigChanged SIM_STATE_LOADED.");
+                if (mPreferenceScreen != null) {
+                    displayPreference(mPreferenceScreen);
+                    mPreference.setVisible(isAvailable());
+                }
+            }
         }
     }
 }

@@ -44,6 +44,10 @@ public class VideoPreferenceController extends BasePreferenceController implemen
     public void displayPreference(PreferenceScreen screen) {
         super.displayPreference(screen);
         mVideoPreference = screen.findPreference(getPreferenceKey());
+        //bug 1146371 : if animation is not available , hide preference
+        if (mVideoPreference != null && !mVideoPreference.getAnimationAvailable()) {
+            mVideoPreference.setVisible(false);
+        }
     }
 
     @Override
@@ -60,5 +64,4 @@ public class VideoPreferenceController extends BasePreferenceController implemen
             mVideoPreference.onViewVisible(mVideoPaused);
         }
     }
-
 }

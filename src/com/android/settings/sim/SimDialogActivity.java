@@ -70,6 +70,10 @@ public class SimDialogActivity extends FragmentActivity {
 
     private void showOrUpdateDialog() {
         final int dialogType = getIntent().getIntExtra(DIALOG_TYPE_KEY, INVALID_PICK);
+        if (dialogType == INVALID_PICK) {
+            finish();
+            return;
+        }
         final String tag = Integer.toString(dialogType);
         final FragmentManager fragmentManager = getSupportFragmentManager();
         SimDialogFragment fragment = (SimDialogFragment) fragmentManager.findFragmentByTag(tag);
@@ -149,9 +153,12 @@ public class SimDialogActivity extends FragmentActivity {
         final SubscriptionManager subscriptionManager = getSystemService(SubscriptionManager.class);
         final TelephonyManager telephonyManager = getSystemService(
                 TelephonyManager.class).createForSubscriptionId(subId);
+        boolean defaultDataSuIdChange = subscriptionManager.getDefaultDataSubscriptionId() != subId;
         subscriptionManager.setDefaultDataSubId(subId);
         telephonyManager.setDataEnabled(true);
-        Toast.makeText(this, R.string.data_switch_started, Toast.LENGTH_LONG).show();
+        if (defaultDataSuIdChange) {
+            Toast.makeText(this, R.string.data_switch_started, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void setDefaultCallsSubId(final int subId) {

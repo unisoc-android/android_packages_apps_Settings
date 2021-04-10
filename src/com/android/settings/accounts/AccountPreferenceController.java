@@ -91,6 +91,11 @@ public class AccountPreferenceController extends AbstractPreferenceController
     private AccountRestrictionHelper mHelper;
     private MetricsFeatureProvider mMetricsFeatureProvider;
 
+    // Add for bug1104405, no need to show the Sprd type accounts.
+    public static final String[] SPRD_ACCOUNTS = {"sprd.com.android.account.usim",
+        "sprd.com.android.account.phone",
+        "sprd.com.android.account.sim"};
+
     /**
      * Holds data related to the accounts belonging to one profile.
      */
@@ -474,6 +479,18 @@ public class AccountPreferenceController extends AbstractPreferenceController
         }
     }
 
+    /* Add for bug1104405, no need to show the Sprd type accounts. @{ */
+    public static boolean filterSprdAccount(String[] accountArray, String type){
+         for (int i = 0; i < accountArray.length; i++){
+             if (type != null && type.equals(accountArray[i])){
+                 Log.d(TAG," type = " + type);
+                 return true;
+             }
+         }
+         return false;
+    }
+    /* @} */
+
     private ArrayList<AccountTypePreference> getAccountTypePreferences(AuthenticatorHelper helper,
             UserHandle userHandle, ArrayMap<String, AccountTypePreference> preferenceToRemove) {
         final String[] accountTypes = helper.getEnabledAccountTypes();
@@ -482,6 +499,12 @@ public class AccountPreferenceController extends AbstractPreferenceController
 
         for (int i = 0; i < accountTypes.length; i++) {
             final String accountType = accountTypes[i];
+            /* Add for bug1104405, no need to show the Sprd type accounts. @{ */
+            if (filterSprdAccount(SPRD_ACCOUNTS, accountType)){
+                continue;
+            }
+            /* @} */
+
             // Skip showing any account that does not have any of the requested authorities
             if (!accountTypeHasAnyRequestedAuthorities(helper, accountType)) {
                 continue;

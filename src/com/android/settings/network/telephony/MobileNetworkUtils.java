@@ -28,12 +28,14 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
+import android.net.Uri;
 import android.os.PersistableBundle;
 import android.os.SystemProperties;
 import android.provider.Settings;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.CarrierConfigManager;
+import android.telephony.CarrierConfigManagerEx;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -42,6 +44,7 @@ import android.telephony.ims.feature.ImsFeature;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
+import android.widget.Toast;
 
 import androidx.annotation.VisibleForTesting;
 
@@ -54,6 +57,7 @@ import com.android.settings.R;
 import com.android.settings.Utils;
 import com.android.settings.core.BasePreferenceController;
 import com.android.settingslib.graph.SignalDrawable;
+import com.android.settingslib.WirelessUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -70,12 +74,16 @@ public class MobileNetworkUtils {
     // the default value is false.
     private static final String KEY_ENABLE_ESIM_UI_BY_DEFAULT =
             "esim.enable_esim_system_ui_by_default";
+    // UNISOC: FL0108090007 UPLMN Preference
+    private static final String PROPERTY_UPLMN_CONTROL = "persist.sys.uplmn";
+
     private static final String LEGACY_ACTION_CONFIGURE_PHONE_ACCOUNT =
             "android.telecom.action.CONNECTION_SERVICE_CONFIGURE";
 
     // The following constants are used to draw signal icon.
     public static final int NO_CELL_DATA_TYPE_ICON = 0;
     public static final Drawable EMPTY_DRAWABLE = new ColorDrawable(Color.TRANSPARENT);
+    public static final String OMA_WFC_ENABLE = "oma.wfc.enable";
 
     /**
      * Returns if DPC APNs are enforced.
@@ -127,10 +135,32 @@ public class MobileNetworkUtils {
             isWifiCallingEnabled = imsMgr != null
                     && imsMgr.isWfcEnabledByPlatform()
                     && imsMgr.isWfcProvisionedOnDevice()
-                    && isImsServiceStateReady(imsMgr);
+                    && isImsServiceStateReady(imsMgr)
+                    && (isShowWfcByDefault(context, subId)
+                            || (!isShowWfcByDefault(context, subId) && isOmaWfcEnable(context, subId)));
         }
 
         return isWifiCallingEnabled;
+    }
+
+    /*
+     * UNISOC: Add for Bug 1073231 control WFC showing via OMA request
+     */
+    public static boolean isShowWfcByDefault(Context context, int subId) {
+        final PersistableBundle carrierConfig = context.getSystemService(
+                CarrierConfigManager.class).getConfigForSubId(subId);
+
+        if (carrierConfig != null) {
+            return carrierConfig.getBoolean(
+                    CarrierConfigManagerEx.KEY_DEFAULT_SHOW_WIFI_CALL);
+        }
+
+        return true;
+    }
+
+    public static boolean isOmaWfcEnable(Context context, int subId) {
+        return ((Settings.Global.getInt(context.getContentResolver(),
+                OMA_WFC_ENABLE + subId, 0)) == 1 ? true : false);
     }
 
     @VisibleForTesting
@@ -535,4 +565,82 @@ public class MobileNetworkUtils {
         icons.setTintList(Utils.getColorAttr(context, android.R.attr.colorControlNormal));
         return icons;
     }
+
+    public static boolean isSupportWCDMA(Context context,int subId) {
+        final TelephonyManager tm = TelephonyManager.from(context).createForSubscriptionId(subId);
+        long radioAccessFamily = tm.getSupportedRadioAccessFamily();
+        if (TelephonyManager.NETWORK_TYPE_BITMASK_UNKNOWN != radioAccessFamily) {
+            int RAF_WCDMA = (int) TelephonyManager.NETWORK_TYPE_BITMASK_HSUPA
+                    | (int) TelephonyManager.NETWORK_TYPE_BITMASK_HSDPA
+                    | (int) TelephonyManager.NETWORK_TYPE_BITMASK_HSPA
+                    | (int) TelephonyManager.NETWORK_TYPE_BITMASK_HSPAP
+                    | (int) TelephonyManager.NETWORK_TYPE_BITMASK_UMTS;
+            return (radioAccessFamily & RAF_WCDMA) != 0;
+        }
+        return false;
+    }
+
+    public static boolean isSupportLTE(Context context,int subId) {
+        final TelephonyManager tm = TelephonyManager.from(context).createForSubscriptionId(subId);
+        long radioAccessFamily = tm.getSupportedRadioAccessFamily();
+        if (TelephonyManager.NETWORK_TYPE_BITMASK_UNKNOWN != radioAccessFamily) {
+            int RAF_LTE = (int) TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                    | (int) TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA;
+            return (radioAccessFamily & RAF_LTE) != 0;
+        }
+        return false;
+    }
+
+    public static boolean isSupportNR(Context context,int subId) {
+        final TelephonyManager tm = TelephonyManager.from(context).createForSubscriptionId(subId);
+        long radioAccessFamily = tm.getSupportedRadioAccessFamily();
+        if (TelephonyManager.NETWORK_TYPE_BITMASK_UNKNOWN != radioAccessFamily) {
+            int RAF_NR = (int) TelephonyManager.NETWORK_TYPE_BITMASK_NR;
+            return (radioAccessFamily & RAF_NR) != 0;
+        }
+        return false;
+    }
+
+    public static boolean isSupportGSM(Context context,int subId) {
+        final TelephonyManager tm = TelephonyManager.from(context).createForSubscriptionId(subId);
+        long radioAccessFamily = tm.getSupportedRadioAccessFamily();
+        if (TelephonyManager.NETWORK_TYPE_BITMASK_UNKNOWN != radioAccessFamily) {
+            int RAF_GSM = (int) TelephonyManager.NETWORK_TYPE_BITMASK_GSM
+                    |(int) TelephonyManager.NETWORK_TYPE_BITMASK_GPRS
+                    |(int) TelephonyManager.NETWORK_TYPE_BITMASK_EDGE;
+            return (radioAccessFamily & RAF_GSM) != 0;
+        }
+        return false;
+    }
+
+    public static Uri getNotifyContentUri(Uri uri, boolean usingSubId, int subId) {
+        return (usingSubId) ? Uri.withAppendedPath(uri, "" + subId) : uri;
+    }
+
+    /**
+     * UNISOC: FL0108090007 UPLMN Preference*/
+    public static boolean isSupportUplmn(int subId){
+        return SystemProperties.getBoolean(PROPERTY_UPLMN_CONTROL, false);
+    }
+    /**
+     * @} */
+
+    /** UNISOC: Bug929604 To check whether network selection is enabled @{ */
+    public static boolean isNetworkSelectEnabled (Context context) {
+        TelephonyManager telephonyManager = (TelephonyManager)
+                context.getSystemService(Context.TELEPHONY_SERVICE);
+        if (telephonyManager.getCallState() != TelephonyManager.CALL_STATE_IDLE) {
+            Toast.makeText(context, R.string.select_during_call_prohibited,
+                    Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (WirelessUtils.isAirplaneModeOn(context)) {
+            Toast.makeText(context, R.string.select_under_airplane_prohibited,
+                    Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+    /** @} */
+
 }

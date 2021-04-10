@@ -129,6 +129,17 @@ public class ListWithEntrySummaryPreference extends CustomListPreference {
 
             return row;
         }
+
+        /*UNISOC: Add for bug 1128400*/
+        @Override
+        public int getCount(){
+            if(mSelector != null && mSelector.getEntryValues() != null) {
+                return mSelector.getEntryValues().length;
+            }
+            return 0;
+        }
+        /* @} */
+
     }
 
     @Override

@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"განბლოკვის ნიმუშის დაყენება"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"გასაღების ცვლილება"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"როგორ დახაზოთ განბლოკვის გრაფიკული გასაღები"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"ძალიან ბევრი არასწორი მცდელობა. სცადეთ ხელახლა <xliff:g id="NUMBER">%d</xliff:g> წამში."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">ძალიან ბევრი არასწორი მცდელობა. ცადეთ ხელახლა <xliff:g id="NUMBER">%d</xliff:g> წამში.</item>
+        <item quantity="one">ძალიან ბევრი არასწორი მცდელობა. ცადეთ ხელახლა 1 წამში.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"თქვენს ტელეფონზე არ არის დაყენებული აპლიკაცია."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"სამსახურის პროფილის უსაფრთხოება"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"სამსახურის პროფილის ეკრანის დაბლოკვა"</string>

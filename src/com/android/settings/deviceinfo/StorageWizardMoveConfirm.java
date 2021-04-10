@@ -33,6 +33,7 @@ import android.os.storage.StorageManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.android.internal.util.Preconditions;
 import com.android.settings.R;
@@ -85,8 +86,11 @@ public class StorageWizardMoveConfirm extends StorageWizardBase {
                     Log.d(TAG, "User " + user.id + " is currently locked; requesting unlock");
                     final CharSequence description = TextUtils.expandTemplate(
                             getText(R.string.storage_wizard_move_unlock), user.name);
-                    new ChooseLockSettingsHelper(this).launchConfirmationActivityForAnyUser(
+                    boolean launched = new ChooseLockSettingsHelper(this).launchConfirmationActivityForAnyUser(
                             REQUEST_CREDENTIAL, null, null, description, user.id);
+                    if (!launched) {
+                        Toast.makeText(this, description, Toast.LENGTH_LONG).show();
+                    }
                     return;
                 }
             }

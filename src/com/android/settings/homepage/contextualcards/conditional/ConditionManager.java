@@ -18,6 +18,7 @@ package com.android.settings.homepage.contextualcards.conditional;
 
 import android.content.Context;
 import android.util.Log;
+import android.os.SystemProperties;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
@@ -47,6 +48,8 @@ public class ConditionManager {
     private final ConditionListener mListener;
 
     private boolean mIsListeningToStateChange;
+    //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp battery saver condition
+    private final boolean isSupportSprdPowerManager = (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1));
 
     public ConditionManager(Context context, ConditionListener listener) {
         mAppContext = context.getApplicationContext();
@@ -154,7 +157,11 @@ public class ConditionManager {
         mCardControllers.add(new AirplaneModeConditionController(mAppContext, this /* manager */));
         mCardControllers.add(
                 new BackgroundDataConditionController(mAppContext, this /* manager */));
-        mCardControllers.add(new BatterySaverConditionController(mAppContext, this /* manager */));
+
+        //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp battery saver condition
+        if (!isSupportSprdPowerManager) {
+            mCardControllers.add(new BatterySaverConditionController(mAppContext, this /* manager */));
+        }
         mCardControllers.add(new CellularDataConditionController(mAppContext, this /* manager */));
         mCardControllers.add(new DndConditionCardController(mAppContext, this /* manager */));
         mCardControllers.add(new HotspotConditionController(mAppContext, this /* manager */));

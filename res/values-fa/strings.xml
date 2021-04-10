@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"تنظیم الگوی بازگشایی قفل"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"تغییر الگوی بازگشایی قفل"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"نحوه ترسیم الگوی بازگشایی قفل"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"تلاش‌های نادرست بسیاری انجام شده است. پس از <xliff:g id="NUMBER">%d</xliff:g> ثانیه دوباره امتحان کنید."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">"تلاش‌های نادرست بسیاری انجام شده است. پس از <xliff:g id="NUMBER">%d</xliff:g> ثانیه دیگر دوباره امتحان کنید."</item>
+        <item quantity="other">"تلاش‌های نادرست بسیاری انجام شده است. پس از <xliff:g id="NUMBER">%d</xliff:g> ثانیه دوباره امتحان کنید."</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"برنامه کاربردی در گوشی شما نصب نشد."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"امنیت نمایه کاری"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"قفل صفحه نمایه کاری"</string>

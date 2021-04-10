@@ -66,7 +66,7 @@ public class StorageWizardFormatProgress extends StorageWizardBase {
         if (mTask == null) {
             mTask = new PartitionTask();
             mTask.setActivity(this);
-            mTask.execute();
+            mTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         } else {
             mTask.setActivity(this);
         }

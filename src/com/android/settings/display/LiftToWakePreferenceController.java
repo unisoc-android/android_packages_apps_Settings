@@ -25,6 +25,7 @@ import androidx.preference.SwitchPreference;
 
 import com.android.settings.core.PreferenceControllerMixin;
 import com.android.settingslib.core.AbstractPreferenceController;
+import com.sprd.settings.smartcontrols.Utils;
 
 public class LiftToWakePreferenceController extends AbstractPreferenceController implements
         PreferenceControllerMixin, Preference.OnPreferenceChangeListener {
@@ -37,6 +38,11 @@ public class LiftToWakePreferenceController extends AbstractPreferenceController
 
     @Override
     public boolean isAvailable() {
+        /* UNISOC:1154812 Remove the item if smart control exists @{ */
+        if (Utils.isSupportSmartControl(mContext)) {
+            return false;
+        }
+        /* @} */
         SensorManager sensors = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         return sensors != null && sensors.getDefaultSensor(Sensor.TYPE_WAKE_GESTURE) != null;
     }

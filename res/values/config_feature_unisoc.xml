@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    This file is used to configure the switch of functions in Settings.
+    Including Settings internal self-developed function, currently no switch
+    control function, plugins added in Settings, etc. One function uses only
+    one switch for control.
+
+    Switch Type Example:
+    Bool:config_support_xxx
+    <bool name="config_support_networkRate" translatable="false">true</bool>
+    Plugin:config_plugin_xxx
+    <string name="config_plugin_disableDatausage" translatable="false">plugin.sprd.disabledatausage.AddonDisableDataUsage</string>
+    Value:config_xxx
+    <integer name="config_wifiSupplicantScanInterval" translatable="false">15000</integer>
+-->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- UNISOC: Add for network mode type -->
+    <bool name="config_network_option_not_allowed_for_non_USIM_card" translatable="false">false</bool>
+    <bool name="config_network_option_not_allowed_for_non_primary_card" translatable="false">true</bool>
+    <bool name="config_carrier_customize_network" translatable="false">false</bool>
+    <!-- UNISOC: new featrue:Smart Dual SIM -->
+    <bool name="config_show_smartdualsim">false</bool>
+    <!-- Show Ram
+         true - show
+         false - hide
+         -->
+    <bool name="config_support_showRam" translatable="false">true</bool>
+
+    <!-- UNISOC: 1072210 Support Owner Info Length Limited-->
+    <bool name="config_support_limitOwnerInfoLength" translatable="false">true</bool>
+
+    <!-- Is the device capable of features in SmartControls.
+            true - support
+            false - not support
+         @{-->
+    <bool name="config_support_smartControls" translatable="false">true</bool>
+    <bool name="config_support_smartWake" translatable="false">true</bool>
+    <bool name="config_support_easyDial" translatable="false">true</bool>
+    <bool name="config_support_easyAnswer" translatable="false">true</bool>
+    <bool name="config_support_handsfreeSwitch" translatable="false">true</bool>
+    <bool name="config_support_smartCallRecorder" translatable="false">true</bool>
+    <bool name="config_support_easyBell" translatable="false">true</bool>
+    <bool name="config_support_muteIncomingCalls" translatable="false">true</bool>
+    <bool name="config_support_playControl" translatable="false">true</bool>
+    <bool name="config_support_musicSwitch" translatable="false">true</bool>
+    <bool name="config_support_lockMusicSwitch" translatable="false">true</bool>
+    <bool name="config_support_easyStart" translatable="false">false</bool>
+    <bool name="config_support_muteAlarms" translatable="false">true</bool>
+    <bool name="config_support_shakeToSwitch" translatable="false">true</bool>
+    <bool name="config_support_quickBrowse" translatable="false">true</bool>
+    <bool name="config_support_easyClearMemory" translatable="false">false</bool>
+    <bool name="config_support_touchDisable" translatable="false">true</bool>
+    <bool name="config_support_smartBell" translatable="false">true</bool>
+    <bool name="config_support_powerSaving" translatable="false">true</bool>
+    <!-- @} -->
+    <!-- UNISOC: Support Color Temperature Adjusting
+         true - show
+         false - hide
+    -->
+    <bool name="config_support_colorTemperatureAdjusting" translatable="false">true</bool>
+
+    <!-- UNISOC: Support Super resolution
+         true - support
+         false - not support
+    -->
+    <bool name="config_support_superResolution" translatable="false">true</bool>
+
+    <!-- UNISOC: mobile data always online -->
+    <bool name="enable_mobile_data_always_online" translatable="false">true</bool>
+    <!-- UNISOC: national data roaming -->
+    <bool name="national_data_roaming" translatable="false">false</bool>
+
+    <!-- UNISOC: ps data off -->
+    <bool name="enable_ps_data_off" translatable="false">true</bool>
+
+    <!-- UNISOC:1072218 Restore factory settings when battery level is low, should popup a prompt message.
+         true - support
+         false - not support
+    -->
+    <bool name="config_support_lowBatteryFactoryResetPrompt" translatable="false">true</bool>
+
+    <!-- UNISOC: allow empty apn -->
+    <bool name="config_allow_empty_apn">false</bool>
+
+    <!-- UNISOC: Add feature for primary and secondary sub distinguishing identifier -->
+    <bool name="config_show_primary_sub_tag">false</bool>
+
+    <!-- UNISOC:1072208 Show CP2 version info.
+         true - show
+         false - hide
+    -->
+    <bool name="config_support_showCp2Info" translatable="false">true</bool>
+
+    <!-- Scheduled Power on, off.
+         true - support
+         false - not support
+    -->
+    <bool name="config_support_scheduledPowerOnOff" translatable="false">true</bool>
+
+    <!-- SPRD: Add for wifi-call show toast demand in bug 691804. @{ -->
+    <bool name="show_wfc_on_notification">false</bool>
+
+    <!--UNISOC: add for Power saving management
+            true - support
+            false - not support
+        @{-->
+    <bool name="config_support_appStandbyOptimizer" translatable="false">true</bool>
+    <bool name="config_support_appAutoRunManagement" translatable="false">true</bool>
+    <bool name="config_support_lockScreenBatterySaver" translatable="false">true</bool>
+    <bool name="config_support_powerIntensiveApps" translatable="false">true</bool>
+    <bool name="config_support_batterySaverManage" translatable="false">true</bool>
+    <!-- @} -->
+
+    <!--UNISOC: feature config for dual SIM card ringtone
+        true - support ringtone configuration dual sim card in Settings-Sound
+        false - use AOSP Settings-Sound and not support dual ringtone configuration.-->
+    <bool name="config_support_dual_SIM_card_ringtone" translatable="false">true</bool>
+
+    <!-- Show local system update
+         true - show
+         false - hide
+    -->
+    <bool name="config_support_otaupdate" translatable="false">true</bool>
+</resources>

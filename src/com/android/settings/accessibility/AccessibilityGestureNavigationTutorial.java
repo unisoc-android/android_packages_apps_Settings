@@ -42,6 +42,7 @@ import com.android.settings.R;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import com.sprd.settings.navigation.NavigationBarSettings;
 /**
  * Utility class for creating the dialog that guides users for gesture navigation for
  * accessibility services.
@@ -205,7 +206,8 @@ public class AccessibilityGestureNavigationTutorial {
     }
 
     private static boolean isGestureNavigateEnabled(Context context) {
-        return context.getResources().getInteger(
+        /*UNISOC: Modify for bug 1111853 */
+        return NavigationBarSettings.hasNavigationBar(context) && context.getResources().getInteger(
                 com.android.internal.R.integer.config_navBarInteractionMode)
                 == NAV_BAR_MODE_GESTURAL;
     }

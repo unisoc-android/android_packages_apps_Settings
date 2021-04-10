@@ -21,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.SystemProperties;
 import android.os.PowerManager;
 import android.provider.Settings;
 
@@ -42,6 +43,8 @@ public class DarkUIPreferenceController extends TogglePreferenceController imple
     public static final String DARK_MODE_PREFS = "dark_mode_prefs";
     public static final String PREF_DARK_MODE_DIALOG_SEEN = "dark_mode_dialog_seen";
     public static final int DIALOG_SEEN = 1;
+    //bug 1113470: modify summary of dark theme when Power saving mode is turned on
+    private final boolean isSupportSprdPowerManager = (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1));
 
     @VisibleForTesting
     SwitchPreference mPreference;
@@ -113,10 +116,14 @@ public class DarkUIPreferenceController extends TogglePreferenceController imple
         boolean isBatterySaver = isPowerSaveMode();
         mPreference.setEnabled(!isBatterySaver);
         if (isBatterySaver) {
-            int stringId = mUiModeManager.getNightMode() == UiModeManager.MODE_NIGHT_YES
-                    ? R.string.dark_ui_mode_disabled_summary_dark_theme_on
-                    : R.string.dark_ui_mode_disabled_summary_dark_theme_off;
-            mPreference.setSummary(mContext.getString(stringId));
+            //bug 1113470: modify summary of dark theme when Power saving mode is turned on
+            if (isSupportSprdPowerManager) {
+                int stringId = R.string.unisoc_dark_ui_mode_disabled_summary_dark_theme_on;
+                mPreference.setSummary(mContext.getString(stringId));
+            } else {
+                int stringId = R.string.dark_ui_mode_disabled_summary_dark_theme_on;
+                mPreference.setSummary(mContext.getString(stringId));
+            }
         } else {
             mPreference.setSummary(null);
         }
@@ -126,7 +133,6 @@ public class DarkUIPreferenceController extends TogglePreferenceController imple
     boolean isPowerSaveMode() {
         return mPowerManager.isPowerSaveMode();
     }
-
 
     @VisibleForTesting
     void setUiModeManager(UiModeManager uiModeManager) {

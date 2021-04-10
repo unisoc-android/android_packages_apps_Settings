@@ -113,6 +113,9 @@ public abstract class AudioSwitchPreferenceController extends BasePreferenceCont
      */
     @Override
     public final int getAvailabilityStatus() {
+        if (!Utils.isBluetoothSupported(mContext)) {
+            return CONDITIONALLY_UNAVAILABLE;
+        }
         return FeatureFlagUtils.isEnabled(mContext, FeatureFlags.AUDIO_SWITCHER_SETTINGS) &&
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
                 ? AVAILABLE : CONDITIONALLY_UNAVAILABLE;

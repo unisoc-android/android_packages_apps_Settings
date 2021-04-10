@@ -468,6 +468,10 @@ public class VpnSettings extends RestrictedSettingsFragment implements
 
     @WorkerThread
     private Map<String, LegacyVpnInfo> getConnectedLegacyVpns() {
+        // Add for bug1172072, Avoid NPE
+        if (mConnectivityService == null) {
+            return Collections.emptyMap();
+        }
         try {
             mConnectedLegacyVpn = mConnectivityService.getLegacyVpnInfo(UserHandle.myUserId());
             if (mConnectedLegacyVpn != null) {
@@ -483,6 +487,10 @@ public class VpnSettings extends RestrictedSettingsFragment implements
     private Set<AppVpnInfo> getConnectedAppVpns() {
         // Mark connected third-party services
         Set<AppVpnInfo> connections = new ArraySet<>();
+        // Add for bug1172072, Avoid NPE
+        if (mConnectivityService == null) {
+            return connections;
+        }
         try {
             for (UserHandle profile : mUserManager.getUserProfiles()) {
                 VpnConfig config = mConnectivityService.getVpnConfig(profile.getIdentifier());
@@ -552,7 +560,11 @@ public class VpnSettings extends RestrictedSettingsFragment implements
 
     static List<VpnProfile> loadVpnProfiles(KeyStore keyStore, int... excludeTypes) {
         final ArrayList<VpnProfile> result = Lists.newArrayList();
-
+        /* Add for bug1142138:NPE occurs when clicking the VPN menu @{ */
+        if (keyStore.list(Credentials.VPN) == null) {
+            return result;
+        }
+        /* @} */
         for (String key : keyStore.list(Credentials.VPN)) {
             final VpnProfile profile = VpnProfile.decode(key, keyStore.get(Credentials.VPN + key));
             if (profile != null && !ArrayUtils.contains(excludeTypes, profile.type)) {

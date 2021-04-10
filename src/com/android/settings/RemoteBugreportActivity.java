@@ -37,6 +37,7 @@ import androidx.appcompat.app.AlertDialog;
 public class RemoteBugreportActivity extends Activity {
 
     private static final String TAG = "RemoteBugreportActivity";
+    private AlertDialog mDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,7 +47,7 @@ public class RemoteBugreportActivity extends Activity {
                 DevicePolicyManager.EXTRA_BUGREPORT_NOTIFICATION_TYPE, -1);
 
         if (notificationType == DevicePolicyManager.NOTIFICATION_BUGREPORT_ACCEPTED_NOT_FINISHED) {
-            AlertDialog dialog = new AlertDialog.Builder(this)
+             mDialog = new AlertDialog.Builder(this)
                     .setMessage(R.string.sharing_remote_bugreport_dialog_message)
                     .setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
@@ -61,11 +62,11 @@ public class RemoteBugreportActivity extends Activity {
                         }
                     })
                     .create();
-            dialog.show();
+            mDialog.show();
         } else if (notificationType == DevicePolicyManager.NOTIFICATION_BUGREPORT_STARTED
                 || notificationType
                         == DevicePolicyManager.NOTIFICATION_BUGREPORT_FINISHED_NOT_ACCEPTED) {
-            AlertDialog dialog = new AlertDialog.Builder(this)
+            mDialog = new AlertDialog.Builder(this)
                     .setTitle(R.string.share_remote_bugreport_dialog_title)
                     .setMessage(notificationType
                                     == DevicePolicyManager.NOTIFICATION_BUGREPORT_STARTED
@@ -100,9 +101,18 @@ public class RemoteBugreportActivity extends Activity {
                         }
                     })
                     .create();
-            dialog.show();
+            mDialog.show();
         } else {
             Log.e(TAG, "Incorrect dialog type, no dialog shown. Received: " + notificationType);
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mDialog != null && mDialog.isShowing()) {
+            mDialog.dismiss();
+        }
+        mDialog = null;
     }
 }

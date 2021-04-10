@@ -111,6 +111,19 @@ public class UserDetailsSettings extends SettingsPreferenceFragment
         mPhonePref.setOnPreferenceChangeListener(this);
     }
 
+    /* UNISOC:1195314 Page not finished after user deleted @{ */
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!mGuestUser) {
+            UserInfo info = mUserManager.getUserInfo(mUserInfo.id);
+            if (info == null) {
+                finish();
+            }
+        }
+    }
+    /* @} */
+
     @Override
     public boolean onPreferenceClick(Preference preference) {
         if (preference == mRemoveUserPref) {

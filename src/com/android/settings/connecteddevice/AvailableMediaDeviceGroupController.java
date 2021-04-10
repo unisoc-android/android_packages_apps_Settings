@@ -68,6 +68,7 @@ public class AvailableMediaDeviceGroupController extends BasePreferenceControlle
         }
         mBluetoothDeviceUpdater.registerCallback();
         mLocalBluetoothManager.getEventManager().registerCallback(this);
+        updateTitle();
     }
 
     @Override
@@ -96,6 +97,9 @@ public class AvailableMediaDeviceGroupController extends BasePreferenceControlle
 
     @Override
     public int getAvailabilityStatus() {
+        if (!Utils.isBluetoothSupported(mContext)) {
+           return UNSUPPORTED_ON_DEVICE;
+        }
         return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
                 ? AVAILABLE_UNSEARCHABLE
                 : UNSUPPORTED_ON_DEVICE;

@@ -24,6 +24,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.telephony.CarrierConfigManager;
+import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 
 import com.android.settings.R;
@@ -35,10 +36,16 @@ import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
  */
 public class RoamingDialogFragment extends InstrumentedDialogFragment implements OnClickListener {
 
+    // UNISOC: bug 906818
+    public interface RoamingDialogListener {
+        void onDialogDismiss(InstrumentedDialogFragment dialog);
+    }
+
     public static final String SUB_ID_KEY = "sub_id_key";
 
     private CarrierConfigManager mCarrierConfigManager;
     private int mSubId;
+    private RoamingDialogListener mListener;
 
     public static RoamingDialogFragment newInstance(int subId) {
         final RoamingDialogFragment dialogFragment = new RoamingDialogFragment();
@@ -67,6 +74,14 @@ public class RoamingDialogFragment extends InstrumentedDialogFragment implements
                 CarrierConfigManager.KEY_CHECK_PRICING_WITH_CARRIER_FOR_DATA_ROAMING_BOOL)) {
             message = R.string.roaming_check_price_warning;
         }
+
+        // modify for bug 1205908
+        if (getResources().getBoolean(R.bool.config_enableCtccVersion)) {
+            ServiceState ss = TelephonyManager.from(getContext()).getServiceStateForSubscriber(mSubId);
+            if (ss != null && ss.getRoaming()) {
+                message = R.string.roaming_warning_in_roaming_state;
+            }
+        }
         builder.setMessage(getResources().getString(message))
                 .setTitle(title)
                 .setIconAttribute(android.R.attr.alertDialogIcon)
@@ -88,4 +103,18 @@ public class RoamingDialogFragment extends InstrumentedDialogFragment implements
                     mSubId).setDataRoamingEnabled(true);
         }
     }
+
+    public void setController(RoamingPreferenceController roamingPreferenceController){
+        mListener = (RoamingDialogListener) roamingPreferenceController;
+    }
+
+    /* UNISOC: bug 906818 @{ */
+    public void onDismiss(DialogInterface dialog) {
+        // UNISOC: add for bug1113143
+        if (mListener != null) {
+            mListener.onDialogDismiss(this);
+        }
+        super.onDismiss(dialog);
+    }
+    /* @} */
 }

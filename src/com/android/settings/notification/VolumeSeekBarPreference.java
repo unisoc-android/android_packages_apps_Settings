@@ -33,6 +33,7 @@ import androidx.preference.PreferenceViewHolder;
 
 import com.android.settings.R;
 import com.android.settings.widget.SeekBarPreference;
+import com.android.settings.notification.SeekBarVolumizerEx;
 
 import java.util.Objects;
 
@@ -141,7 +142,7 @@ public class VolumeSeekBarPreference extends SeekBarPreference {
         };
         final Uri sampleUri = mStream == AudioManager.STREAM_MUSIC ? getMediaVolumeUri() : null;
         if (mVolumizer == null) {
-            mVolumizer = new SeekBarVolumizer(getContext(), mStream, sampleUri, sbvc);
+            mVolumizer = new SeekBarVolumizerEx(getContext(), mStream, sampleUri, sbvc);
         }
         mVolumizer.start();
         mVolumizer.setSeekBar(mSeekBar);

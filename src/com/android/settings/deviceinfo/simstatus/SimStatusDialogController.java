@@ -30,6 +30,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
+import android.os.RemoteException;
 import android.telephony.CarrierConfigManager;
 import android.telephony.CellBroadcastMessage;
 import android.telephony.PhoneStateListener;
@@ -43,6 +44,7 @@ import android.telephony.euicc.EuiccManager;
 import android.text.BidiFormatter;
 import android.text.TextDirectionHeuristics;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
@@ -54,8 +56,17 @@ import com.android.settingslib.core.lifecycle.Lifecycle;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settingslib.core.lifecycle.events.OnPause;
 import com.android.settingslib.core.lifecycle.events.OnResume;
+import com.android.settingslib.core.lifecycle.events.OnStart;
+import com.android.settingslib.core.lifecycle.events.OnStop;
+import com.android.internal.telephony.PhoneConstants;
 
-public class SimStatusDialogController implements LifecycleObserver, OnResume, OnPause {
+import com.android.ims.ImsManager;
+import com.android.ims.internal.ImsManagerEx;
+import com.android.ims.internal.IImsServiceEx;
+import com.android.ims.internal.IImsRegisterListener;
+import com.android.ims.ImsConfig;
+
+public class SimStatusDialogController implements LifecycleObserver, OnResume, OnPause, OnStart, OnStop {
 
     private final static String TAG = "SimStatusDialogCtrl";
 
@@ -86,6 +97,8 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
     @VisibleForTesting
     final static int ICCID_INFO_VALUE_ID = R.id.icc_id_value;
     @VisibleForTesting
+    final static int EID_INFO_LABEL_ID = R.id.esim_id_label;
+    @VisibleForTesting
     final static int EID_INFO_VALUE_ID = R.id.esim_id_value;
     @VisibleForTesting
     final static int IMS_REGISTRATION_STATE_LABEL_ID = R.id.ims_reg_state_label;
@@ -102,9 +115,13 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
             new OnSubscriptionsChangedListener() {
                 @Override
                 public void onSubscriptionsChanged() {
-                    mSubscriptionInfo = mSubscriptionManager.getActiveSubscriptionInfo(
+                    /*UNISOC: bug for 977213 @{*/
+                    if (mSubscriptionInfo != null) {
+                        mSubscriptionInfo = mSubscriptionManager.getActiveSubscriptionInfo(
                             mSubscriptionInfo.getSubscriptionId());
-                    updateNetworkProvider();
+                        updateNetworkProvider();
+                    }
+                    /*UNISOC: @}*/
                 }
             };
 
@@ -119,6 +136,19 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
     private final Context mContext;
 
     private boolean mShowLatestAreaInfo;
+    /*UNISOC: bug for 977213 @{*/
+    private int mSlotId;
+    private boolean mIsReceiverRegister = false;
+    /*UNISOC: @}*/
+    /*UNISOC: bug for 894005 @{*/
+    private boolean mIsAreaInfoReceiverRegister = false;
+    /*UNISOC: @}*/
+    /*UNISOC: bug for 1091281 @{*/
+    private boolean mIsImsListenerRegistered;
+    private IImsServiceEx mIImsServiceEx;
+    boolean mIsWifiCallingEnabled = false;
+    int mImsType = -2;
+    /*UNISOC: @}*/
 
     private final BroadcastReceiver mAreaInfoReceiver = new BroadcastReceiver() {
         @Override
@@ -156,6 +186,9 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
         if (lifecycle != null) {
             lifecycle.addObserver(this);
         }
+        /*UNISOC: bug for 977213 @{*/
+        mSlotId = slotId;
+        /*UNISOC: @}*/
     }
 
     public void initialize() {
@@ -179,6 +212,17 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
         updateImsRegistrationState();
     }
 
+    /*UNISOC: bug for 977213 @{*/
+    @Override
+    public void onStart() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(TelephonyManager.ACTION_SIM_CARD_STATE_CHANGED);
+        intentFilter.addAction(TelephonyManager.ACTION_SIM_APPLICATION_STATE_CHANGED);
+        mContext.registerReceiver(mReceiver,intentFilter);
+        mIsReceiverRegister = true;
+    }
+    /*UNISOC: @}*/
+
     @Override
     public void onResume() {
         if (mSubscriptionInfo == null) {
@@ -193,19 +237,31 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
         mSubscriptionManager.addOnSubscriptionsChangedListener(mOnSubscriptionsChangedListener);
 
         if (mShowLatestAreaInfo) {
-            mContext.registerReceiver(mAreaInfoReceiver,
-                    new IntentFilter(CB_AREA_INFO_RECEIVED_ACTION),
-                    Manifest.permission.RECEIVE_EMERGENCY_BROADCAST, null /* scheduler */);
+            /* UNISOC: bug for 894005 @{ */
+//            mContext.registerReceiver(mAreaInfoReceiver,
+//                    new IntentFilter(CB_AREA_INFO_RECEIVED_ACTION),
+//                    Manifest.permission.RECEIVE_EMERGENCY_BROADCAST, null /* scheduler */);
+            if (!mIsAreaInfoReceiverRegister) {
+                mContext.registerReceiver(mAreaInfoReceiver,
+                        new IntentFilter(CB_AREA_INFO_RECEIVED_ACTION),
+                        Manifest.permission.RECEIVE_EMERGENCY_BROADCAST, null /* scheduler */);
+                mIsAreaInfoReceiverRegister = true;
+            }
+            /* @} */
             // Ask CellBroadcastReceiver to broadcast the latest area info received
             final Intent getLatestIntent = new Intent(GET_LATEST_CB_AREA_INFO_ACTION);
             getLatestIntent.setPackage(CELL_BROADCAST_RECEIVER_APP);
             mContext.sendBroadcastAsUser(getLatestIntent, UserHandle.ALL,
                     Manifest.permission.RECEIVE_EMERGENCY_BROADCAST);
         }
+        /*UNISOC: bug for 1091281 @{*/
+        tryRegisterImsListener();
+        /* @} */
     }
 
     @Override
     public void onPause() {
+        Log.d(TAG, " onPause ");
         if (mSubscriptionInfo == null) {
             return;
         }
@@ -215,15 +271,45 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
                 .listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
 
         if (mShowLatestAreaInfo) {
-            mContext.unregisterReceiver(mAreaInfoReceiver);
+            /* UNISOC: bug for 894005 @{ */
+            //mContext.unregisterReceiver(mAreaInfoReceiver);
+            if (mIsAreaInfoReceiverRegister) {
+                try {
+                    mIsAreaInfoReceiverRegister = false;
+                    mContext.unregisterReceiver(mAreaInfoReceiver);
+                } catch (IllegalArgumentException e) {
+                    Log.e(TAG, " Receiver not registered");
+                }
+            }
+            /* @} */
         }
+        /*UNISOC: bug for 1091281 @{*/
+        unTryRegisterImsListener();
+        /* @} */
     }
 
-    private void updateNetworkProvider() {
-        final CharSequence carrierName =
-                mSubscriptionInfo != null ? mSubscriptionInfo.getCarrierName() : null;
-        mDialog.setText(NETWORK_PROVIDER_VALUE_ID, carrierName);
+    /*UNISOC: bug for 977213 @{*/
+    @Override
+    public void onStop() {
+        Log.d(TAG, " onStop ");
+        if (mIsReceiverRegister) {
+            mContext.unregisterReceiver(mReceiver);
+            mIsReceiverRegister = false;
+        }
     }
+    /*UNISOC: @}*/
+
+    /*UNISOC: bug for 973964 @{*/
+    private void updateNetworkProvider() {
+//        final CharSequence carrierName =
+//                mSubscriptionInfo != null ? mSubscriptionInfo.getCarrierName() : null;
+        if (mSubscriptionInfo == null) {
+            return;
+        }
+        mDialog.setText(NETWORK_PROVIDER_VALUE_ID, /*carrierName*/Utils.isInService(getCurrentServiceState())
+                ? mTelephonyManager.getNetworkOperatorName(mSubscriptionInfo.getSubscriptionId()) : null);
+    }
+    /*UNISOC: @}*/
 
     private void updatePhoneNumber() {
         // If formattedNumber is null or empty, it'll display as "Unknown".
@@ -297,7 +383,7 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
     }
 
     private void updateSignalStrength(SignalStrength signalStrength) {
-        if (signalStrength == null) {
+        if (signalStrength == null || mSubscriptionInfo == null) {
             return;
         }
         final int subscriptionId = mSubscriptionInfo.getSubscriptionId();
@@ -317,6 +403,9 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
 
         ServiceState serviceState = getCurrentServiceState();
         if (serviceState == null || !Utils.isInService(serviceState)) {
+            /*UNISOC: bug for 1011032 @{*/
+            resetSignalStrength();
+            /*UNISOC: @}*/
             return;
         }
 
@@ -343,6 +432,17 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
         // Whether EDGE, UMTS, etc...
         String dataNetworkTypeName = null;
         String voiceNetworkTypeName = null;
+        /*UNISOC: bug for 973964 & 1091281 @{*/
+        Log.d(TAG, "updateNetworkType mIsWifiCallingEnabled : " + mIsWifiCallingEnabled);
+        if (getCurrentServiceState() == null) {
+            return;
+        }
+        if (!Utils.isInService(getCurrentServiceState()) && !mIsWifiCallingEnabled) {
+            mDialog.setText(CELL_VOICE_NETWORK_TYPE_VALUE_ID, voiceNetworkTypeName);
+            mDialog.setText(CELL_DATA_NETWORK_TYPE_VALUE_ID, dataNetworkTypeName);
+            return;
+        }
+        /*UNISOC: @}*/
         final int subId = mSubscriptionInfo.getSubscriptionId();
         final int actualDataNetworkType = mTelephonyManager.getDataNetworkType(subId);
         final int actualVoiceNetworkType = mTelephonyManager.getVoiceNetworkType(subId);
@@ -360,7 +460,12 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
                     CarrierConfigManager.KEY_SHOW_4G_FOR_LTE_DATA_ICON_BOOL);
         }
 
-        if (show4GForLTE) {
+        /*UNISOC: bug for 1091281 @{*/
+        if (mIsWifiCallingEnabled) {
+            dataNetworkTypeName = "IWLAN";
+            voiceNetworkTypeName = "IWLAN";
+        /*UNISOC: @}*/
+        } else if (show4GForLTE) {
             if ("LTE".equals(dataNetworkTypeName)) {
                 dataNetworkTypeName = "4G";
             }
@@ -403,6 +508,7 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
         if (mEuiccManager.isEnabled()) {
             mDialog.setText(EID_INFO_VALUE_ID, mEuiccManager.getEid());
         } else {
+            mDialog.removeSettingFromScreen(EID_INFO_LABEL_ID);
             mDialog.removeSettingFromScreen(EID_INFO_VALUE_ID);
         }
     }
@@ -429,6 +535,11 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
 
     @VisibleForTesting
     ServiceState getCurrentServiceState() {
+        /*UNISOC: bug for 977213 @{*/
+        if (mSubscriptionInfo == null) {
+            return null;
+        }
+        /*UNISOC: @}*/
         return mTelephonyManager.getServiceStateForSubscriber(
                 mSubscriptionInfo.getSubscriptionId());
     }
@@ -460,6 +571,9 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
                 updateNetworkProvider();
                 updateServiceState(serviceState);
                 updateRoamingStatus(serviceState);
+                /*UNISOC: bug for 988436 @{*/
+                updateNetworkType();
+                /*UNISOC: @}*/
             }
         };
     }
@@ -478,4 +592,87 @@ public class SimStatusDialogController implements LifecycleObserver, OnResume, O
     String getSimSerialNumber(int subscriptionId) {
         return mTelephonyManager.getSimSerialNumber(subscriptionId);
     }
+
+    /*UNISOC: bug for 977213 @{*/
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            Log.d(TAG, " mReceive  action : " + action);
+            if (action.equals(TelephonyManager.ACTION_SIM_CARD_STATE_CHANGED) ||
+                    action.equals(TelephonyManager.ACTION_SIM_APPLICATION_STATE_CHANGED)) {
+                int slotId = intent.getIntExtra(PhoneConstants.PHONE_KEY, -1);
+                int state = intent.getIntExtra(TelephonyManager.EXTRA_SIM_STATE,
+                        TelephonyManager.SIM_STATE_UNKNOWN);
+                Log.d(TAG, " mReceive  state : " + state);
+                if (TelephonyManager.SIM_STATE_ABSENT == state ||
+                        TelephonyManager.SIM_STATE_LOADED == state) {
+                    if (mDialog != null && slotId == mSlotId) {
+                        mDialog.dismiss();
+                    }
+                }
+            }
+        }
+    };
+    /*UNISOC: @}*/
+    /*UNISOC: bug for 1091281 @{*/
+    private synchronized void tryRegisterImsListener() {
+        if (ImsManager.isVolteEnabledByPlatform(mContext)) {
+            mIImsServiceEx = ImsManagerEx.getIImsServiceEx();
+            if(mIImsServiceEx != null){
+                try{
+                    if (!mIsImsListenerRegistered) {
+                        mIsImsListenerRegistered = true;
+                        mIImsServiceEx.registerforImsRegisterStateChanged(mImsUtListenerExBinder);
+                    }
+                    if (mSubscriptionInfo != null) {
+                        mImsType = mIImsServiceEx.getCurrentImsFeatureForPhone(
+                                mSubscriptionInfo.getSimSlotIndex());
+                    }
+                    Log.d(TAG, " mImsType: " + mImsType);
+                    mIsWifiCallingEnabled = (mImsType ==
+                            ImsConfig.FeatureConstants.FEATURE_TYPE_VOICE_OVER_WIFI);
+                } catch (RemoteException e){
+                    Log.e(TAG, "regiseterforImsException: "+ e);
+                }
+            }
+        }
+    }
+
+    private synchronized void unTryRegisterImsListener() {
+        if (ImsManager.isVolteEnabledByPlatform(mContext)) {
+            try{
+                if (mIsImsListenerRegistered) {
+                    mIsImsListenerRegistered = false;
+                    mIImsServiceEx.unregisterforImsRegisterStateChanged(mImsUtListenerExBinder);
+                }
+                mImsType = -2;
+                mIsWifiCallingEnabled = false;
+            }catch(RemoteException e){
+                Log.e(TAG, "finalize: " + e);
+            }
+        }
+    }
+
+    private final IImsRegisterListener.Stub mImsUtListenerExBinder = new IImsRegisterListener.Stub(){
+        @Override
+        public void imsRegisterStateChange(boolean isRegistered){
+            Log.d(TAG, "imsRegisterStateChange. isRegistered: " + isRegistered);
+            try {
+                if (mIImsServiceEx != null && mSubscriptionInfo != null) {
+                    mImsType = mIImsServiceEx.getCurrentImsFeatureForPhone(
+                            mSubscriptionInfo.getSimSlotIndex());
+                    Log.d(TAG, "imsRegisterStateChange. mImsType: " + mImsType);
+                    mIsWifiCallingEnabled = (mImsType ==
+                            ImsConfig.FeatureConstants.FEATURE_TYPE_VOICE_OVER_WIFI);
+                    updateNetworkType();
+                } else {
+                    return;
+                }
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    };
+    /*UNISOC: @}*/
 }

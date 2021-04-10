@@ -45,6 +45,7 @@ import com.android.settings.security.SecuritySettings;
 import com.android.settings.system.SystemDashboardFragment;
 import com.android.settingslib.drawer.CategoryKey;
 
+import com.sprd.settings.navigation.NavigationBarSettings;
 import java.util.Map;
 
 /**
@@ -116,7 +117,10 @@ public class DashboardFragmentRegistry {
                 CategoryKey.CATEGORY_MY_DEVICE_INFO);
         PARENT_TO_CATEGORY_KEY_MAP.put(BatterySaverSettings.class.getName(),
                 CategoryKey.CATEGORY_BATTERY_SAVER_SETTINGS);
-
+        /* UNISOC Bug 1072090 ,add the search for dynamic navigationbar @{ */
+        PARENT_TO_CATEGORY_KEY_MAP.put(NavigationBarSettings.class.getName(),
+                CategoryKey.CATEGORY_DEVICE);
+        /* @} */
         CATEGORY_KEY_TO_PARENT_MAP = new ArrayMap<>(PARENT_TO_CATEGORY_KEY_MAP.size());
 
         for (Map.Entry<String, String> parentToKey : PARENT_TO_CATEGORY_KEY_MAP.entrySet()) {

@@ -177,7 +177,7 @@ public class WifiDppUtils {
                 config.allowedKeyManagement.get(KeyMgmt.WPA2_PSK)) {
             return WifiQrCode.SECURITY_WPA_PSK;
         }
-        return (config.wepKeys[0] == null) ?
+        return (config.wepTxKeyIndex >= 0 && config.wepKeys[config.wepTxKeyIndex] == null) ?
                 WifiQrCode.SECURITY_NO_PASSWORD : WifiQrCode.SECURITY_WEP;
     }
 

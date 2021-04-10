@@ -16,11 +16,29 @@
 
 <!-- Layout used by CheckBoxPreference for the checkbox style. This is inflated
      inside android.R.layout.preference. -->
-<RadioButton xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@android:id/checkbox"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center"
-    android:background="@null"
-    android:focusable="false"
-    android:clickable="false" />
+
+<!--SPRD:Add for bug#733341 Disallow USB file transfer cts tests failed @{-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <RadioButton
+        android:id="@android:id/checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@null"
+        android:focusable="false"
+        android:clickable="false" />
+
+    <ImageView
+        android:id="@+id/restricted_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:scaleType="centerInside"
+        android:src="@*android:drawable/ic_info"
+        android:layout_marginRight="@dimen/restricted_icon_padding"
+        android:visibility="gone"/>
+
+</LinearLayout>
+<!--Bug733341 end @}-->

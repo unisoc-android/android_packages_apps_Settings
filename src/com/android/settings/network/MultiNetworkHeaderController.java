@@ -18,14 +18,18 @@ package com.android.settings.network;
 
 import android.app.settings.SettingsEnums;
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
+import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceScreen;
 
 import com.android.settings.core.BasePreferenceController;
 import com.android.settings.wifi.WifiConnectionPreferenceController;
 import com.android.settingslib.core.lifecycle.Lifecycle;
+
+import android.os.UserManager;
 
 // This controls a header at the top of the Network & internet page that only appears when there
 // are two or more active mobile subscriptions. It shows an overview of available network
@@ -34,15 +38,20 @@ public class MultiNetworkHeaderController extends BasePreferenceController imple
         WifiConnectionPreferenceController.UpdateListener,
         SubscriptionsPreferenceController.UpdateListener {
     public static final String TAG = "MultiNetworkHdrCtrl";
+    private static final int COUNT_INVALID = -1;
 
     private WifiConnectionPreferenceController mWifiController;
     private SubscriptionsPreferenceController mSubscriptionsController;
     private PreferenceCategory mPreferenceCategory;
     private PreferenceScreen mPreferenceScreen;
     private int mOriginalExpandedChildrenCount;
+    private FragmentManager mFragmentManager;
+    private UserManager mUserManager;
+    private int mChildrenCount = COUNT_INVALID;
 
     public MultiNetworkHeaderController(Context context, String key) {
         super(context, key);
+        mUserManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
     }
 
     public void init(Lifecycle lifecycle) {
@@ -64,6 +73,22 @@ public class MultiNetworkHeaderController extends BasePreferenceController imple
                 prefStartOrder);
     }
 
+    /* UNISOC:Improve the function of turning on and off the Sub {@*/
+    public void init(Lifecycle lifecycle,FragmentManager fragmentManager, int count) {
+        mFragmentManager = fragmentManager;
+        mWifiController = createWifiController(lifecycle);
+        mSubscriptionsController = createSubscriptionsController(lifecycle,fragmentManager);
+        // UNISOC: Modify for bug1145683, we need a way to set a expanded children count.
+        mChildrenCount = count;
+    }
+
+    SubscriptionsPreferenceController createSubscriptionsController(Lifecycle lifecycle,FragmentManager fragmentManager) {
+        final int prefStartOrder = 10;
+        return new SubscriptionsPreferenceController(mContext, lifecycle, this, mPreferenceKey,
+                prefStartOrder,fragmentManager);
+    }
+    /* @} */
+
     @Override
     public void displayPreference(PreferenceScreen screen) {
         super.displayPreference(screen);
@@ -77,7 +102,8 @@ public class MultiNetworkHeaderController extends BasePreferenceController imple
 
     @Override
     public int getAvailabilityStatus() {
-        if (mSubscriptionsController == null || !mSubscriptionsController.isAvailable()) {
+        if (mSubscriptionsController == null || (!mSubscriptionsController.isAvailable() && !mWifiController.isAvailable())
+               || !mUserManager.isAdminUser()) {
             return CONDITIONALLY_UNAVAILABLE;
         } else {
             return AVAILABLE;
@@ -90,7 +116,10 @@ public class MultiNetworkHeaderController extends BasePreferenceController imple
         // TODO(b/129893781) we need a better way to express where the advanced collapsing starts
         // for preference groups that have items dynamically added/removed in the top expanded
         // section.
-        if (mOriginalExpandedChildrenCount != Integer.MAX_VALUE) {
+        // UNISOC: Modify for bug1145683, we need a way to set a expanded children count.
+        if (mChildrenCount != COUNT_INVALID) {
+            mPreferenceScreen.setInitialExpandedChildrenCount(mChildrenCount);
+        } else if (mOriginalExpandedChildrenCount != Integer.MAX_VALUE) {
             if (available) {
                 mPreferenceScreen.setInitialExpandedChildrenCount(
                         mOriginalExpandedChildrenCount + mPreferenceCategory.getPreferenceCount());

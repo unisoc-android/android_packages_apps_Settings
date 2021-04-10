@@ -48,7 +48,7 @@ public class FileSizeFormatterTest {
                                 0 /* size */,
                                 com.android.internal.R.string.gigabyteShort,
                                 GIGABYTE_IN_BYTES))
-                .isEqualTo("0.00 GB");
+                .isEqualTo("0.00 " + mContext.getResources().getString(com.android.internal.R.string.gigabyteShort));
     }
 
     @Test
@@ -59,7 +59,7 @@ public class FileSizeFormatterTest {
                                 MEGABYTE_IN_BYTES * 11 /* size */,
                                 com.android.internal.R.string.gigabyteShort,
                                 GIGABYTE_IN_BYTES))
-                .isEqualTo("0.01 GB");
+                .isEqualTo("0.01 " + mContext.getResources().getString(com.android.internal.R.string.gigabyteShort));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class FileSizeFormatterTest {
                                 MEGABYTE_IN_BYTES * 155 /* size */,
                                 com.android.internal.R.string.gigabyteShort,
                                 GIGABYTE_IN_BYTES))
-                .isEqualTo("0.16 GB");
+                .isEqualTo("0.16 " + mContext.getResources().getString(com.android.internal.R.string.gigabyteShort));
     }
 
     @Test
@@ -81,7 +81,7 @@ public class FileSizeFormatterTest {
                                 MEGABYTE_IN_BYTES * 1551 /* size */,
                                 com.android.internal.R.string.gigabyteShort,
                                 GIGABYTE_IN_BYTES))
-                .isEqualTo("1.6 GB");
+                .isEqualTo("1.6 " + mContext.getResources().getString(com.android.internal.R.string.gigabyteShort));
     }
 
     @Test
@@ -93,7 +93,7 @@ public class FileSizeFormatterTest {
                                 GIGABYTE_IN_BYTES * 15 + MEGABYTE_IN_BYTES * 50 /* size */,
                                 com.android.internal.R.string.gigabyteShort,
                                 GIGABYTE_IN_BYTES))
-                .isEqualTo("15 GB");
+                .isEqualTo("15 " + mContext.getResources().getString(com.android.internal.R.string.gigabyteShort));
     }
 
     @Test
@@ -104,6 +104,6 @@ public class FileSizeFormatterTest {
                                 MEGABYTE_IN_BYTES * -155 /* size */,
                                 com.android.internal.R.string.gigabyteShort,
                                 GIGABYTE_IN_BYTES))
-                .isEqualTo("-0.16 GB");
+                .isEqualTo("-0.16 " + mContext.getResources().getString(com.android.internal.R.string.gigabyteShort));
     }
 }

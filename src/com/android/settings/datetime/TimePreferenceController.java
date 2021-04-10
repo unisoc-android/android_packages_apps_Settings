@@ -44,6 +44,7 @@ public class TimePreferenceController extends AbstractPreferenceController
     private static final String KEY_TIME = "time";
 
     private final AutoTimePreferenceController mAutoTimePreferenceController;
+    private final SprdAutoTimePreferenceController mSprdAutoTimePreferenceController;
     private final TimePreferenceHost mHost;
 
 
@@ -53,6 +54,16 @@ public class TimePreferenceController extends AbstractPreferenceController
         super(context);
         mHost = callback;
         mAutoTimePreferenceController = autoTimePreferenceController;
+        mSprdAutoTimePreferenceController = null;
+    }
+
+    public TimePreferenceController(Context context,
+            TimePreferenceHost callback,
+            SprdAutoTimePreferenceController sprdAutoTimePreferenceController) {
+        super(context);
+        mHost = callback;
+        mAutoTimePreferenceController = null;
+        mSprdAutoTimePreferenceController = sprdAutoTimePreferenceController;
     }
 
     @Override
@@ -67,8 +78,10 @@ public class TimePreferenceController extends AbstractPreferenceController
         }
         final Calendar now = Calendar.getInstance();
         preference.setSummary(DateFormat.getTimeFormat(mContext).format(now.getTime()));
-        if (!((RestrictedPreference) preference).isDisabledByAdmin()) {
+        if (mAutoTimePreferenceController != null && !((RestrictedPreference) preference).isDisabledByAdmin()) {
             preference.setEnabled(!mAutoTimePreferenceController.isEnabled());
+        }else if (mSprdAutoTimePreferenceController != null && !((RestrictedPreference) preference).isDisabledByAdmin()) {
+            preference.setEnabled(!mSprdAutoTimePreferenceController.isEnabled());
         }
     }
 

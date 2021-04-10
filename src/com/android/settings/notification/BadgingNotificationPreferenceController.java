@@ -18,6 +18,7 @@ package com.android.settings.notification;
 
 import static android.provider.Settings.Secure.NOTIFICATION_BADGING;
 
+import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.ContentObserver;
@@ -77,9 +78,10 @@ public class BadgingNotificationPreferenceController extends TogglePreferenceCon
 
     @Override
     public int getAvailabilityStatus() {
-        return mContext.getResources()
-                .getBoolean(com.android.internal.R.bool.config_notificationBadging)
-                ? AVAILABLE : UNSUPPORTED_ON_DEVICE;
+        //Modify for bug1121939, remove notificationBadging in go board
+        boolean available = !ActivityManager.isLowRamDeviceStatic() && mContext.getResources()
+                .getBoolean(com.android.internal.R.bool.config_notificationBadging);
+        return available ? AVAILABLE : UNSUPPORTED_ON_DEVICE;
     }
 
     @Override

@@ -27,6 +27,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -37,12 +38,14 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiSsid;
 import android.provider.Settings;
+import android.util.Log;
 
 import androidx.fragment.app.Fragment;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.settings.tests.unit.R;
 import com.android.settingslib.wifi.AccessPoint;
 import com.android.settingslib.wifi.WifiTracker;
 import com.android.settingslib.wifi.WifiTracker.WifiListener;
@@ -62,6 +65,7 @@ import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class WifiNetworkListFragmentTest {
+    private static final String TAG = "Settings_ut";
     private static final String TEST_SSID = "\"Test Ssid\"";
     private static final String TEST_UNQUOTED_SSID = "Test Ssid";
     private static final String TEST_BSSID = "0a:08:5c:67:89:00";
@@ -83,6 +87,7 @@ public class WifiNetworkListFragmentTest {
 
     private WifiNetworkListFragment mWifiNetworkListFragment;
     private Context mContext;
+    private boolean mTestFlag;
 
     @Rule
     public ActivityTestRule<WifiDppConfiguratorActivity> mActivityRule = new ActivityTestRule<>(
@@ -90,6 +95,8 @@ public class WifiNetworkListFragmentTest {
 
     @Before
     public void setUp() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        mTestFlag = context.getResources().getBoolean(R.bool.config_test_wifi);
         MockitoAnnotations.initMocks(this);
         mContext = InstrumentationRegistry.getTargetContext();
         WifiTrackerFactory.setTestingWifiTracker(mWifiTracker);
@@ -161,14 +168,18 @@ public class WifiNetworkListFragmentTest {
 
     @Test
     public void onConnected_shouldSeeConnectedMessage() throws Exception {
-        setWifiState(WifiManager.WIFI_STATE_ENABLED);
-        setupConnectedAccessPoint();
-        when(mWifiTracker.isConnected()).thenReturn(true);
+        if (mTestFlag) {
+            setWifiState(WifiManager.WIFI_STATE_ENABLED);
+            setupConnectedAccessPoint();
+            when(mWifiTracker.isConnected()).thenReturn(true);
 
-        launchActivity(TEST_DPP_URL);
-        callOnWifiStateChanged(WifiManager.WIFI_STATE_ENABLED);
+            launchActivity(TEST_DPP_URL);
+            callOnWifiStateChanged(WifiManager.WIFI_STATE_ENABLED);
 
-        onView(withText(resourceString(WIFI_DISPLAY_STATUS_CONNECTED))).check(
-                matches(isDisplayed()));
+            onView(withText(resourceString(WIFI_DISPLAY_STATUS_CONNECTED))).check(
+                    matches(isDisplayed()));
+        } else {
+            Log.d(TAG, "onConnected_shouldSeeConnectedMessage not test");
+        }
     }
 }

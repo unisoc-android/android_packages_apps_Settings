@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"የክፈት ስርዓተ ጥለት አዘጋጅ"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"መክፈቻ ስርዓት ጥለት ለውጥ"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"የመክፈቻ ስርዓተ ንጥል እንዴት ይሳላል"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"ከልክ በላይ ብዙ የተሳሳቱ ሙከራዎች። በ<xliff:g id="NUMBER">%d</xliff:g> ሰከንዶች ውስጥ እንደገና ይሞክሩ።"</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">ከልክ በላይ ብዙ የተሳሳቱ ሙከራዎች። በ<xliff:g id="NUMBER">%d</xliff:g> ሰኮንዶች ውስጥ እንደገና ይሞክሩ።</item>
+        <item quantity="other">ከልክ በላይ ብዙ የተሳሳቱ ሙከራዎች። በ<xliff:g id="NUMBER">%d</xliff:g> ሰኮንዶች ውስጥ እንደገና ይሞክሩ።</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"መተግበሪያ በስልክዎ ላይ አልተጫነም።"</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"የስራ መገለጫ ደህንነት"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"የሥራ መገለጫ ማያ ገጽ መቆለፊያ"</string>

@@ -51,6 +51,11 @@
     <dimen name="pager_tabs_title_padding">16dp</dimen>
     <dimen name="pager_tabs_selected_indicator_height">3dp</dimen>
 
+    <!-- Dashboard padding in its container -->
+    <dimen name="dashboard_padding_start">0dp</dimen>
+    <dimen name="dashboard_padding_end">0dp</dimen>
+    <dimen name="dashboard_padding_top">0dp</dimen>
+    <dimen name="dashboard_padding_bottom">0dp</dimen>
     <!-- Minimum width for the popup for updating a user's photo. -->
     <dimen name="update_user_photo_popup_min_width">300dip</dimen>
 
@@ -256,14 +261,14 @@
     <dimen name="unmount_button_padding">8dp</dimen>
 
     <!-- Display, Screen zoom -->
-    <dimen name="conversation_message_list_padding">10dp</dimen>
+    <dimen name="conversation_message_list_padding">5dp</dimen>
     <dimen name="conversation_message_contact_icon_text_size">32sp</dimen>
     <dimen name="conversation_message_text_size">16sp</dimen>
     <dimen name="conversation_status_text_size">12sp</dimen>
     <dimen name="conversation_bubble_width_snap">20dp</dimen>
     <dimen name="message_bubble_arrow_width">9dp</dimen>
     <dimen name="message_padding_default">18dp</dimen>
-    <dimen name="message_text_left_right_padding">14dp</dimen>
+    <dimen name="message_text_left_right_padding">1dp</dimen>
     <dimen name="message_text_top_padding">10dp</dimen>
     <dimen name="message_text_bottom_padding">12dp</dimen>
     <dimen name="message_metadata_top_padding">4dp</dimen>

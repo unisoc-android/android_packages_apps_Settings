@@ -23,6 +23,7 @@ import android.provider.Settings;
 import androidx.preference.Preference;
 
 import com.android.settings.core.PreferenceControllerMixin;
+import com.android.settings.Utils;
 import com.android.settingslib.RestrictedSwitchPreference;
 
 public class LightsPreferenceController extends NotificationPreferenceController
@@ -73,7 +74,8 @@ public class LightsPreferenceController extends NotificationPreferenceController
 
     boolean canPulseLight() {
         if (!mContext.getResources()
-                .getBoolean(com.android.internal.R.bool.config_intrusiveNotificationLed)) {
+                .getBoolean(com.android.internal.R.bool.config_intrusiveNotificationLed)
+                || !Utils.ledFileIsExists()) {
             return false;
         }
         return Settings.System.getInt(mContext.getContentResolver(),

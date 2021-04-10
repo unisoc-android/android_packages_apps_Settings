@@ -296,6 +296,11 @@ public class SimSelectNotification extends BroadcastReceiver {
                 context,
                 context.getString(R.string.help_uri_sim_combination_warning),
                 context.getClass().getName());
+        // Unisoc: modify for Bug 1154883
+        if (resultIntent == null) {
+            Log.d(TAG, "resultIntent is null.");
+            return;
+        }
         PendingIntent resultPendingIntent = PendingIntent.getActivity(context, 0, resultIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT);
         builder.setContentIntent(resultPendingIntent);

@@ -21,6 +21,7 @@ import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.os.Bundle;
 import android.service.notification.ZenPolicy;
+import android.util.Log;
 
 import androidx.preference.Preference;
 
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ZenCustomRuleConfigSettings extends ZenCustomRuleSettingsBase {
+    static final String TAG = "ZenCustomRuleConfigSettings";
     private static final String CALLS_KEY = "zen_rule_calls_settings";
     private static final String MESSAGES_KEY = "zen_rule_messages_settings";
     private static final String ALARMS_KEY = "zen_rule_alarms";
@@ -108,6 +110,11 @@ public class ZenCustomRuleConfigSettings extends ZenCustomRuleSettingsBase {
      * Updates summaries of preferences without preference controllers
      */
     private void updateSummaries() {
+        if (mRule.getZenPolicy() == null) {
+            Log.d(TAG, "not update summaries since policy is null");
+            return;
+        }
+
         NotificationManager.Policy noManPolicy = mBackend.toNotificationPolicy(
                 mRule.getZenPolicy());
 

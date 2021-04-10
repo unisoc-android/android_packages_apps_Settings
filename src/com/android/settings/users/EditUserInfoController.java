@@ -187,6 +187,9 @@ public class EditUserInfoController {
                     }
                 })
                 .create();
+        //bug 1138548 : Not be canceled when touched outside the dialog.
+        mEditUserInfoDialog.setCanceledOnTouchOutside(false);
+        mEditUserPhotoController.setUserInfoDialog(mEditUserInfoDialog);
 
         // Make sure the IME is up.
         mEditUserInfoDialog.getWindow().setSoftInputMode(

@@ -19,6 +19,7 @@ package com.android.settings;
 import android.app.Dialog;
 import android.content.Context;
 import android.text.InputType;
+import android.text.InputFilter;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.EditText;
@@ -29,7 +30,9 @@ import com.android.settingslib.CustomEditTextPreferenceCompat;
  * TODO: Add a soft dialpad for PIN entry.
  */
 class EditPinPreference extends CustomEditTextPreferenceCompat {
-
+    /*UNISOC: Feature porting @{ */
+    private boolean mIsShowing = false;
+    /*UNISOC: @} */
     interface OnPinEnteredListener {
         void onPinEntered(EditPinPreference preference, boolean positiveResult);
     }
@@ -58,6 +61,9 @@ class EditPinPreference extends CustomEditTextPreferenceCompat {
             editText.setInputType(InputType.TYPE_CLASS_NUMBER |
                     InputType.TYPE_NUMBER_VARIATION_PASSWORD);
             editText.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
+            /*UNISOC: Feature porting @{ */
+            editText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(8)});
+            /*UNISOC: @} */
         }
     }
 
@@ -69,6 +75,9 @@ class EditPinPreference extends CustomEditTextPreferenceCompat {
     @Override
     protected void onDialogClosed(boolean positiveResult) {
         super.onDialogClosed(positiveResult);
+        /*UNISOC: Feature porting @{ */
+        mIsShowing = false;
+        /*UNISOC: @} */
         if (mPinListener != null) {
             mPinListener.onPinEntered(this, positiveResult);
         }
@@ -80,4 +89,13 @@ class EditPinPreference extends CustomEditTextPreferenceCompat {
             onClick();
         }
     }
+    /*UNISOC: Feature porting @{ */
+    @Override
+    protected void onClick() {
+        if (!mIsShowing) {
+            super.onClick();
+        }
+        mIsShowing = true;
+    }
+    /*UNISOC: @} */
 }

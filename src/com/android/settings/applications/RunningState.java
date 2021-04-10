@@ -53,6 +53,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Singleton for retrieving and monitoring the state about all running
@@ -154,7 +155,7 @@ public class RunningState {
                     return lhs.mUserId < rhs.mUserId ? -1 : 1;
                 }
                 if (lhs.mProcess == rhs.mProcess) {
-                    if (lhs.mLabel == rhs.mLabel) {
+                    if (Objects.equals(lhs.mLabel, rhs.mLabel)) {
                         return 0;
                     }
                     return lhs.mLabel != null ? lhs.mLabel.compareTo(rhs.mLabel) : -1;
@@ -187,7 +188,7 @@ public class RunningState {
                 if (lhsInfo.lru != rhsInfo.lru) {
                     return lhsInfo.lru < rhsInfo.lru ? -1 : 1;
                 }
-                if (lhs.mProcess.mLabel == rhs.mProcess.mLabel) {
+                if (Objects.equals(lhs.mProcess.mLabel, rhs.mProcess.mLabel)) {
                     return 0;
                 }
                 if (lhs.mProcess.mLabel == null) return 1;

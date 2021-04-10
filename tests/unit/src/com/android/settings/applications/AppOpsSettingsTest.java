@@ -153,7 +153,11 @@ abstract public class AppOpsSettingsTest {
 
         for (UiObject2 matchingObject : listOfMatchingTextViews) {
             matchingObject.click();
-            findAndVerifySwitchState(true);
+            if (AppOpsManager.OP_REQUEST_INSTALL_PACKAGES == mAppOpCode) {
+                findAndVerifySwitchState(false);
+            } else {
+                findAndVerifySwitchState(true);
+            }
             mUiDevice.pressBack();
         }
     }

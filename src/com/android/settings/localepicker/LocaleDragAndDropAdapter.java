@@ -198,8 +198,9 @@ class LocaleDragAndDropAdapter
             Log.e(TAG, String.format(Locale.US,
                     "Negative position in onItemMove %d -> %d", fromPosition, toPosition));
         }
-        notifyItemChanged(fromPosition); // to update the numbers
-        notifyItemChanged(toPosition);
+        // Update position without numbers when moving
+        //notifyItemChanged(fromPosition); // to update the numbers
+        //notifyItemChanged(toPosition);
         notifyItemMoved(fromPosition, toPosition);
         // We don't call doTheUpdate() here because this method is called for each item swap.
         // So if we drag something across several positions it will be called several times.
@@ -252,6 +253,11 @@ class LocaleDragAndDropAdapter
     }
 
     void addLocale(LocaleStore.LocaleInfo li) {
+        /* UNISOC for bug 1157937 repetition localeInfo not add into list @{ */
+        if (mFeedItemList.contains(li)) {
+            return;
+        }
+        /* @} */
         mFeedItemList.add(li);
         notifyItemInserted(mFeedItemList.size() - 1);
         doTheUpdate();
@@ -259,13 +265,17 @@ class LocaleDragAndDropAdapter
 
     public void doTheUpdate() {
         int count = mFeedItemList.size();
-        final Locale[] newList = new Locale[count];
-
+        /* UNISOC for bug1166405 repetition Locale not add into list */
+        final List<Locale> localeList = new ArrayList<Locale>();
         for (int i = 0; i < count; i++) {
             final LocaleStore.LocaleInfo li = mFeedItemList.get(i);
-            newList[i] = li.getLocale();
+            Locale locale = li.getLocale();
+            if (!localeList.contains(locale)) {
+                localeList.add(locale);
+            }
         }
-
+        Locale[] newList = localeList.toArray(new Locale[localeList.size()]);
+        /* @} */
         final LocaleList ll = new LocaleList(newList);
         updateLocalesWhenAnimationStops(ll);
     }

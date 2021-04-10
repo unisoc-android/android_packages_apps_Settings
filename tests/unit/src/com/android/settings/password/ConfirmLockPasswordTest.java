@@ -26,6 +26,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
@@ -39,32 +40,43 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class ConfirmLockPasswordTest {
-
+    private static final String TAG = "Settings_ut";
     private Instrumentation mInstrumentation;
     private Context mContext;
+    private boolean mTestFlag;
 
     @Before
     public void setUp() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
+        mTestFlag = mInstrumentation.getContext().getResources()
+                .getBoolean(com.android.settings.tests.unit.R.bool.config_test_lockscreen);
     }
 
     @Test
     public void enterWrongPin_shouldShowErrorMessage() {
-        mInstrumentation.startActivitySync(
-                new Intent(mContext, ConfirmLockPassword.class));
-        onView(withId(R.id.password_entry)).perform(typeText("1234"))
-                .perform(pressKey(KeyEvent.KEYCODE_ENTER));
-        onView(withId(R.id.errorText)).check(matches(withText(R.string.lockpassword_invalid_pin)));
+        if (mTestFlag) {
+            mInstrumentation.startActivitySync(
+                    new Intent(mContext, ConfirmLockPassword.class));
+            onView(withId(R.id.password_entry)).perform(typeText("1234"))
+                    .perform(pressKey(KeyEvent.KEYCODE_ENTER));
+            onView(withId(R.id.errorText)).check(matches(withText(R.string.lockpassword_invalid_pin)));
+        } else {
+            Log.d(TAG, "enterWrongPin_shouldShowErrorMessage not test");
+        }
     }
 
     @Test
     public void enterWrongPin_darkTheme_shouldShowErrorMessage() {
-        mInstrumentation.startActivitySync(
-                new Intent(mContext, ConfirmLockPassword.class)
-                        .putExtra(ConfirmDeviceCredentialBaseFragment.DARK_THEME, true));
-        onView(withId(R.id.password_entry)).perform(typeText("1234"))
-                .perform(pressKey(KeyEvent.KEYCODE_ENTER));
-        onView(withId(R.id.errorText)).check(matches(withText(R.string.lockpassword_invalid_pin)));
+        if (mTestFlag) {
+            mInstrumentation.startActivitySync(
+                    new Intent(mContext, ConfirmLockPassword.class)
+                            .putExtra(ConfirmDeviceCredentialBaseFragment.DARK_THEME, true));
+            onView(withId(R.id.password_entry)).perform(typeText("1234"))
+                    .perform(pressKey(KeyEvent.KEYCODE_ENTER));
+            onView(withId(R.id.errorText)).check(matches(withText(R.string.lockpassword_invalid_pin)));
+        } else {
+            Log.d(TAG, "enterWrongPin_darkTheme_shouldShowErrorMessage not test");
+        }
     }
 }

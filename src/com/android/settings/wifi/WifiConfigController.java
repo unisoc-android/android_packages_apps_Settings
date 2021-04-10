@@ -30,15 +30,20 @@ import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiConfiguration.AuthAlgorithm;
 import android.net.wifi.WifiConfiguration.KeyMgmt;
+import android.net.wifi.WifiConfiguration.Protocol;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiEnterpriseConfig.Eap;
 import android.net.wifi.WifiEnterpriseConfig.Phase2;
+import android.net.wifi.WifiFeaturesUtils;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.UserManager;
 import android.security.Credentials;
 import android.security.KeyStore;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -157,6 +162,7 @@ public class WifiConfigController implements TextWatcher,
     private TextView mNetworkPrefixLengthView;
     private TextView mDns1View;
     private TextView mDns2View;
+    private Boolean mAutoFillFlag = true ;
 
     private Spinner mProxySettingsSpinner;
     private Spinner mMeteredSettingsSpinner;
@@ -182,6 +188,17 @@ public class WifiConfigController implements TextWatcher,
     private Integer mSecurityInPosition[];
 
     private final WifiManager mWifiManager;
+
+    //NOTE: Bug #475482 Add sim slot selection support for eap-sim and eap-aka BEG-->
+    private Spinner mEapSimSlotSpinner;
+    private String mSimSlot1Str;
+    private String mSimSlot2Str;
+    //<-- Add sim slot selection support for eap-sim and eap-aka END
+
+    //SPRD: Bug #590380 Porting WEP feature to AndroidN BEG-->
+    private Spinner mWepKeyIndex;
+    private static int mWepPosition = 0;
+    //<-- Porting WEP feature to AndroidN END
 
     public WifiConfigController(WifiConfigUiBase parent, View view, AccessPoint accessPoint,
             int mode) {
@@ -215,6 +232,14 @@ public class WifiConfigController implements TextWatcher,
         mMode = mode;
 
         final Resources res = mContext.getResources();
+
+        mSupportAppConnectPolicy = WifiFeaturesUtils.getInstance(mContext).isSupportAppConnectPolicy();
+
+        PEAP_AND_SIM_METHOD_ADAPTER = new ArrayAdapter<String>(
+                mContext, android.R.layout.simple_spinner_item,
+                res.getStringArray(R.array.peap_and_sim_method));
+        PEAP_AND_SIM_METHOD_ADAPTER.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
 
         mLevels = res.getStringArray(R.array.wifi_signal);
         if (Utils.isWifiOnly(mContext) || !mContext.getResources().getBoolean(
@@ -501,13 +526,26 @@ public class WifiConfigController implements TextWatcher,
         boolean passwordInvalid = false;
         if (mPasswordView != null
                 && ((mAccessPointSecurity == AccessPoint.SECURITY_WEP
-                        && mPasswordView.length() == 0)
+                        && isWepPasswordInvalid())
                     || (mAccessPointSecurity == AccessPoint.SECURITY_PSK
                            && !isValidPsk(mPasswordView.getText().toString()))
                     || (mAccessPointSecurity == AccessPoint.SECURITY_SAE
                         && !isValidSaePassword(mPasswordView.getText().toString())))) {
             passwordInvalid = true;
         }
+
+        //SPRD: Bug #474464 Porting WAPI feature BEG-->
+        if (mPasswordView != null && mAccessPointSecurity == AccessPoint.SECURITY_WAPI_PSK
+                && mPasswordView.length() < 8) {
+            passwordInvalid = true;
+        }
+        if (mAccessPointSecurity == AccessPoint.SECURITY_WAPI_CERT
+                && ((mWapiAsCert != null && mWapiAsCert.getSelectedItemPosition() == 0)
+                        || (mWapiUserCert != null && mWapiUserCert.getSelectedItemPosition() == 0))) {
+            passwordInvalid = true;
+        }
+        //<-- Porting WAPI feature END
+
         if ((mSsidView != null && mSsidView.length() == 0)
                 // If Accesspoint is not saved, apply passwordInvalid check
                 || ((mAccessPoint == null || !mAccessPoint.isSaved()) && passwordInvalid
@@ -649,10 +687,13 @@ public class WifiConfigController implements TextWatcher,
                     // WEP-40, WEP-104, and 256-bit WEP (WEP-232?)
                     if ((length == 10 || length == 26 || length == 58)
                             && password.matches("[0-9A-Fa-f]*")) {
-                        config.wepKeys[0] = password;
+                    //SPRD: Bug #590380 Porting WEP feature to AndroidN BEG-->
+                        config.wepKeys[mWepPosition] = password;
                     } else {
-                        config.wepKeys[0] = '"' + password + '"';
+                        config.wepKeys[mWepPosition] = '"' + password + '"';
                     }
+                    config.wepTxKeyIndex = mWepPosition;
+                    //<-- Porting WEP feature to AndroidN END
                 }
                 break;
 
@@ -683,6 +724,9 @@ public class WifiConfigController implements TextWatcher,
                 }
                 config.enterpriseConfig = new WifiEnterpriseConfig();
                 int eapMethod = mEapMethodSpinner.getSelectedItemPosition();
+                if (isSsidCMCC() && eapMethod > 0) {
+                    eapMethod = Eap.SIM;
+                }
                 int phase2Method = mPhase2Spinner.getSelectedItemPosition();
                 config.enterpriseConfig.setEapMethod(eapMethod);
                 switch (eapMethod) {
@@ -714,6 +758,21 @@ public class WifiConfigController implements TextWatcher,
                                 break;
                         }
                         break;
+                    //NOTE: Bug #475482 Add sim slot selection support for eap-sim and eap-aka BEG-->
+                    case Eap.SIM:
+                    case Eap.AKA:
+                    case Eap.AKA_PRIME:
+                        int simNum = -1;
+                        String eapSimSlotValue = (String) mEapSimSlotSpinner.getSelectedItem();
+                        if (eapSimSlotValue.equals(mSimSlot2Str)){
+                            simNum = 1;
+                        } else if (eapSimSlotValue.equals(mSimSlot1Str)){
+                            simNum = 0;
+                        }
+                        config.enterpriseConfig.setSimNum(simNum);
+                        Log.d(TAG, "mEapSimSlotSpinner.getSelectedItem() " + mEapSimSlotSpinner.getSelectedItem());
+                        break;
+                    //<-- Add sim slot selection support for eap-sim and eap-aka END
                     default:
                         // The default index from mPhase2FullAdapter maps to the API
                         config.enterpriseConfig.setPhase2Method(phase2Method);
@@ -797,12 +856,40 @@ public class WifiConfigController implements TextWatcher,
                     config.preSharedKey = '"' + password + '"';
                 }
                 break;
-
             case AccessPoint.SECURITY_OWE:
                 config.allowedKeyManagement.set(KeyMgmt.OWE);
                 config.requirePMF = true;
                 break;
-
+            //SPRD: Bug #474464 Porting WAPI feature BEG-->
+            case AccessPoint.SECURITY_WAPI_PSK:
+                config.allowedKeyManagement.set(KeyMgmt.WAPI_PSK);
+                config.allowedProtocols.set(Protocol.WAPI);
+                config.allowedAuthAlgorithms.set(AuthAlgorithm.OPEN);
+                if (mPasswordView.length() != 0) {
+                    String password = mPasswordView.getText().toString();
+                    if (password.matches("[0-9A-Fa-f]{64}")) {
+                        config.preSharedKey = password;
+                    } else {
+                        config.preSharedKey = '"' + password + '"';
+                    }
+                }
+                Log.d(TAG, "mWapiPskType.getSelectedItemPosition() " + mWapiPskType.getSelectedItemPosition());
+                config.wapiPskType = WAPI_PSK_TYPE_VALUES[mWapiPskType.getSelectedItemPosition()];
+                break;
+            case AccessPoint.SECURITY_WAPI_CERT:
+                config.allowedKeyManagement.set(KeyMgmt.WAPI_CERT);
+                config.allowedProtocols.set(Protocol.WAPI);
+                config.allowedAuthAlgorithms.set(AuthAlgorithm.OPEN);
+                Log.d(TAG, "mWapiAsCert.getSelectedItemPosition() " + mWapiAsCert.getSelectedItemPosition());
+                Log.d(TAG, "mWapiAsCert.getSelectedItem() " + mWapiAsCert.getSelectedItem());
+                Log.d(TAG, "mWapiUserCert.getSelectedItemPosition() " + mWapiUserCert.getSelectedItemPosition());
+                Log.d(TAG, "mWapiUserCert.getSelectedItem() " + mWapiUserCert.getSelectedItem());
+                config.wapiAsCert = ((mWapiAsCert.getSelectedItemPosition() == 0) ? "" :
+                        AccessPoint.convertToQuotedString(KEYSTORE_SPACE + Credentials.WAPI_AS_CERTIFICATE + (String) mWapiAsCert.getSelectedItem()));
+                config.wapiUserCert = ((mWapiUserCert.getSelectedItemPosition() == 0) ? "" :
+                        AccessPoint.convertToQuotedString(KEYSTORE_SPACE + Credentials.WAPI_USER_CERTIFICATE + (String) mWapiUserCert.getSelectedItem()));
+                break;
+            //<-- Porting WAPI feature END
             default:
                 return null;
         }
@@ -903,8 +990,15 @@ public class WifiConfigController implements TextWatcher,
             staticIpConfiguration.ipAddress = new LinkAddress(inetAddr, networkPrefixLength);
         } catch (NumberFormatException e) {
             // Set the hint as default after user types in ip address
-            mNetworkPrefixLengthView.setText(mConfigUi.getContext().getString(
-                    R.string.wifi_network_prefix_length_hint));
+            if (mAutoFillFlag) {
+                mNetworkPrefixLengthView.setText(mConfigUi.getContext().getString(
+                        R.string.wifi_network_prefix_length_hint));
+                networkPrefixLength = Integer.parseInt(mNetworkPrefixLengthView.getText().toString());
+            } else {
+                mNetworkPrefixLengthView.setHint(mConfigUi.getContext().getString(
+                        R.string.wifi_network_prefix_length_hint));
+                return R.string.wifi_ip_settings_invalid_ip_address;
+            }
         } catch (IllegalArgumentException e) {
             return R.string.wifi_ip_settings_invalid_ip_address;
         }
@@ -916,7 +1010,11 @@ public class WifiConfigController implements TextWatcher,
                 InetAddress netPart = NetworkUtils.getNetworkPart(inetAddr, networkPrefixLength);
                 byte[] addr = netPart.getAddress();
                 addr[addr.length - 1] = 1;
-                mGatewayView.setText(InetAddress.getByAddress(addr).getHostAddress());
+                if (mAutoFillFlag) {
+                    mGatewayView.setText(InetAddress.getByAddress(addr).getHostAddress());
+                } else {
+                    mGatewayView.setHint(InetAddress.getByAddress(addr).getHostAddress());
+                }
             } catch (RuntimeException ee) {
             } catch (java.net.UnknownHostException u) {
             }
@@ -933,16 +1031,23 @@ public class WifiConfigController implements TextWatcher,
 
         String dns = mDns1View.getText().toString();
         InetAddress dnsAddr = null;
-
         if (TextUtils.isEmpty(dns)) {
             //If everything else is valid, provide hint as a default option
-            mDns1View.setText(mConfigUi.getContext().getString(R.string.wifi_dns1_hint));
+            if (mAutoFillFlag) {
+                mDns1View.setText(mConfigUi.getContext().getString(R.string.wifi_dns1_hint));
+            } else {
+                mDns1View.setHint(mConfigUi.getContext().getString(R.string.wifi_dns1_hint));
+            }
         } else {
             dnsAddr = getIPv4Address(dns);
             if (dnsAddr == null) {
                 return R.string.wifi_ip_settings_invalid_dns;
             }
             staticIpConfiguration.dnsServers.add(dnsAddr);
+        }
+
+        if (mAutoFillFlag) {
+            mAutoFillFlag = false;
         }
 
         if (mDns2View.length() > 0) {
@@ -952,7 +1057,10 @@ public class WifiConfigController implements TextWatcher,
                 return R.string.wifi_ip_settings_invalid_dns;
             }
             staticIpConfiguration.dnsServers.add(dnsAddr);
+        } else if (TextUtils.isEmpty(dns)) {
+            return R.string.wifi_ip_settings_invalid_dns;
         }
+
         return 0;
     }
 
@@ -961,6 +1069,7 @@ public class WifiConfigController implements TextWatcher,
                 mAccessPointSecurity == AccessPoint.SECURITY_OWE ||
                 mAccessPointSecurity == AccessPoint.SECURITY_OWE_TRANSITION) {
             mView.findViewById(R.id.security_fields).setVisibility(View.GONE);
+            mView.findViewById(R.id.eap).setVisibility(View.GONE);
             return;
         }
         mView.findViewById(R.id.security_fields).setVisibility(View.VISIBLE);
@@ -978,9 +1087,62 @@ public class WifiConfigController implements TextWatcher,
             }
         }
 
+        //SPRD: Bug #474464 Porting WAPI feature BEG-->
+        if (mAccessPointSecurity != AccessPoint.SECURITY_WAPI_PSK) {
+            mView.findViewById(R.id.wapi_psk).setVisibility(View.GONE);
+        } else {
+            mView.findViewById(R.id.wapi_psk).setVisibility(View.VISIBLE);
+            mWapiPskType = (Spinner) mView.findViewById(R.id.wapi_psk_type);
+            // SPRD: add the listener for mWapiPskType
+            mWapiPskType.setOnItemSelectedListener(this);
+
+            if (mAccessPoint != null && mAccessPoint.isSaved()) {
+                WifiConfiguration config = mAccessPoint.getConfig();
+                mWapiPskType.setSelection(config.wapiPskType);
+            }
+        }
+
+        if (mAccessPointSecurity != AccessPoint.SECURITY_WAPI_CERT) {
+            mView.findViewById(R.id.wapi_cert).setVisibility(View.GONE);
+            mView.findViewById(R.id.password_layout).setVisibility(View.VISIBLE);
+            mView.findViewById(R.id.show_password_layout).setVisibility(View.VISIBLE);
+        } else {
+            mView.findViewById(R.id.password_layout).setVisibility(View.GONE);
+            mView.findViewById(R.id.show_password_layout).setVisibility(View.GONE);
+            mView.findViewById(R.id.wapi_cert).setVisibility(View.VISIBLE);
+            mWapiAsCert = (Spinner) mView.findViewById(R.id.wapi_as_cert);
+            mWapiUserCert = (Spinner) mView.findViewById(R.id.wapi_user_cert);
+            mWapiAsCert.setOnItemSelectedListener(this);
+            mWapiUserCert.setOnItemSelectedListener(this);
+            loadAndSetWapiCert(mAccessPoint, mWapiAsCert, mWapiUserCert);
+        }
+        //<-- Porting WAPI feature END
+
+        //SPRD: Bug #590380 Porting WEP feature to AndroidN BEG-->
+        if(mAccessPointSecurity == AccessPoint.SECURITY_WEP){
+            mView.findViewById(R.id.wep_layout).setVisibility(View.VISIBLE);
+            mView.findViewById(R.id.wep_password_tip).setVisibility(View.VISIBLE);
+            mWepKeyIndex = (Spinner) mView.findViewById(R.id.wep_key_index);
+            mWepKeyIndex.setOnItemSelectedListener(this);
+
+            Context context = mConfigUi.getContext();
+            Resources resources = context.getResources();
+            String[] wepkeyindex = resources.getStringArray(R.array.wep_key_index);
+
+            ArrayAdapter<String> keyindexadapter = new ArrayAdapter<String>(
+                    context, android.R.layout.simple_spinner_item, wepkeyindex);
+            keyindexadapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            mWepKeyIndex.setAdapter(keyindexadapter);
+        } else {
+            mView.findViewById(R.id.wep_layout).setVisibility(View.GONE);
+            mView.findViewById(R.id.wep_password_tip).setVisibility(View.GONE);
+        }
+        //<-- Porting WEP feature to AndroidN END
+
         if (mAccessPointSecurity != AccessPoint.SECURITY_EAP &&
                 mAccessPointSecurity != AccessPoint.SECURITY_EAP_SUITE_B) {
             mView.findViewById(R.id.eap).setVisibility(View.GONE);
+            mView.findViewById(R.id.l_identity).setVisibility(View.GONE);
             return;
         }
         mView.findViewById(R.id.eap).setVisibility(View.VISIBLE);
@@ -997,6 +1159,9 @@ public class WifiConfigController implements TextWatcher,
                 spinnerAdapter.setDropDownViewResource(
                         android.R.layout.simple_spinner_dropdown_item);
                 mEapMethodSpinner.setAdapter(spinnerAdapter);
+            }
+            if (isSsidCMCC()) {
+                mEapMethodSpinner.setAdapter(PEAP_AND_SIM_METHOD_ADAPTER);
             }
             mPhase2Spinner = (Spinner) mView.findViewById(R.id.phase2);
             mPhase2Spinner.setOnItemSelectedListener(this);
@@ -1031,7 +1196,12 @@ public class WifiConfigController implements TextWatcher,
                 WifiEnterpriseConfig enterpriseConfig = mAccessPoint.getConfig().enterpriseConfig;
                 int eapMethod = enterpriseConfig.getEapMethod();
                 int phase2Method = enterpriseConfig.getPhase2Method();
-                mEapMethodSpinner.setSelection(eapMethod);
+                //mEapMethodSpinner.setSelection(eapMethod);
+                if (isSsidCMCC() && eapMethod > 0) {
+                    mEapMethodSpinner.setSelection(1);
+                } else {
+                    mEapMethodSpinner.setSelection(eapMethod);
+                }
                 showEapFieldsByMethod(eapMethod);
                 switch (eapMethod) {
                     case Eap.PEAP:
@@ -1123,6 +1293,10 @@ public class WifiConfigController implements TextWatcher,
      *   password
      */
     private void showEapFieldsByMethod(int eapMethod) {
+        if (isSsidCMCC() && eapMethod > 0) {
+            eapMethod = WIFI_EAP_METHOD_SIM;
+        }
+
         // Common defaults
         mView.findViewById(R.id.l_method).setVisibility(View.VISIBLE);
         mView.findViewById(R.id.l_identity).setVisibility(View.VISIBLE);
@@ -1133,6 +1307,10 @@ public class WifiConfigController implements TextWatcher,
         mView.findViewById(R.id.l_ca_cert).setVisibility(View.VISIBLE);
         mView.findViewById(R.id.password_layout).setVisibility(View.VISIBLE);
         mView.findViewById(R.id.show_password_layout).setVisibility(View.VISIBLE);
+
+        //NOTE: Bug #475482 Add sim slot selection support for eap-sim and eap-aka BEG-->
+        mView.findViewById(R.id.l_sim_slot).setVisibility(View.GONE);
+        //<-- Add sim slot selection support for eap-sim and eap-aka END
 
         Context context = mConfigUi.getContext();
         switch (eapMethod) {
@@ -1159,6 +1337,11 @@ public class WifiConfigController implements TextWatcher,
                 mView.findViewById(R.id.l_anonymous).setVisibility(View.VISIBLE);
                 showPeapFields();
                 setUserCertInvisible();
+                if (isSsidCMCC()) {
+                    setPhase2Invisible();
+                    setCaCertInvisible();
+                    setAnonymousIdentInvisible();
+                }
                 break;
             case WIFI_EAP_METHOD_TTLS:
                 // Reset adapter if needed
@@ -1182,6 +1365,23 @@ public class WifiConfigController implements TextWatcher,
                 setIdentityInvisible();
                 if (mAccessPoint != null && mAccessPoint.isCarrierAp()) {
                     setEapMethodInvisible();
+                }
+
+                //NOTE: Bug #475482 Add sim slot selection support for eap-sim and eap-aka BEG-->
+                mView.findViewById(R.id.l_sim_slot).setVisibility(View.VISIBLE);
+                mEapSimSlotSpinner = (Spinner) mView.findViewById(R.id.eap_sim_slots);
+                mSimSlot1Str = context.getString(R.string.wifi_eap_sim_slot1);
+                mSimSlot2Str = context.getString(R.string.wifi_eap_sim_slot2);
+                mEapSimSlotSpinner.setVisibility(View.VISIBLE);
+                if (mAccessPoint != null && isCheckingDefaultSsidEapSimSlot()){
+                    showAndAutoSelectPresetSsidEapSimSlotsFields();
+                } else {
+                    loadEapSimSlots(mEapSimSlotSpinner);
+                    if (mAccessPoint != null && mAccessPoint.isSaved()) {
+                        WifiConfiguration config = mAccessPoint.getConfig();
+                        Log.d(TAG,"showSecurityFields() -> eap sim_num = " + config.enterpriseConfig.getSimNum());
+                        setEapSimSlot(mEapSimSlotSpinner, config.enterpriseConfig.getSimNum());
+                    }
                 }
                 break;
         }
@@ -1389,7 +1589,11 @@ public class WifiConfigController implements TextWatcher,
         } catch (Exception e) {
             Log.e(TAG, "can't get the certificate list from KeyStore");
         }
-        certs.add(noCertificateString);
+        //SPRD: Bug #474464 Porting WAPI feature BEG-->
+        //certs.add(noCertificateString);
+        if (noCertificateString != null)
+            certs.add(noCertificateString);
+        //<-- Porting WAPI feature END
 
         final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
                 context, android.R.layout.simple_spinner_item,
@@ -1500,6 +1704,10 @@ public class WifiConfigController implements TextWatcher,
             showPeapFields();
         } else if (parent == mProxySettingsSpinner) {
             showProxyFields();
+        //SPRD: Bug #590380 Porting WEP feature to AndroidN BEG-->
+        } else if(parent == mWepKeyIndex){
+            mWepPosition = position;
+        //<-- Porting WEP feature to AndroidN END
         } else if (parent == mHiddenSettingsSpinner) {
             mHiddenWarningView.setVisibility(
                     position == NOT_HIDDEN_NETWORK
@@ -1541,6 +1749,7 @@ public class WifiConfigController implements TextWatcher,
         mConfigUi.setTitle(R.string.wifi_add_network);
 
         mSsidView = (TextView) mView.findViewById(R.id.ssid);
+        mSsidView.setFilters(new InputFilter[] {new WifiUtils.WifiDeviceNameFilter()});
         mSsidView.addTextChangedListener(this);
         mSecuritySpinner = ((Spinner) mView.findViewById(R.id.security));
         mSecuritySpinner.setOnItemSelectedListener(this);
@@ -1572,7 +1781,12 @@ public class WifiConfigController implements TextWatcher,
             spinnerAdapter.add(mContext.getString(R.string.wifi_security_eap_suiteb));
             mSecurityInPosition[idx++] = AccessPoint.SECURITY_EAP_SUITE_B;
         }
-
+        if (mWifiManager.isWapiSupported()) {
+            spinnerAdapter.add(mContext.getString(R.string.wifi_security_wapi_psk));
+            mSecurityInPosition[idx++] = AccessPoint.SECURITY_WAPI_PSK;
+            spinnerAdapter.add(mContext.getString(R.string.wifi_security_wapi_cert));
+            mSecurityInPosition[idx++] = AccessPoint.SECURITY_WAPI_CERT;
+        }
         spinnerAdapter.notifyDataSetChanged();
 
         mView.findViewById(R.id.type).setVisibility(View.VISIBLE);
@@ -1584,5 +1798,199 @@ public class WifiConfigController implements TextWatcher,
         mView.findViewById(R.id.hidden_settings_field).setVisibility(View.VISIBLE);
         ((CheckBox) mView.findViewById(R.id.wifi_advanced_togglebox))
                 .setOnCheckedChangeListener(this);
+    }
+
+    //=============================================================================
+    // add by sprd start
+    //=============================================================================
+
+    //SPRD: Bug #474464 Porting WAPI feature BEG-->
+    private static final String KEYSTORE_SPACE = WifiConfiguration.KEYSTORE_URI;
+    private static final int[] WAPI_PSK_TYPE_VALUES = {
+            WifiConfiguration.WAPI_ASCII_PASSWORD,
+            WifiConfiguration.WAPI_HEX_PASSWORD
+    };
+    private Spinner mWapiPskType;
+    private Spinner mWapiAsCert;
+    private Spinner mWapiUserCert;
+
+    private void setCertificate(Spinner spinner, String prefix, String cert) {
+        prefix = KEYSTORE_SPACE + prefix;
+        if (cert != null && cert.startsWith(prefix)) {
+            setSelection(spinner, cert.substring(prefix.length()));
+        }
+    }
+
+    private void loadAndSetWapiCert(AccessPoint accessPoint,
+            Spinner wapiAs, Spinner wapiUser) {
+        loadCertificates(wapiAs, Credentials.WAPI_AS_CERTIFICATE, null, false, false);
+        loadCertificates(wapiUser, Credentials.WAPI_USER_CERTIFICATE, null, false, false);
+        if (accessPoint != null && accessPoint.isSaved()) {
+            WifiConfiguration config = accessPoint.getConfig();
+            setCertificate(wapiAs, Credentials.WAPI_AS_CERTIFICATE, config.wapiAsCert);
+            setCertificate(wapiUser, Credentials.WAPI_USER_CERTIFICATE, config.wapiUserCert);
+        }
+    }
+    //<-- Porting WAPI feature END
+
+    //NOTE: Bug #475482 Add sim slot selection support for eap-sim and eap-aka BEG-->
+    private void loadEapSimSlots(Spinner spinner) {
+        final Context context = mConfigUi.getContext();
+        final String unspecified = context.getString(R.string.wifi_unspecified);
+        String[] certs;
+
+        boolean slot1Enabled = false;
+        boolean slot2Enabled = false;
+
+        TelephonyManager mTelephonyManager = TelephonyManager.from(mContext);
+        int num = mTelephonyManager.getPhoneCount();
+        for (int i = 0; i < num; i++) {
+            if (mTelephonyManager.hasIccCard(i)) {
+                if (i == 0) {
+                    slot1Enabled = true;
+                } else if (i == 1) {
+                    slot2Enabled = true;
+                }
+            }
+        }
+
+        if (slot1Enabled && slot2Enabled) {
+            certs = new String[]{unspecified, mSimSlot1Str, mSimSlot2Str};
+        } else if (slot1Enabled || slot2Enabled) {
+            if (slot1Enabled) {
+                certs = new String[]{unspecified, mSimSlot1Str};
+            } else {
+                certs = new String[]{unspecified, mSimSlot2Str};
+            }
+        } else {
+            certs = new String[] {unspecified};
+        }
+
+        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                context, android.R.layout.simple_spinner_item, certs);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+    }
+
+    private void setEapSimSlot(Spinner spinner,int slot) {
+        final Context context = mConfigUi.getContext();
+        if (slot != -1) {
+            if (slot == 0) {
+                setSelection(spinner, context.getString(R.string.wifi_eap_sim_slot1));
+            } else {
+                setSelection(spinner, context.getString(R.string.wifi_eap_sim_slot2));
+            }
+        }
+    }
+    //<-- Add sim slot selection support for eap-sim and eap-aka END
+
+    //SPRD: Bug #590380 Porting WEP feature to AndroidN BEG-->
+    private boolean isWepPasswordInvalid() {
+        if (mPasswordView != null) {
+            int length = mPasswordView.length();
+            String password = mPasswordView.getText().toString();
+            // WEP-40, WEP-104, and 256-bit WEP (WEP-232?)
+            if ((length == 10 || length == 26 || length == 32) &&
+                    password.matches("[0-9A-Fa-f]*")) {
+                return false;
+            } else if (length == 5 || length == 13 || length == 16) {
+                byte[] bytePassword = password.getBytes();
+                int asciiPassword = 0;
+                for (byte b : bytePassword) {
+                    asciiPassword = (int)b;
+                    if (asciiPassword < 0 || asciiPassword > 127) return true;
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+    //<-- Porting WEP feature to AndroidN END
+
+    private boolean isCheckingDefaultSsidEapSimSlot() {
+        if (mAccessPoint.isSaved()) {
+            WifiEnterpriseConfig enterpriseConfig = mAccessPoint.getConfig().enterpriseConfig;
+            int eapMethod = enterpriseConfig.getEapMethod();
+            if (Eap.SIM != eapMethod && Eap.AKA != eapMethod && Eap.AKA_PRIME != eapMethod) {
+                return false;
+            }
+            if (enterpriseConfig.getImsi() == null) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    private void showAndAutoSelectPresetSsidEapSimSlotsFields() {
+        final Context context = mConfigUi.getContext();
+        final String unspecified = context.getString(R.string.wifi_unspecified);
+        String[] certs;
+
+        boolean slot1Enabled = false;
+        boolean slot2Enabled = false;
+        TelephonyManager mTelephonyManager = TelephonyManager.from(mContext);
+        int phoneCount = mTelephonyManager.getPhoneCount();
+        for (int i = 0; i < phoneCount ; i++) {
+            int[] subId = SubscriptionManager.getSubId(i);
+            String imsi = mTelephonyManager.getSubscriberId(subId == null ? -1 : subId[0]);
+            if (mTelephonyManager.hasIccCard(i) && checkValidSimSlot(i, imsi)) {
+                if (i == 0) {
+                    slot1Enabled = true;
+                } else if (i == 1) {
+                    slot2Enabled = true;
+                }
+            }
+        }
+        if (slot1Enabled && slot2Enabled) {
+            certs = new String[]{unspecified, mSimSlot1Str, mSimSlot2Str};
+        } else if (slot1Enabled || slot2Enabled) {
+            if (slot1Enabled) {
+                certs = new String[]{unspecified, mSimSlot1Str};
+            } else {
+                certs = new String[]{unspecified, mSimSlot2Str};
+            }
+        } else {
+            certs = new String[] {unspecified};
+        }
+
+        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                context, android.R.layout.simple_spinner_item, certs);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mEapSimSlotSpinner.setAdapter(adapter);
+        if (slot1Enabled && slot2Enabled) {
+            WifiConfiguration config = mAccessPoint.getConfig();
+            Log.d(TAG,"showSecurityFields() -> eap sim_num = " + config.enterpriseConfig.getSimNum());
+            setEapSimSlot(mEapSimSlotSpinner, config.enterpriseConfig.getSimNum());
+        } else if (slot1Enabled || slot2Enabled) {// Only one target sim, auto select it.
+            mEapSimSlotSpinner.setSelection(1);
+        }
+    }
+
+    private boolean checkValidSimSlot(int slot, String imsi) {
+        if (imsi == null) return false;
+        String eapIMSIListStr = mAccessPoint.getConfig().enterpriseConfig.getImsi();
+        if (eapIMSIListStr != null){
+            String imsiList[] = eapIMSIListStr.split("-");
+            for (String imsiItem : imsiList) {
+                if (imsi.startsWith(imsiItem)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean mSupportAppConnectPolicy = false;
+    private ArrayAdapter<String> PEAP_AND_SIM_METHOD_ADAPTER;
+    private static final String CMCC_SSID = "CMCC";
+
+    private boolean isSsidCMCC() {
+        if (mSupportAppConnectPolicy && mAccessPoint != null) {
+            return CMCC_SSID.equals(mAccessPoint.getSsidStr());
+        } else {
+            return false;
+        }
     }
 }

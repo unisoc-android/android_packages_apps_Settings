@@ -20,10 +20,13 @@ import android.app.Dialog;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.storage.StorageManager;
+import android.os.storage.VolumeInfo;
 import android.os.storage.VolumeRecord;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -40,12 +43,15 @@ import com.android.settings.core.InstrumentedFragment;
 import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
 import com.android.settings.search.actionbar.SearchMenuController;
 
+import java.util.Collections;
+import java.util.List;
+
 public class PrivateVolumeForget extends InstrumentedFragment {
     @VisibleForTesting
     static final String TAG_FORGET_CONFIRM = "forget_confirm";
 
     private VolumeRecord mRecord;
-
+    private StorageManager mStorage;
     @Override
     public int getMetricsCategory() {
         return SettingsEnums.DEVICEINFO_STORAGE;
@@ -61,14 +67,19 @@ public class PrivateVolumeForget extends InstrumentedFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        final StorageManager storage = getActivity().getSystemService(StorageManager.class);
-        final String fsUuid = getArguments().getString(VolumeRecord.EXTRA_FS_UUID);
+        mStorage = getActivity().getSystemService(StorageManager.class);
+        /* Modify for bug1111754,Cannot access the storage settings from status bar @{ */
+        String fsUuid = getArguments().getString(VolumeRecord.EXTRA_FS_UUID);
+        if (fsUuid == null) {
+            fsUuid = getIntent().getStringExtra(VolumeRecord.EXTRA_FS_UUID);
+        }
+        /* @} */
         // Passing null will crash the StorageManager, so let's early exit.
         if (fsUuid == null) {
             getActivity().finish();
             return null;
         }
-        mRecord = storage.findRecordByUuid(fsUuid);
+        mRecord = mStorage.findRecordByUuid(fsUuid);
 
         if (mRecord == null) {
             getActivity().finish();
@@ -86,9 +97,23 @@ public class PrivateVolumeForget extends InstrumentedFragment {
         return view;
     }
 
+    /* Add for bug1111754,Cannot access the storage settings from status bar @{ */
+    private Intent getIntent() {
+        if (getActivity() == null) {
+            return null;
+        }
+        return getActivity().getIntent();
+    }
+    /* @} */
+
     private final OnClickListener mConfirmListener = new OnClickListener() {
         @Override
         public void onClick(View v) {
+            // check uuid before show dialog
+            if (mStorage.findRecordByUuid(mRecord.getFsUuid()) == null) {
+                getActivity().finish();
+                return;
+            }
             ForgetConfirmFragment.show(PrivateVolumeForget.this, mRecord.getFsUuid());
         }
     };
@@ -128,7 +153,13 @@ public class PrivateVolumeForget extends InstrumentedFragment {
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            storage.forgetVolume(fsUuid);
+                            /* Bug1118250: Rename sdcard after forget volume operation cause settings crash {@ */
+                            boolean isAvailable = isInsertInternalSdCardExist(storage,fsUuid);
+                            Log.d(TAG_FORGET_CONFIRM, " isAvailable = " + isAvailable);
+                            if (!isAvailable) {
+                                storage.forgetVolume(fsUuid);
+                            }
+                            /* @} */
                             getActivity().finish();
                         }
                     });
@@ -137,4 +168,22 @@ public class PrivateVolumeForget extends InstrumentedFragment {
             return builder.create();
         }
     }
+
+    /* Bug1118250: Rename sdcard after forget volume operation cause settings crash {@ */
+    public static boolean isInsertInternalSdCardExist(StorageManager mStorageManager, String fsUuid){
+        boolean isExist = false;
+        final List<VolumeInfo> volumes = mStorageManager.getVolumes();
+        Collections.sort(volumes, VolumeInfo.getDescriptionComparator());
+        for (VolumeInfo vol : volumes) {
+            if (vol.getType() == VolumeInfo.TYPE_PRIVATE) {
+                Log.d(TAG_FORGET_CONFIRM, " isMounted =" + vol.isMountedReadable() +
+                        " fsUuid =" + fsUuid + " vol.getFsUuid()=" + vol.getFsUuid());
+                if (vol.isMountedReadable() && fsUuid != null && fsUuid.equals(vol.getFsUuid())) {
+                    isExist = true;
+                }
+            }
+        }
+        return isExist;
+   }
+   /* @} */
 }

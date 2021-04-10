@@ -18,6 +18,7 @@ package com.android.settings.deviceinfo.aboutphone;
 
 import android.app.Dialog;
 import android.app.settings.SettingsEnums;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
@@ -36,6 +37,10 @@ public class DeviceNameWarningDialog extends InstrumentedDialogFragment
     public static final String TAG = "DeviceNameWarningDlg";
 
     public static void show(MyDeviceInfoFragment host) {
+        //Add for bug1128437, Settings crash when clicking the confirm button
+        if (host.getActivity() == null) {
+            return;
+        }
         final FragmentManager manager = host.getActivity().getSupportFragmentManager();
         if (manager.findFragmentByTag(TAG) != null) {
             return;

@@ -54,6 +54,8 @@ public class SettingsInitialize extends BroadcastReceiver {
     private static final String PRIMARY_PROFILE_SETTING =
             "com.android.settings.PRIMARY_PROFILE_CONTROLLED";
     private static final String WEBVIEW_IMPLEMENTATION_ACTIVITY = ".WebViewImplementation";
+    private static final String[] MANIFEST_SHORTCUTS = {
+            "manifest-shortcut-wifi", "manifest-shortcut-data-usage", "manifest-shortcut-battery"};
 
     @Override
     public void onReceive(Context context, Intent broadcast) {
@@ -130,6 +132,15 @@ public class SettingsInitialize extends BroadcastReceiver {
         final List<ShortcutInfo> pinnedShortcuts = shortcutManager.getPinnedShortcuts();
         final List<ShortcutInfo> updates = new ArrayList<>();
         for (ShortcutInfo info : pinnedShortcuts) {
+            boolean isStatic = false;
+            for (int i = 0; i < MANIFEST_SHORTCUTS.length; i++) {
+                if (MANIFEST_SHORTCUTS[i].equals(info.getId())) {
+                    isStatic = true;
+                    break;
+                }
+            }
+            if (isStatic) continue;
+
             if (info.isImmutable()) {
                 continue;
             }

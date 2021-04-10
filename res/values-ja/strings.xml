@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"ロック解除パターン設定"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"パターンの変更"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"ロック解除パターンの描き方"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"誤った回数が多すぎます。<xliff:g id="NUMBER">%d</xliff:g>秒後にもう一度お試しください。"</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">誤った回数が多すぎます。<xliff:g id="NUMBER">%d</xliff:g> 秒後にもう一度お試しください。</item>
+        <item quantity="one">誤った回数が多すぎます。1 秒後にもう一度お試しください。</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"アプリはデバイスにインストールされていません。"</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"仕事用プロファイルのセキュリティ"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"仕事用プロファイルの画面ロック"</string>

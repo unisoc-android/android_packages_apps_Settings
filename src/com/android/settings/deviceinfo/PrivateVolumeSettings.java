@@ -21,6 +21,7 @@ import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.IPackageDataObserver;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -35,7 +36,9 @@ import android.os.storage.StorageManager;
 import android.os.storage.VolumeInfo;
 import android.os.storage.VolumeRecord;
 import android.provider.DocumentsContract;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.text.format.Formatter;
 import android.text.format.Formatter.BytesResult;
 import android.util.Log;
@@ -44,6 +47,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AlertDialog;
@@ -148,12 +152,20 @@ public class PrivateVolumeSettings extends SettingsPreferenceFragment {
         super.onCreate(icicle);
 
         final Context context = getActivity();
-
         mUserManager = context.getSystemService(UserManager.class);
         mStorageManager = context.getSystemService(StorageManager.class);
 
         mVolumeId = getArguments().getString(VolumeInfo.EXTRA_VOLUME_ID);
+        //Add for bug1111749, Settings crashed when enter storage from statusbar
+        if (mVolumeId == null) {
+            mVolumeId = getIntent().getStringExtra(VolumeInfo.EXTRA_VOLUME_ID);
+        }
         mVolume = mStorageManager.findVolumeById(mVolumeId);
+        // finish activity if volume is invalid.
+        if (!isVolumeValid()) {
+            getActivity().finish();
+            return;
+        }
 
         final long sharedDataSize = mVolume.getPath().getTotalSpace();
         mTotalSize = getArguments().getLong(EXTRA_VOLUME_SIZE, 0);
@@ -171,11 +183,6 @@ public class PrivateVolumeSettings extends SettingsPreferenceFragment {
 
         mMeasure = new StorageMeasurement(context, mVolume, mSharedVolume);
         mMeasure.setReceiver(mReceiver);
-
-        if (!isVolumeValid()) {
-            getActivity().finish();
-            return;
-        }
 
         addPreferencesFromResource(R.xml.device_info_storage_volume);
         getPreferenceScreen().setOrderingAsAdded(true);
@@ -281,6 +288,7 @@ public class PrivateVolumeSettings extends SettingsPreferenceFragment {
         }
         category.setTitle(title);
         category.removeAll();
+        category.setLayoutResource(R.layout.preference_category_sprd);
         addPreference(group, category);
         ++mHeaderPoolIndex;
         return category;
@@ -332,6 +340,7 @@ public class PrivateVolumeSettings extends SettingsPreferenceFragment {
 
     private Preference buildAction(int titleRes) {
         final Preference pref = new Preference(getPrefContext());
+        pref.setIconSpaceReserved(true);
         pref.setTitle(titleRes);
         pref.setKey(Integer.toString(titleRes));
         return pref;
@@ -457,7 +466,11 @@ public class PrivateVolumeSettings extends SettingsPreferenceFragment {
             case R.id.storage_free:
                 final Intent deletion_helper_intent =
                         new Intent(StorageManager.ACTION_MANAGE_STORAGE);
-                startActivity(deletion_helper_intent);
+                /* Bug1106941: no need to startActivity if StorageManager application is disabled @{*/
+                if (Utils.isIntentCanBeResolved(context, deletion_helper_intent)) {
+                    startActivity(deletion_helper_intent);
+                }
+                /* @} */
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -694,6 +707,34 @@ public class PrivateVolumeSettings extends SettingsPreferenceFragment {
      * Dialog that allows editing of volume nickname.
      */
     public static class RenameFragment extends InstrumentedDialogFragment {
+        /* Add for bug1106367, Disable button when nickname is empty @{ */
+        private TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before,
+                int count) {
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                int after) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String text = s.toString().trim();
+                AlertDialog dialog = (AlertDialog)getDialog();
+                if (dialog == null) return;
+                Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                if (button == null) return;
+                if (TextUtils.isEmpty(text)) {
+                    button.setEnabled(false);
+                } else {
+                    button.setEnabled(true);
+                }
+            }
+        };
+        /* @} */
+
         public static void show(PrivateVolumeSettings parent, VolumeInfo vol) {
             if (!parent.isAdded()) return;
 
@@ -724,7 +765,11 @@ public class PrivateVolumeSettings extends SettingsPreferenceFragment {
 
             final View view = dialogInflater.inflate(R.layout.dialog_edittext, null, false);
             final EditText nickname = (EditText) view.findViewById(R.id.edittext);
-            nickname.setText(rec.getNickname());
+            //Add for bug1106367, Disable button when nickname is empty
+            nickname.addTextChangedListener(textWatcher);
+            if (rec != null) {
+                nickname.setText(rec.getNickname());
+            }
 
             builder.setTitle(R.string.storage_rename_title);
             builder.setView(view);

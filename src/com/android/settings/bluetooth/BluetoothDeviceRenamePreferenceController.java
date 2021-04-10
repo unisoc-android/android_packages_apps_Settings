@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import androidx.annotation.VisibleForTesting;
 import androidx.fragment.app.Fragment;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceScreen;
 
 import com.android.settings.overlay.FeatureFactory;
 import com.android.settingslib.core.instrumentation.MetricsFeatureProvider;
@@ -48,6 +49,12 @@ public class BluetoothDeviceRenamePreferenceController extends
     @VisibleForTesting
     public void setFragment(Fragment fragment) {
         mFragment = fragment;
+    }
+
+    @Override
+    public void displayPreference(PreferenceScreen screen) {
+        super.displayPreference(screen);
+        updatePreferenceState(mPreference);
     }
 
     @Override

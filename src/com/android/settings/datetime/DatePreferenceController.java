@@ -46,12 +46,22 @@ public class DatePreferenceController extends AbstractPreferenceController
 
     private final DatePreferenceHost mHost;
     private final AutoTimePreferenceController mAutoTimePreferenceController;
+    private final SprdAutoTimePreferenceController mSprdAutoTimePreferenceController;
 
     public DatePreferenceController(Context context, DatePreferenceHost host,
             AutoTimePreferenceController autoTimePreferenceController) {
         super(context);
         mHost = host;
         mAutoTimePreferenceController = autoTimePreferenceController;
+        mSprdAutoTimePreferenceController = null;
+    }
+
+    public DatePreferenceController(Context context, DatePreferenceHost host,
+            SprdAutoTimePreferenceController sprdAutoTimePreferenceController) {
+        super(context);
+        mHost = host;
+        mAutoTimePreferenceController = null;
+        mSprdAutoTimePreferenceController = sprdAutoTimePreferenceController;
     }
 
     @Override
@@ -66,8 +76,10 @@ public class DatePreferenceController extends AbstractPreferenceController
         }
         final Calendar now = Calendar.getInstance();
         preference.setSummary(DateFormat.getLongDateFormat(mContext).format(now.getTime()));
-        if (!((RestrictedPreference) preference).isDisabledByAdmin()) {
+        if (mAutoTimePreferenceController != null && !((RestrictedPreference) preference).isDisabledByAdmin()) {
             preference.setEnabled(!mAutoTimePreferenceController.isEnabled());
+        } else if (mSprdAutoTimePreferenceController != null && !((RestrictedPreference) preference).isDisabledByAdmin()) {
+            preference.setEnabled(!mSprdAutoTimePreferenceController.isEnabled());
         }
     }
 

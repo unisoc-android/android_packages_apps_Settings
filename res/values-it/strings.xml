@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Imposta sequenza"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Cambia sequenza di sblocco"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Procedura per l\'impostazione di una sequenza di sblocco"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Troppi tentativi errati. Riprova fra <xliff:g id="NUMBER">%d</xliff:g> secondi."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Troppi tentativi errati. Riprova fra <xliff:g id="NUMBER">%d</xliff:g> secondi.</item>
+        <item quantity="one">Troppi tentativi errati. Riprova fra 1 secondo.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Applicazione non installata sul telefono."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Sicurezza del profilo di lavoro"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Blocco schermo del profilo di lavoro"</string>

@@ -18,10 +18,16 @@ package com.android.settings.connecteddevice;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.provider.SearchIndexableResource;
+import android.os.Bundle;
+import android.util.Log;
+import androidx.preference.Preference;
 
 import com.android.settings.R;
 import com.android.settings.bluetooth.BluetoothFilesPreferenceController;
+import com.android.settings.bluetooth.Utils;
 import com.android.settings.dashboard.DashboardFragment;
 import com.android.settings.nfc.AndroidBeamPreferenceController;
 import com.android.settings.print.PrintSettingPreferenceController;
@@ -52,6 +58,26 @@ public class AdvancedConnectedDeviceDashboardFragment extends DashboardFragment 
     @Override
     protected String getLogTag() {
         return TAG;
+    }
+
+    @Override
+    public void onCreate(Bundle icicle) {
+        super.onCreate(icicle);
+        if (!Utils.isBluetoothSupported(getActivity())) {
+            getPreferenceScreen().removePreference((Preference)findPreference(KEY_BLUETOOTH));
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Drawable d = getActivity().getDrawable(
+                com.android.internal.R.drawable.ic_settings_bluetooth);
+        TypedArray a = getActivity().obtainStyledAttributes(new int[]{
+                android.R.attr.colorControlNormal});
+        int tintColor = a.getColor(0, 0);
+        a.recycle();
+        d.setTint(tintColor);
     }
 
     @Override

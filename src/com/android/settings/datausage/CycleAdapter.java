@@ -160,8 +160,11 @@ public class CycleAdapter extends SettingsSpinnerAdapter<CycleAdapter.CycleItem>
         clear();
 
         final Context context = getContext();
-        for (NetworkCycleData data : cycleData) {
-            add(new CycleAdapter.CycleItem(context, data.getStartTime(), data.getEndTime()));
+        //UNISOC: bug1140507, check cycleData before iterator
+        if (cycleData != null) {
+            for (NetworkCycleData data : cycleData) {
+                add(new CycleAdapter.CycleItem(context, data.getStartTime(), data.getEndTime()));
+            }
         }
 
         // force pick the current cycle (first item)

@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiFeaturesUtils;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.UserManager;
@@ -236,6 +237,10 @@ public class WifiTetherSettings extends RestrictedDashboardFragment
                 @Override
                 public List<SearchIndexableResource> getXmlResourcesToIndex(
                         Context context, boolean enabled) {
+                    UserManager mUserManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
+                    if (WifiFeaturesUtils.FeatureProperty.SUPPORT_SPRD_SOFTAP_FEATURES || mUserManager.isGuestUser()) {
+                        return null;
+                    }
                     final SearchIndexableResource sir = new SearchIndexableResource(context);
                     sir.xmlResId = R.xml.wifi_tether_settings;
                     return Arrays.asList(sir);

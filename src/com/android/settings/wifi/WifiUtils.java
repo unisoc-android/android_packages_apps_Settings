@@ -24,9 +24,11 @@ import android.content.pm.PackageManager;
 import android.net.NetworkCapabilities;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiFeaturesUtils;
 import android.provider.Settings;
 import android.text.TextUtils;
 
+import com.android.settings.utils.Utf8ByteLengthFilter;
 import com.android.settingslib.wifi.AccessPoint;
 
 import java.nio.charset.StandardCharsets;
@@ -169,9 +171,13 @@ public class WifiUtils {
                     // WEP-40, WEP-104, and 256-bit WEP (WEP-232?)
                     if ((length == 10 || length == 26 || length == 58)
                             && password.matches("[0-9A-Fa-f]*")) {
-                        config.wepKeys[0] = password;
+                        if (config.wepTxKeyIndex >= 0) {
+                            config.wepKeys[config.wepTxKeyIndex] = password;
+                        }
                     } else {
-                        config.wepKeys[0] = '"' + password + '"';
+                        if (config.wepTxKeyIndex >= 0) {
+                            config.wepKeys[config.wepTxKeyIndex] = '"' + password + '"';
+                        }
                     }
                 }
                 break;
@@ -275,6 +281,9 @@ public class WifiUtils {
                 && config.getNetworkSelectionStatus() != null
                 && config.getNetworkSelectionStatus().getHasEverConnected()) {
             return CONNECT_TYPE_SAVED_NETWORK;
+        } else if (accessPoint.isSaved() && config != null
+                && !config.canModify) {
+            return CONNECT_TYPE_SAVED_NETWORK;
         } else if (accessPoint.isPasspoint()) {
             // Access point provided by an installed Passpoint provider, connect using
             // the associated config.
@@ -283,4 +292,39 @@ public class WifiUtils {
             return CONNECT_TYPE_OTHERS;
         }
     }
+
+    /**
+     * check should show autoJoin menu
+     */
+    public static boolean isShowAutoJoinMenu(Context context, AccessPoint accessPoint) {
+        if (accessPoint.isSaved() && accessPoint.getConfig().autoJoinMenu) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * check should show disconnect menu, it will do disconnect action
+     */
+    public static boolean isDisconnectNetworkSupported(Context context) {
+        return WifiFeaturesUtils.getInstance(context).isDisconnectNetworkSupported();
+    }
+
+    /**
+     * check should show disconnect menu, it will do disable network action
+     */
+    public static boolean isDisableNetworkSupported(Context context) {
+        return WifiFeaturesUtils.getInstance(context).isDisableNetworkSupported();
+    }
+    public static class WifiDeviceNameFilter extends Utf8ByteLengthFilter {
+        public WifiDeviceNameFilter() {
+            super(SSID_ASCII_MAX_LENGTH);
+        }
+    }
+    public static class WifiDevicePassWordFilter extends Utf8ByteLengthFilter {
+        public WifiDevicePassWordFilter() {
+            super(PASSWORD_MAX_LENGTH);
+        }
+    }
+
 }

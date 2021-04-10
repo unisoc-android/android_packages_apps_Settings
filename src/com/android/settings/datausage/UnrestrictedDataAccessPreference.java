@@ -56,9 +56,11 @@ public class UnrestrictedDataAccessPreference extends AppSwitchPreference implem
                 UserHandle.getUserId(entry.info.uid)));
         updateState();
         setKey(generateKey(mEntry));
-        if (mEntry.icon != null) {
-            setIcon(mEntry.icon);
+        // bug 1120144: the application icon which in Unrestricted data does not display while first enter Settings
+        if (mEntry.icon == null) {
+            mApplicationsState.ensureIcon(mEntry);
         }
+        setIcon(mEntry.icon);
     }
 
     static String generateKey(final AppEntry entry) {

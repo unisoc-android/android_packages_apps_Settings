@@ -16,6 +16,7 @@
 
 package com.android.settings.notification;
 
+import android.app.ActivityManager;
 import android.app.NotificationManager;
 import android.content.Context;
 
@@ -24,6 +25,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 
 import com.android.settings.core.PreferenceControllerMixin;
+import com.android.settings.Utils;
 import com.android.settings.widget.DisabledCheckBoxPreference;
 import com.android.settingslib.core.lifecycle.Lifecycle;
 
@@ -56,7 +58,12 @@ public class ZenModeVisEffectPreferenceController
     public boolean isAvailable() {
         if (mEffect == NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS) {
             return mContext.getResources()
-                    .getBoolean(com.android.internal.R.bool.config_intrusiveNotificationLed);
+                    .getBoolean(com.android.internal.R.bool.config_intrusiveNotificationLed)
+                    && Utils.ledFileIsExists();
+        }
+        //Add for bug1121939, remove notificationBadging in go board
+        if (mEffect == NotificationManager.Policy.SUPPRESSED_EFFECT_BADGE) {
+            return !ActivityManager.isLowRamDeviceStatic();
         }
         return true;
     }

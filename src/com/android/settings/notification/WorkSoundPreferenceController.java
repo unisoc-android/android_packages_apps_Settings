@@ -242,17 +242,22 @@ public class WorkSoundPreferenceController extends AbstractPreferenceController
         }
 
         final Context managedProfileContext = getManagedProfileContext();
-        if (Settings.Secure.getIntForUser(managedProfileContext.getContentResolver(),
-                Settings.Secure.SYNC_PARENT_SOUNDS, 0, mManagedProfileId) == 1) {
-            enableWorkSyncSettings();
-        } else {
-            disableWorkSyncSettings();
+        if (managedProfileContext != null) {
+            if (Settings.Secure.getIntForUser(managedProfileContext.getContentResolver(),
+                    Settings.Secure.SYNC_PARENT_SOUNDS, 0, mManagedProfileId) == 1) {
+                enableWorkSyncSettings();
+            } else {
+                disableWorkSyncSettings();
+            }
         }
     }
 
     void enableWorkSync() {
-        RingtoneManager.enableSyncFromParent(getManagedProfileContext());
-        enableWorkSyncSettings();
+        final Context managedProfileContext = getManagedProfileContext();
+        if (managedProfileContext != null) {
+            RingtoneManager.enableSyncFromParent(managedProfileContext);
+            enableWorkSyncSettings();
+        }
     }
 
     private void enableWorkSyncSettings() {
@@ -266,8 +271,11 @@ public class WorkSoundPreferenceController extends AbstractPreferenceController
     }
 
     private void disableWorkSync() {
-        RingtoneManager.disableSyncFromParent(getManagedProfileContext());
-        disableWorkSyncSettings();
+        final Context managedProfileContext = getManagedProfileContext();
+        if (managedProfileContext != null) {
+            RingtoneManager.disableSyncFromParent(managedProfileContext);
+            disableWorkSyncSettings();
+        }
     }
 
     private void disableWorkSyncSettings() {

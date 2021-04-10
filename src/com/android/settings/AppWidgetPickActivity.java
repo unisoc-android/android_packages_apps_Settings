@@ -105,18 +105,24 @@ public class AppWidgetPickActivity extends ActivityPicker
                 switch (density) {
                     case DisplayMetrics.DENSITY_MEDIUM:
                         iconDensity = DisplayMetrics.DENSITY_LOW;
+                        break;
                     case DisplayMetrics.DENSITY_TV:
                         iconDensity = DisplayMetrics.DENSITY_MEDIUM;
+                        break;
                     case DisplayMetrics.DENSITY_HIGH:
                         iconDensity = DisplayMetrics.DENSITY_MEDIUM;
+                        break;
                     case DisplayMetrics.DENSITY_XHIGH:
                         iconDensity = DisplayMetrics.DENSITY_HIGH;
+                        break;
                     case DisplayMetrics.DENSITY_XXHIGH:
                         iconDensity = DisplayMetrics.DENSITY_XHIGH;
+                        break;
                     default:
                         // The density is some abnormal value.  Return some other
                         // abnormal value that is a reasonable scaling of it.
                         iconDensity = (int)((density*0.75f)+.5f);
+                        break;
                 }
                 Resources packageResources = mPackageManager.
                         getResourcesForApplication(info.provider.getPackageName());

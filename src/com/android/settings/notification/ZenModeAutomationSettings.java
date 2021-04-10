@@ -16,6 +16,7 @@
 
 package com.android.settings.notification;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AutomaticZenRule;
 import android.app.NotificationManager;
@@ -51,6 +52,7 @@ public class ZenModeAutomationSettings extends ZenModeSettingsBase {
     private CharSequence[] mDeleteDialogRuleNames;
     private String[] mDeleteDialogRuleIds;
     private boolean[] mDeleteDialogChecked;
+    private AlertDialog mAlertDialog;
 
     @Override
     public void onAttach(Context context) {
@@ -98,7 +100,7 @@ public class ZenModeAutomationSettings extends ZenModeSettingsBase {
                 .setNoun("condition provider")
                 .build();
     }
-    private final int DELETE_RULES = 1;
+    private static final int DELETE_RULES = 1;
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -118,7 +120,13 @@ public class ZenModeAutomationSettings extends ZenModeSettingsBase {
                     mDeleteDialogRuleNames[i] = rules[i].getValue().getName();
                     mDeleteDialogRuleIds[i] = rules[i].getKey();
                 }
-                new AlertDialog.Builder(mContext)
+                /* bug 1186512 : crash occurs when activity has be destoryed and dialog is showing   @} */
+                final Activity activity = getActivity();
+                if (activity == null || activity.isFinishing()) {
+                    return true;
+                }
+                /* @} */
+                mAlertDialog = new AlertDialog.Builder(mContext)
                         .setTitle(R.string.zen_mode_delete_automatic_rules)
                         .setMultiChoiceItems(mDeleteDialogRuleNames, null,
                                 new DialogInterface.OnMultiChoiceClickListener() {
@@ -176,4 +184,13 @@ public class ZenModeAutomationSettings extends ZenModeSettingsBase {
                     return buildPreferenceControllers(context, null, null, null);
                 }
             };
+
+    /* bug 1186512 : crash occurs when activity has be destoryed and dialog is showing   @} */
+    public void onDestroy() {
+        super.onDestroy();
+        if (mAlertDialog != null && mAlertDialog.isShowing()) {
+            mAlertDialog.dismiss();
+        }
+    }
+    /* @} */
 }

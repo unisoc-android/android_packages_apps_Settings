@@ -75,6 +75,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.IntConsumer;
 
+import androidx.appcompat.app.AlertDialog;
+
 public class TrustedCredentialsSettings extends InstrumentedFragment
         implements TrustedCredentialsDialogBuilder.DelegateInterface {
 
@@ -90,6 +92,9 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
     private static final String SAVED_CONFIRMING_CREDENTIAL_USER = "ConfirmingCredentialUser";
     private static final String USER_ACTION = "com.android.settings.TRUSTED_CREDENTIALS_USER";
     private static final int REQUEST_CONFIRM_CREDENTIALS = 1;
+
+    private AlertDialog mAlertDialog;
+    private AlertDialog mTrustAllCaAlertDialog;
 
     @Override
     public int getMetricsCategory() {
@@ -178,6 +183,7 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         final Activity activity = getActivity();
         mUserManager = (UserManager) activity.getSystemService(Context.USER_SERVICE);
         mKeyguardManager = (KeyguardManager) activity
@@ -198,12 +204,6 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
 
         mConfirmingCredentialListener = null;
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE);
-        filter.addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE);
-        filter.addAction(Intent.ACTION_MANAGED_PROFILE_UNLOCKED);
-        activity.registerReceiver(mWorkProfileChangedReceiver, filter);
-
         activity.setTitle(R.string.trusted_credentials);
     }
 
@@ -217,20 +217,41 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
 
     @Override public View onCreateView(
             LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-        mTabHost = (TabHost) inflater.inflate(R.layout.trusted_credentials, parent, false);
-        mTabHost.setup();
-        addTab(Tab.SYSTEM);
-        // TODO add Install button on Tab.USER to go to CertInstaller like KeyChainActivity
-        addTab(Tab.USER);
-        if (getActivity().getIntent() != null &&
-                USER_ACTION.equals(getActivity().getIntent().getAction())) {
-            mTabHost.setCurrentTabByTag(Tab.USER.mTag);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE);
+        filter.addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE);
+        filter.addAction(Intent.ACTION_MANAGED_PROFILE_UNLOCKED);
+        getActivity().registerReceiver(mWorkProfileChangedReceiver, filter);
+
+        if(mTabHost == null) {
+            mTabHost = (TabHost) inflater.inflate(R.layout.trusted_credentials, parent, false);
+            mTabHost.setup();
+            addTab(Tab.SYSTEM);
+            // TODO add Install button on Tab.USER to go to CertInstaller like KeyChainActivity
+            addTab(Tab.USER);
+            if (getActivity().getIntent() != null && USER_ACTION.equals(getActivity().getIntent().getAction())) {
+                mTabHost.setCurrentTabByTag(Tab.USER.mTag);
+            }
         }
         return mTabHost;
     }
+
+    @Override
+    public void onDestroyView() {
+           super.onDestroyView();
+           getActivity().unregisterReceiver(mWorkProfileChangedReceiver);
+           if(mAlertDialog != null) {
+               mAlertDialog.dismiss();
+               mAlertDialog = null;
+           }
+           if(mTrustAllCaAlertDialog != null) {
+               mTrustAllCaAlertDialog.dismiss();
+               mTrustAllCaAlertDialog = null;
+           }
+    }
+
     @Override
     public void onDestroy() {
-        getActivity().unregisterReceiver(mWorkProfileChangedReceiver);
         for (AdapterData.AliasLoader aliasLoader : mAliasLoaders) {
             aliasLoader.cancel(true);
         }
@@ -241,6 +262,9 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
             mAliasOperation = null;
         }
         closeKeyChainConnections();
+        if(mAlertDialog != null && mAlertDialog.isShowing()) {
+            mAlertDialog.dismiss();
+        }
         super.onDestroy();
     }
 
@@ -343,8 +367,10 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
         public int getChildrenCount(int groupPosition) {
             List<CertHolder> certHolders = mData.mCertHoldersByUserId.valueAt(groupPosition);
             if (certHolders != null) {
+                Log.d(TAG, "certHolders.size: "+certHolders.size());
                 return certHolders.size();
             }
+            Log.d(TAG, "certHolders size is 0");
             return 0;
         }
         @Override
@@ -534,6 +560,7 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
             @Override
             public void onChanged() {
                 super.onChanged();
+                Log.d(TAG, "Observer onChanged");
                 ChildAdapter.super.notifyDataSetChanged();
             }
             @Override
@@ -571,6 +598,7 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
         @Override
         public void notifyDataSetChanged() {
             // Don't call super as the parent will propagate this event back later in mObserver
+            Log.d(TAG, "notifyDataSetChanged");
             mParent.notifyDataSetChanged();
         }
         @Override
@@ -669,7 +697,7 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
             private Context mContext;
 
             public AliasLoader() {
-                mContext = getActivity();
+                mContext = getActivity().getApplicationContext();
                 mAliasLoaders.add(this);
                 List<UserHandle> profiles = mUserManager.getUserProfiles();
                 for (UserHandle profile : profiles) {
@@ -773,6 +801,7 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
                 for (int i = 0; i < n; ++i) {
                     mCertHoldersByUserId.put(certHolders.keyAt(i), certHolders.valueAt(i));
                 }
+                Log.d(TAG, "onPostExecute notifyDataSetChanged");
                 mAdapter.notifyDataSetChanged();
                 mProgressBar.setVisibility(View.GONE);
                 mContentView.setVisibility(View.VISIBLE);
@@ -924,7 +953,7 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
     private void showTrustAllCaDialog(List<CertHolder> unapprovedCertHolders) {
         final CertHolder[] arr = unapprovedCertHolders.toArray(
                 new CertHolder[unapprovedCertHolders.size()]);
-        new TrustedCredentialsDialogBuilder(getActivity(), this)
+        mTrustAllCaAlertDialog = new TrustedCredentialsDialogBuilder(getActivity(), this)
                 .setCertHolders(arr)
                 .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
@@ -938,7 +967,10 @@ public class TrustedCredentialsSettings extends InstrumentedFragment
     }
 
     private void showCertDialog(final CertHolder certHolder) {
-        new TrustedCredentialsDialogBuilder(getActivity(), this)
+        if(mAlertDialog != null && mAlertDialog.isShowing()) {
+            mAlertDialog.dismiss();
+        }
+        mAlertDialog = new TrustedCredentialsDialogBuilder(getActivity(), this)
                 .setCertHolder(certHolder)
                 .show();
     }

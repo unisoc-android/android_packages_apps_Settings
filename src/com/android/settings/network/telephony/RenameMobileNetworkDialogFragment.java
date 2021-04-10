@@ -28,6 +28,7 @@ import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.TelephonyManagerEx;
 import android.text.BidiFormatter;
 import android.text.TextDirectionHeuristics;
 import android.text.TextUtils;
@@ -62,8 +63,10 @@ public class RenameMobileNetworkDialogFragment extends InstrumentedDialogFragmen
 
     private TelephonyManager mTelephonyManager;
     private SubscriptionManager mSubscriptionManager;
+    private TelephonyManagerEx mTelephonyManagerEx;
     private int mSubId;
     private EditText mNameView;
+    private EditText mNumberView;
     private Spinner mColorSpinner;
     private Color[] mColors;
 
@@ -100,6 +103,7 @@ public class RenameMobileNetworkDialogFragment extends InstrumentedDialogFragmen
         super.onAttach(context);
         mTelephonyManager = getTelephonyManager(context);
         mSubscriptionManager = getSubscriptionManager(context);
+        mTelephonyManagerEx = TelephonyManagerEx.from(context);
         mSubId = getArguments().getInt(KEY_SUBSCRIPTION_ID);
     }
 
@@ -121,6 +125,14 @@ public class RenameMobileNetworkDialogFragment extends InstrumentedDialogFragmen
                     mSubscriptionManager.setIconTint(
                             mColors[mColorSpinner.getSelectedItemPosition()].getColor(),
                             mSubId);
+                    SubscriptionInfo currentInfo = mSubscriptionManager.getActiveSubscriptionInfo(mSubId);
+                    String newNumber = mNumberView.getText().toString();
+                    if (currentInfo != null && newNumber != null
+                            && !newNumber.equals(currentInfo.getNumber())) {
+                        mTelephonyManagerEx.setLine1NumberForDisplayForSubscriberEx(mSubId, "phoneNumber", newNumber);
+                        currentInfo.setNumber(newNumber);
+                        mSubscriptionManager.setDisplayNumber(newNumber,mSubId);
+                    }
                 })
                 .setNegativeButton(android.R.string.cancel, null);
         return builder.create();
@@ -152,15 +164,17 @@ public class RenameMobileNetworkDialogFragment extends InstrumentedDialogFragmen
         }
 
         final TextView operatorName = view.findViewById(R.id.operator_name_value);
-        final ServiceState serviceState = mTelephonyManager.getServiceStateForSubscriber(mSubId);
-        operatorName.setText(serviceState.getOperatorAlphaLong());
+        //UNISOC:Modify for bug1109975,use network operator name when language changed.
+        //final ServiceState serviceState = mTelephonyManager.getServiceStateForSubscriber(mSubId);
+        final String networkOperator = mTelephonyManager.getNetworkOperatorName(mSubId);
+        operatorName.setText(/*serviceState.getOperatorAlphaLong()*/networkOperator);
 
         final TextView phoneTitle = view.findViewById(R.id.number_label);
         phoneTitle.setVisibility(info.isOpportunistic() ? View.GONE : View.VISIBLE);
 
-        final TextView phoneNumber = view.findViewById(R.id.number_value);
+        mNumberView = view.findViewById(R.id.number_value);
         final String formattedNumber = DeviceInfoUtils.getFormattedPhoneNumber(getContext(), info);
-        phoneNumber.setText(BidiFormatter.getInstance().unicodeWrap(formattedNumber,
+        mNumberView.setText(BidiFormatter.getInstance().unicodeWrap(formattedNumber,
                 TextDirectionHeuristics.LTR));
     }
 

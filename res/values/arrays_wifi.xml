@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- create by spreadst -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string-array name="mobile_to_wlan">
+        <item>@string/mobile_to_wlan_policy_auto</item>
+        <item>@string/mobile_to_wlan_policy_manual</item>
+        <item>@string/mobile_to_wlan_policy_ask</item>
+    </string-array>
+    <string-array name="mobile_to_wlan_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <!-- case WLAN_0221: Only PEAP and SIM methods are allowed. --> <skip />
+    <string-array name="peap_and_sim_method">
+        <!-- Do not translate. -->
+        <item>PEAP</item>
+        <!-- Do not translate. -->
+        <item>SIM</item>
+    </string-array>
+
+    <!-- SPRD: Bug #474464 Porting WAPI feature to AndroidN BEG-->
+    <!-- Wi-Fi settings.  The type of WAPI PSK key a Wi-Fi network has. -->
+    <string-array name="wifi_wapi_psk_type">
+        <!-- Do not translate. -->
+        <item>@string/wifi_security_wapi_psk_ascii</item>
+        <!-- Do not translate. -->
+        <item>@string/wifi_security_wapi_psk_hexadecimal</item>
+    </string-array>
+    <!--  Porting WAPI feature to AndroidN END -->
+
+    <!-- SPRD: Bug #590380 Porting WEP feature to AndroidN BEG-->
+    <string-array name="wep_key_index">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <!--  Porting WEP feature to AndroidN END -->
+
+</resources>

@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"திறப்பதற்கான வடிவத்தை அமை"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"திறப்பதற்கான வடிவத்தை மாற்று"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"திறப்பதற்கான வடிவத்தை எப்படி வரைவது"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"பல தவறான முயற்சிகள். <xliff:g id="NUMBER">%d</xliff:g> வினாடிகளில் மீண்டும் முயற்சிக்கவும்."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">பல தவறான முயற்சிகள். <xliff:g id="NUMBER">%d</xliff:g> வினாடிகளுக்குப் பிறகு முயலவும்.</item>
+        <item quantity="one">பல தவறான முயற்சிகள். 1 வினாடிக்குப் பிறகு முயலவும்.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"உங்கள் தொலைபேசியில் ஆப்ஸ் நிறுவப்படவில்லை."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"பணிச் சுயவிவரப் பாதுகாப்பு"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"பணி சுயவிவரத்தின் திரைப் பூட்டு"</string>

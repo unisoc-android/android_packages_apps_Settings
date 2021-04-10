@@ -31,7 +31,11 @@
         android:layout_gravity="center_vertical"
         android:focusable="true"
         android:focusableInTouchMode="true"
-        android:inputType="numberDecimal" />
+        android:inputType="numberDecimal"
+        android:maxLength="15">
+        <!--UNISOC:1146152, EditText get the focus by default -->
+        <requestFocus />
+    </EditText>
 
     <Spinner
         android:id="@+id/size_spinner"

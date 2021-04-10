@@ -33,7 +33,8 @@
             android:layout_width="120dip"
             android:layout_weight="0.4"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical" />
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="32dip"/>
         <Space
             android:layout_width="0dip"
             android:layout_height="wrap_content"

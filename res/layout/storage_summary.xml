@@ -50,11 +50,12 @@
     <ProgressBar
         android:id="@android:id/progress"
         android:layout_width="match_parent"
-        android:layout_height="8dp"
+        android:layout_height="5dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp"
         android:visibility="gone"
         android:max="100"
+        android:progressDrawable="@drawable/color_bar_progress"
         style="?android:attr/progressBarStyleHorizontal" />
 
 </LinearLayout>

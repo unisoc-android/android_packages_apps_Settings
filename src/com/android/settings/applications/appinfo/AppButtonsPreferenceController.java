@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
 import android.app.settings.SettingsEnums;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -160,7 +161,8 @@ public class AppButtonsPreferenceController extends BasePreferenceController imp
     @Override
     public int getAvailabilityStatus() {
         // TODO(b/37313605): Re-enable once this controller supports instant apps
-        return isInstantApp() || isSystemModule() ? DISABLED_FOR_USER : AVAILABLE;
+        //bug 1147118: do not show app buttons preference when app entry is null
+        return mAppEntry == null || isInstantApp() || isSystemModule() ? DISABLED_FOR_USER : AVAILABLE;
     }
 
     @Override
@@ -680,7 +682,13 @@ public class AppButtonsPreferenceController extends BasePreferenceController imp
 
     private void launchApplication() {
         if (mAppLaunchIntent != null) {
-            mContext.startActivityAsUser(mAppLaunchIntent, new UserHandle(mUserId));
+            /*UNISOC:1152701 Settings crashed in monkey test @{*/
+            try {
+                mContext.startActivityAsUser(mAppLaunchIntent, new UserHandle(mUserId));
+            } catch (ActivityNotFoundException e) {
+                Log.w(TAG, "No activity found for " + mAppLaunchIntent);
+            }
+            /* @} */
         }
     }
 

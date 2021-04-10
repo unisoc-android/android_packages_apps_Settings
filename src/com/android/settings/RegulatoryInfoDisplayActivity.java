@@ -54,6 +54,8 @@ public class RegulatoryInfoDisplayActivity extends Activity implements
     private static final String REGULATORY_INFO_FILEPATH_TEMPLATE =
             "/data/misc/elabel/regulatory_info_%s.png";
 
+    private AlertDialog mDialog;
+
     /**
      * Display the regulatory info graphic in a dialog window.
      */
@@ -106,12 +108,12 @@ public class RegulatoryInfoDisplayActivity extends Activity implements
                 image.setImageResource(resId);
             }
             builder.setView(view);
-            builder.show();
+            mDialog = builder.show();
         } else if (regulatoryText.length() > 0) {
             builder.setMessage(regulatoryText);
-            AlertDialog dialog = builder.show();
+            mDialog = builder.show();
             // we have to show the dialog first, or the setGravity() call will throw a NPE
-            TextView messageText = (TextView) dialog.findViewById(android.R.id.message);
+            TextView messageText = (TextView) mDialog.findViewById(android.R.id.message);
             messageText.setGravity(Gravity.CENTER);
         } else {
             // neither drawable nor text resource exists, finish activity
@@ -153,6 +155,15 @@ public class RegulatoryInfoDisplayActivity extends Activity implements
     @Override
     public void onDismiss(DialogInterface dialog) {
         finish();   // close the activity
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mDialog != null && mDialog.isShowing()) {
+            mDialog.dismiss();
+        }
+        mDialog = null;
     }
 
     private String getCoo() {

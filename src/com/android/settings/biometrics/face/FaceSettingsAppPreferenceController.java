@@ -32,7 +32,7 @@ import androidx.preference.Preference;
  */
 public class FaceSettingsAppPreferenceController extends FaceSettingsPreferenceController {
 
-    static final String KEY = "security_settings_face_app";
+    public static final String KEY = "security_settings_face_app";
 
     private static final int ON = 1;
     private static final int OFF = 0;

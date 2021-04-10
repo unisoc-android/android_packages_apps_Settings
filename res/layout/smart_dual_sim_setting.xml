@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <com.android.settings.widget.SwitchBar android:id="@+id/switch_bar"
+        android:layout_height="?android:attr/actionBarSize"
+        android:layout_width="match_parent"
+        android:background="@drawable/switchbar_background"
+        android:theme="?attr/switchBarTheme"
+        />
+
+    <RelativeLayout android:layout_height="wrap_content"
+        android:layout_width="match_parent">
+        <TextView
+            android:id="@+id/sim1_number_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:paddingTop="18dp"
+            />
+
+        <EditText
+            android:id="@+id/sim1_number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="phone"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:hint="@string/smart_dual_sim_hint"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/sim1_number_text"
+            />
+
+        <TextView
+            android:id="@+id/sim2_number_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/sim1_number_text"
+            android:paddingTop="18dp"
+            />
+
+        <EditText
+            android:id="@+id/sim2_number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="phone"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:hint="@string/smart_dual_sim_hint"
+            android:layout_below="@id/sim1_number"
+            android:layout_toRightOf="@id/sim2_number_text"
+            />
+    </RelativeLayout>
+
+</LinearLayout>

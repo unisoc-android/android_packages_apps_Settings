@@ -69,6 +69,8 @@ public class StorageVolumePreference extends Preference {
         Drawable icon;
         if (VolumeInfo.ID_PRIVATE_INTERNAL.equals(volume.getId())) {
             icon = context.getDrawable(R.drawable.ic_storage);
+        } else if (volume.getDisk().isUsb()) {
+            icon = context.getDrawable(R.drawable.ic_settings_otg);
         } else {
             icon = context.getDrawable(R.drawable.ic_sim_sd);
         }
@@ -79,7 +81,8 @@ public class StorageVolumePreference extends Preference {
 
             long freeBytes = 0;
             long usedBytes = 0;
-            if (volume.getType() == VolumeInfo.TYPE_PRIVATE) {
+            if (volume.getType() == VolumeInfo.TYPE_PRIVATE
+                    && VolumeInfo.ID_PRIVATE_INTERNAL.equals(volume.getId())) {
                 final StorageStatsManager stats =
                         context.getSystemService(StorageStatsManager.class);
                 try {
@@ -92,9 +95,7 @@ public class StorageVolumePreference extends Preference {
             } else {
                 // StorageStatsManager can only query private volumes.
                 // Default to previous storage calculation for public volumes.
-                if (totalBytes <= 0) {
-                    totalBytes = path.getTotalSpace();
-                }
+                totalBytes = path.getTotalSpace();
                 freeBytes = path.getFreeSpace();
                 usedBytes = totalBytes - freeBytes;
             }

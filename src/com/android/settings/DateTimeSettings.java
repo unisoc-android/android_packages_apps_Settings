@@ -21,7 +21,9 @@ import android.app.Dialog;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.content.Intent;
+import android.location.LocationFeaturesUtils;
 import android.provider.SearchIndexableResource;
+import android.util.Log;
 
 import com.android.settings.dashboard.DashboardFragment;
 import com.android.settings.dashboard.SummaryLoader;
@@ -29,6 +31,7 @@ import com.android.settings.datetime.AutoTimeFormatPreferenceController;
 import com.android.settings.datetime.AutoTimePreferenceController;
 import com.android.settings.datetime.AutoTimeZonePreferenceController;
 import com.android.settings.datetime.DatePreferenceController;
+import com.android.settings.datetime.SprdAutoTimePreferenceController;
 import com.android.settings.datetime.TimeChangeListenerMixin;
 import com.android.settings.datetime.TimeFormatPreferenceController;
 import com.android.settings.datetime.TimePreferenceController;
@@ -45,9 +48,12 @@ import java.util.List;
 
 @SearchIndexable
 public class DateTimeSettings extends DashboardFragment implements
-        TimePreferenceController.TimePreferenceHost, DatePreferenceController.DatePreferenceHost {
+        TimePreferenceController.TimePreferenceHost, DatePreferenceController.DatePreferenceHost,
+        SprdAutoTimePreferenceController.SprdAutoTimePreferenceHost  {
 
     private static final String TAG = "DateTimeSettings";
+    private static boolean SUPPORT_GPS_TIME = false;
+    private static boolean GNSS_DISABLED = false;
 
     // have we been launched from the setup wizard?
     protected static final String EXTRA_IS_FROM_SUW = "firstRun";
@@ -64,13 +70,25 @@ public class DateTimeSettings extends DashboardFragment implements
 
     @Override
     protected int getPreferenceScreenResId() {
-        return R.xml.date_time_prefs;
+        int resId = R.xml.date_time_prefs;
+        if (!GNSS_DISABLED) {
+            if (SUPPORT_GPS_TIME) {
+                resId = R.xml.date_time_prefs_gps;
+            }
+        } else {
+            if (SUPPORT_GPS_TIME) {
+                resId = R.xml.date_time_prefs_no_gps;
+            }
+        }
+        return resId;
     }
 
     @Override
     public void onAttach(Context context) {
-        super.onAttach(context);
+        SUPPORT_GPS_TIME = LocationFeaturesUtils.getInstance(context).isSupportGpsTime();
+        GNSS_DISABLED = LocationFeaturesUtils.getInstance(context).isGnssDisabled();
         getSettingsLifecycle().addObserver(new TimeChangeListenerMixin(context, this));
+        super.onAttach(context);
     }
 
     @Override
@@ -83,29 +101,49 @@ public class DateTimeSettings extends DashboardFragment implements
         final AutoTimeZonePreferenceController autoTimeZonePreferenceController =
                 new AutoTimeZonePreferenceController(
                         activity, this /* UpdateTimeAndDateCallback */, isFromSUW);
-        final AutoTimePreferenceController autoTimePreferenceController =
-                new AutoTimePreferenceController(
-                        activity, this /* UpdateTimeAndDateCallback */);
         final AutoTimeFormatPreferenceController autoTimeFormatPreferenceController =
                 new AutoTimeFormatPreferenceController(
                         activity, this /* UpdateTimeAndDateCallback */);
         controllers.add(autoTimeZonePreferenceController);
-        controllers.add(autoTimePreferenceController);
+        SprdAutoTimePreferenceController sprdAutoTimePreferenceController = null;
+        AutoTimePreferenceController autoTimePreferenceController = null;
+        if (SUPPORT_GPS_TIME){
+            sprdAutoTimePreferenceController = new SprdAutoTimePreferenceController(
+                            activity, this /* SprdAutoTimePreferenceHost */,this /* SprdGpsUpdateTimeCallback */);
+            controllers.add(sprdAutoTimePreferenceController);
+        } else {
+            autoTimePreferenceController = new AutoTimePreferenceController(
+                            activity, this /* UpdateTimeAndDateCallback */);
+            controllers.add(autoTimePreferenceController);
+        }
         controllers.add(autoTimeFormatPreferenceController);
 
         controllers.add(new TimeFormatPreferenceController(
                 activity, this /* UpdateTimeAndDateCallback */, isFromSUW));
         controllers.add(new TimeZonePreferenceController(
                 activity, autoTimeZonePreferenceController));
-        controllers.add(new TimePreferenceController(
-                activity, this /* UpdateTimeAndDateCallback */, autoTimePreferenceController));
-        controllers.add(new DatePreferenceController(
-                activity, this /* UpdateTimeAndDateCallback */, autoTimePreferenceController));
+        if (SUPPORT_GPS_TIME){
+            controllers.add(new TimePreferenceController(
+                    activity, this /* UpdateTimeAndDateCallback */, sprdAutoTimePreferenceController));
+            controllers.add(new DatePreferenceController(
+                    activity, this /* UpdateTimeAndDateCallback */, sprdAutoTimePreferenceController));
+        } else {
+            controllers.add(new TimePreferenceController(
+                    activity, this /* UpdateTimeAndDateCallback */, autoTimePreferenceController));
+            controllers.add(new DatePreferenceController(
+                    activity, this /* UpdateTimeAndDateCallback */, autoTimePreferenceController));
+        }
         return controllers;
     }
 
     @Override
     public void updateTimeAndDateDisplay(Context context) {
+        updatePreferenceStates();
+    }
+
+    @Override
+    public void updatePreference(Context context) {
+        Log.d(TAG, "updatePreferenceBySprdUpdateTime");
         updatePreferenceStates();
     }
 
@@ -118,6 +156,9 @@ public class DateTimeSettings extends DashboardFragment implements
             case TimePreferenceController.DIALOG_TIMEPICKER:
                 return use(TimePreferenceController.class)
                         .buildTimePicker(getActivity());
+            case SprdAutoTimePreferenceController.DIALOG_AUTO_TIME_GPS_CONFIRM:
+                return use(SprdAutoTimePreferenceController.class)
+                        .buildGpsConfirm(getActivity());
             default:
                 throw new IllegalArgumentException();
         }
@@ -130,6 +171,9 @@ public class DateTimeSettings extends DashboardFragment implements
                 return SettingsEnums.DIALOG_DATE_PICKER;
             case TimePreferenceController.DIALOG_TIMEPICKER:
                 return SettingsEnums.DIALOG_TIME_PICKER;
+            case SprdAutoTimePreferenceController.DIALOG_AUTO_TIME_GPS_CONFIRM:
+                int value = SettingsEnums.DIALOG_AUTO_TIME_GPS_CONFIRM;
+                return SettingsEnums.DIALOG_AUTO_TIME_GPS_CONFIRM;
             default:
                 return 0;
         }
@@ -144,6 +188,12 @@ public class DateTimeSettings extends DashboardFragment implements
     @Override
     public void showDatePicker() {
         showDialog(DatePreferenceController.DIALOG_DATEPICKER);
+    }
+
+    @Override
+    public void showGpsConfirm() {
+        removeDialog(SprdAutoTimePreferenceController.DIALOG_AUTO_TIME_GPS_CONFIRM);
+        showDialog(SprdAutoTimePreferenceController.DIALOG_AUTO_TIME_GPS_CONFIRM);
     }
 
     private static class SummaryProvider implements SummaryLoader.SummaryProvider {

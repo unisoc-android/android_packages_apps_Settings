@@ -38,7 +38,9 @@ LOCAL_STATIC_ANDROID_LIBRARIES := \
 
 LOCAL_JAVA_LIBRARIES := \
     telephony-common \
-    ims-common
+    ims-common \
+    radio_interactor_common \
+    unisoc_ims_common
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx-constraintlayout_constraintlayout-solver \
@@ -50,7 +52,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     settings-log-bridge-protos-lite \
     contextualcards \
     settings-logtags \
-    zxing-core-1.7
+    zxing-core-1.7 \
+    vendor.sprd.hardware.connmgr-V1.0-java
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 

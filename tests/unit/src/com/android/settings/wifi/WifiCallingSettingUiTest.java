@@ -38,6 +38,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.SubscriptionInfo;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.espresso.NoMatchingViewException;
@@ -48,6 +49,7 @@ import com.android.ims.ImsConfig;
 import com.android.ims.ImsManager;
 import com.android.internal.telephony.SubscriptionController;
 import com.android.settings.testutils.MockedServiceManager;
+import com.android.settings.tests.unit.R;
 
 import junit.framework.Assert;
 
@@ -64,6 +66,7 @@ import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class WifiCallingSettingUiTest {
+    private static final String TAG = "Settings_ut";
     private static final String SUBSCRIPTION0_NAME = "SUB0";
     private static final String SUBSCRIPTION1_NAME = "SUB1";
     private static final String WFC_MODE_TITLE = "Calling preference";
@@ -87,13 +90,16 @@ public class WifiCallingSettingUiTest {
     ImsManager mImsManager0;
     @Mock
     ImsManager mImsManager1;
+    private boolean mTestFlag;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
+        Context context = mInstrumentation.getContext();
         mDevice = UiDevice.getInstance(mInstrumentation);
+        mTestFlag = context.getResources().getBoolean(R.bool.config_test_wifi);
 
         mMockedServiceManager = new MockedServiceManager();
         mMockedServiceManager.replaceService("isub", mSubscriptionController);
@@ -132,34 +138,38 @@ public class WifiCallingSettingUiTest {
 
     @Test
     public void testSingleSimUi() throws InterruptedException {
-        configureSingleSim();
-        doReturn(true).when(mImsManager0).isWfcEnabledByUser();
-        doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
-                .when(mImsManager0).getWfcMode();
-        doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
-                .when(mImsManager0).getWfcMode(anyBoolean());
+        if (mTestFlag) {
+            configureSingleSim();
+            doReturn(true).when(mImsManager0).isWfcEnabledByUser();
+            doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
+                   .when(mImsManager0).getWfcMode();
+            doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
+                   .when(mImsManager0).getWfcMode(anyBoolean());
 
-        mInstrumentation.startActivitySync(createActivityIntent());
+            mInstrumentation.startActivitySync(createActivityIntent());
 
-        checkSingleSimUi();
+            checkSingleSimUi();
 
-        try {
-            mDevice.setOrientationLeft();
-        } catch (Exception e) {
-            Assert.fail("Exception " + e);
+            try {
+                mDevice.setOrientationLeft();
+            } catch (Exception e) {
+                Assert.fail("Exception " + e);
+            }
+
+            // Re-check after rotation. Fragment should be recreated properly.
+            checkSingleSimUi();
+
+            try {
+                mDevice.setOrientationNatural();
+            } catch (Exception e) {
+                Assert.fail("Exception " + e);
+            }
+
+            // Re-check after rotation. Fragment should be resumed properly.
+            checkSingleSimUi();
+        } else {
+            Log.d(TAG, "testSingleSimUi not test");
         }
-
-        // Re-check after rotation. Fragment should be recreated properly.
-        checkSingleSimUi();
-
-        try {
-            mDevice.setOrientationNatural();
-        } catch (Exception e) {
-            Assert.fail("Exception " + e);
-        }
-
-        // Re-check after rotation. Fragment should be resumed properly.
-        checkSingleSimUi();
     }
 
     private void checkSingleSimUi() {
@@ -173,73 +183,85 @@ public class WifiCallingSettingUiTest {
 
     @Test
     public void testNoValidSub() throws InterruptedException {
-        configureDualSim();
-        doReturn(false).when(mImsManager0).isWfcEnabledByPlatform();
-        doReturn(false).when(mImsManager0).isNonTtyOrTtyOnVolteEnabled();
-        doReturn(false).when(mImsManager1).isWfcEnabledByPlatform();
-        doReturn(false).when(mImsManager1).isNonTtyOrTtyOnVolteEnabled();
-        doReturn(false).when(mImsManager0).isWfcEnabledByUser();
-        doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
-                .when(mImsManager0).getWfcMode();
-        doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
-                .when(mImsManager0).getWfcMode(anyBoolean());
+        if (mTestFlag) {
+            configureDualSim();
+            doReturn(false).when(mImsManager0).isWfcEnabledByPlatform();
+            doReturn(false).when(mImsManager0).isNonTtyOrTtyOnVolteEnabled();
+            doReturn(false).when(mImsManager1).isWfcEnabledByPlatform();
+            doReturn(false).when(mImsManager1).isNonTtyOrTtyOnVolteEnabled();
+            doReturn(false).when(mImsManager0).isWfcEnabledByUser();
+            doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
+                    .when(mImsManager0).getWfcMode();
+            doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
+                    .when(mImsManager0).getWfcMode(anyBoolean());
 
-        Activity activity = mInstrumentation.startActivitySync(createActivityIntent());
+            Activity activity = mInstrumentation.startActivitySync(createActivityIntent());
 
-        assertEquals(false, checkExists(onView(withText(SUBSCRIPTION0_NAME))));
-        assertEquals(false, checkExists(onView(withText(SUBSCRIPTION1_NAME))));
-        assertEquals(false, checkExists(onView(withText(WFC_MODE_TITLE))));
+            assertEquals(false, checkExists(onView(withText(SUBSCRIPTION0_NAME))));
+            assertEquals(false, checkExists(onView(withText(SUBSCRIPTION1_NAME))));
+            assertEquals(false, checkExists(onView(withText(WFC_MODE_TITLE))));
 
-        checkSwitchBarStatus(false, false);
-        checkEmptyViewStatus(false);
+            checkSwitchBarStatus(false, false);
+            checkEmptyViewStatus(false);
+        } else {
+            Log.d(TAG, "testNoValidSub not test");
+        }
     }
 
     @Test
     public void testWfcDisabled() throws InterruptedException {
-        configureSingleSim();
-        doReturn(false).when(mImsManager0).isWfcEnabledByUser();
-        doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
-                .when(mImsManager0).getWfcMode();
-        doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
-                .when(mImsManager0).getWfcMode(anyBoolean());
+        if (mTestFlag) {
+            configureSingleSim();
+            doReturn(false).when(mImsManager0).isWfcEnabledByUser();
+            doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
+                    .when(mImsManager0).getWfcMode();
+            doReturn(ImsConfig.WfcModeFeatureValueConstants.WIFI_PREFERRED)
+                    .when(mImsManager0).getWfcMode(anyBoolean());
 
-        Activity activity = mInstrumentation.startActivitySync(createActivityIntent());
+            Activity activity = mInstrumentation.startActivitySync(createActivityIntent());
 
-        assertEquals(false, checkExists(onView(withText(SUBSCRIPTION0_NAME))));
-        assertEquals(false, checkExists(onView(withText(SUBSCRIPTION1_NAME))));
-        assertEquals(false, checkExists(onView(withText(WFC_MODE_TITLE))));
+            assertEquals(false, checkExists(onView(withText(SUBSCRIPTION0_NAME))));
+            assertEquals(false, checkExists(onView(withText(SUBSCRIPTION1_NAME))));
+            assertEquals(false, checkExists(onView(withText(WFC_MODE_TITLE))));
 
-        checkSwitchBarStatus(true, false);
-        checkEmptyViewStatus(true);
+            checkSwitchBarStatus(true, false);
+            checkEmptyViewStatus(true);
+        } else {
+            Log.d(TAG, "testWfcDisabled not test");
+        }
     }
 
     @Test
     public void testDualSimUi() throws InterruptedException {
-        configureDualSim();
-        doReturn(true).when(mImsManager0).isWfcEnabledByUser();
-        doReturn(false).when(mImsManager1).isWfcEnabledByUser();
-        doReturn(ImsConfig.WfcModeFeatureValueConstants.CELLULAR_PREFERRED)
-                .when(mImsManager0).getWfcMode();
-        doReturn(ImsConfig.WfcModeFeatureValueConstants.CELLULAR_PREFERRED)
-                .when(mImsManager0).getWfcMode(anyBoolean());
+        if (mTestFlag) {
+            configureDualSim();
+            doReturn(true).when(mImsManager0).isWfcEnabledByUser();
+            doReturn(false).when(mImsManager1).isWfcEnabledByUser();
+            doReturn(ImsConfig.WfcModeFeatureValueConstants.CELLULAR_PREFERRED)
+                    .when(mImsManager0).getWfcMode();
+            doReturn(ImsConfig.WfcModeFeatureValueConstants.CELLULAR_PREFERRED)
+                    .when(mImsManager0).getWfcMode(anyBoolean());
 
-        mInstrumentation.startActivitySync(createActivityIntent());
+            mInstrumentation.startActivitySync(createActivityIntent());
 
-        assertEquals(true, checkExists(onView(withText(SUBSCRIPTION0_NAME))));
-        assertEquals(true, checkExists(onView(withText(SUBSCRIPTION1_NAME))));
-        assertEquals(true, checkExists(onView(withText(WFC_MODE_TITLE))));
-        assertEquals(true, checkExists(onView(withText(WFC_MODE_CELLULAR_PREFERRED))));
+            assertEquals(true, checkExists(onView(withText(SUBSCRIPTION0_NAME))));
+            assertEquals(true, checkExists(onView(withText(SUBSCRIPTION1_NAME))));
+            assertEquals(true, checkExists(onView(withText(WFC_MODE_TITLE))));
+            assertEquals(true, checkExists(onView(withText(WFC_MODE_CELLULAR_PREFERRED))));
 
-        onView(withText(SUBSCRIPTION0_NAME)).check(matches(isSelected()));
-        checkSwitchBarStatus(true, true);
-        checkEmptyViewStatus(false);
+            onView(withText(SUBSCRIPTION0_NAME)).check(matches(isSelected()));
+            checkSwitchBarStatus(true, true);
+            checkEmptyViewStatus(false);
 
-        // Switch to SUB1.
-        onView(withText(SUBSCRIPTION1_NAME)).perform(click());
+            // Switch to SUB1.
+            onView(withText(SUBSCRIPTION1_NAME)).perform(click());
 
-        checkSwitchBarStatus(true, false);
-        checkEmptyViewStatus(true);
-        onView(withText(SUBSCRIPTION1_NAME)).check(matches(isSelected()));
+            checkSwitchBarStatus(true, false);
+            checkEmptyViewStatus(true);
+            onView(withText(SUBSCRIPTION1_NAME)).check(matches(isSelected()));
+        } else {
+            Log.d(TAG, "testDualSimUi not test");
+        }
     }
 
     private boolean checkExists(ViewInteraction v) {
@@ -256,6 +278,7 @@ public class WifiCallingSettingUiTest {
                 com.android.settings.Settings.WifiCallingSettingsActivity.class);
         intent.setPackage("com.android.settings");
         intent.setAction("android.intent.action.MAIN");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
 

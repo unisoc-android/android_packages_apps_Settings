@@ -25,6 +25,7 @@
         android:singleLine="true"
         android:inputType="textCapSentences"
         android:hint="@string/zen_mode_rule_name_hint"
+        android:maxLength="100"
         android:layout_marginLeft="22dp"
         android:layout_marginRight="22dp" >
 

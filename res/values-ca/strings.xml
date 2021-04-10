@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Defineix el patró de desbloqueig"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Canvia el patró de desbloqueig"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Com crear un patró de desbloqueig"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Has superat el nombre d\'intents incorrectes permesos. Torna-ho a provar d\'aquí a <xliff:g id="NUMBER">%d</xliff:g> segons."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Has superat el nombre d\'intents incorrectes permesos. Torna-ho a provar d\'aquí a <xliff:g id="NUMBER">%d</xliff:g> segons.</item>
+        <item quantity="one">Has superat el nombre d\'intents incorrectes permesos. Torna-ho a provar d\'aquí a 1 segon.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"L\'aplicació no està instal·lada al telèfon."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Seguretat del perfil professional"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Bloqueig de pantalla del perfil professional"</string>

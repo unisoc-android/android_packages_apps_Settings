@@ -18,6 +18,7 @@ package com.android.settings.homepage.contextualcards.conditional;
 
 import android.content.Context;
 import android.util.ArrayMap;
+import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
 
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -108,6 +110,14 @@ public class ConditionContextualCardController implements ContextualCardControll
         final List<ContextualCard> conditionCards = mConditionManager.getDisplayableCards();
         final Map<Integer, List<ContextualCard>> conditionalCards =
                 buildConditionalCardsWithFooterOrHeader(conditionCards);
+
+        Log.d(TAG, "before onContextualCardUpdated, condition card size is " + conditionalCards.size());
+        for (ContextualCard contextualCard : conditionCards) {
+            final ConditionalContextualCard card = (ConditionalContextualCard) contextualCard;
+            if (card.getConditionId() == Objects.hash("DndConditionCardController")) {
+                Log.d(TAG, "Dnd condition card");
+            }
+        }
         mListener.onContextualCardUpdated(conditionalCards);
     }
 

@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Ontgrendelingspatroon instellen"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Ontgrendelingspatroon wijzigen"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Je tekent als volgt een ontgrendelingspatroon"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Te veel onjuiste pogingen. Probeer het over <xliff:g id="NUMBER">%d</xliff:g> seconden opnieuw."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Te veel onjuiste pogingen. Probeer het over <xliff:g id="NUMBER">%d</xliff:g> seconden opnieuw.</item>
+        <item quantity="one">Te veel onjuiste pogingen. Probeer het over één seconde opnieuw.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Deze app is niet geïnstalleerd op je telefoon."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Beveiliging voor werkprofiel"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Schermvergrendeling voor werkprofiel"</string>

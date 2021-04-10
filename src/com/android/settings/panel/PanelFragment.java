@@ -144,8 +144,12 @@ public class PanelFragment extends Fragment {
 
     private void createPanelContent() {
         final FragmentActivity activity = getActivity();
+
         if (mLayoutView == null) {
+            // bug 1149188: NPE occurs when activity has destroyed.
+            if (activity == null) return;
             activity.finish();
+            return;
         }
 
         mPanelSlices = mLayoutView.findViewById(R.id.panel_parent_layout);
@@ -171,7 +175,10 @@ public class PanelFragment extends Fragment {
                 .getPanel(activity, panelType, mediaPackageName);
 
         if (mPanel == null) {
+            // bug 1149188: NPE occurs when activity has destroyed.
+            if (activity == null) return;
             activity.finish();
+            return;
         }
 
         mMetricsProvider = FeatureFactory.getFactory(activity).getMetricsFeatureProvider();
@@ -260,6 +267,11 @@ public class PanelFragment extends Fragment {
      *     {@link mOnGlobalLayoutListener}, which calls {@link #animateIn()}.
      */
     private void loadPanelWhenReady() {
+        /*bug 1147249 : Can not save load panel since not attached to a ativity @{ */
+        if (getActivity() == null) {
+            return;
+        }
+        /* @} */
         if (mPanelSlicesLoaderCountdownLatch.isPanelReadyToLoad()) {
             mAdapter = new PanelSlicesAdapter(
                     this, mSliceLiveData, mPanel.getMetricsCategory());

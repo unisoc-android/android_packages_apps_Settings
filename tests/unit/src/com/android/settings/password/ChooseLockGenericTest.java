@@ -34,6 +34,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.WindowManager;
 
 import androidx.test.filters.MediumTest;
@@ -43,6 +44,7 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 import androidx.test.runner.lifecycle.Stage;
 
 import com.android.internal.widget.LockPatternUtils;
+import com.android.settings.tests.unit.R;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -64,6 +66,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class ChooseLockGenericTest {
+    private static final String TAG = "Settings_ut";
     private static final long TIMEOUT = 5 * DateUtils.SECOND_IN_MILLIS;
     private static final Intent PHISHING_ATTACK_INTENT = new Intent()
             .putExtra("confirm_credentials", false)
@@ -72,6 +75,7 @@ public class ChooseLockGenericTest {
     private UiDevice mDevice;
     private Context mTargetContext;
     private String mSettingPackage;
+    private boolean mTestFlag;
 
     @Rule
     public ActivityTestRule<ChooseLockGeneric> mChooseLockGenericActivityRule =
@@ -85,52 +89,66 @@ public class ChooseLockGenericTest {
         mDevice = UiDevice.getInstance(getInstrumentation());
         mTargetContext = getInstrumentation().getTargetContext();
         mSettingPackage = mTargetContext.getPackageName();
+        Context context = getInstrumentation().getContext();
+        mTestFlag = context.getResources().getBoolean(R.bool.config_test_lockscreen);
     }
 
     @Test
     public void testConfirmLockPasswordShown_deviceWithPassword() throws Throwable {
-        setPassword();
-        try {
-            // GIVEN a PIN password is set on this device at set up.
-            // WHEN ChooseLockGeneric is launched with no extras.
-            mChooseLockGenericActivityRule.launchActivity(null /* No extras */);
-            // THEN ConfirmLockPassword.InternalActivity is shown.
-            final Activity activity = getCurrentActivity();
-            assertThat(isSecureWindow(activity)).isTrue();
-            assertThat(activity)
-                    .isInstanceOf(ConfirmLockPassword.InternalActivity.class);
-        } finally {
-            finishAllAppTasks();
-            mDevice.waitForIdle();
-            clearPassword();
+        if (mTestFlag) {
+            setPassword();
+            try {
+                // GIVEN a PIN password is set on this device at set up.
+                // WHEN ChooseLockGeneric is launched with no extras.
+                mChooseLockGenericActivityRule.launchActivity(null /* No extras */);
+                // THEN ConfirmLockPassword.InternalActivity is shown.
+                final Activity activity = getCurrentActivity();
+                assertThat(isSecureWindow(activity)).isTrue();
+                assertThat(activity)
+                        .isInstanceOf(ConfirmLockPassword.InternalActivity.class);
+            } finally {
+                finishAllAppTasks();
+                mDevice.waitForIdle();
+                clearPassword();
+            }
+        } else {
+            Log.d(TAG, "testConfirmLockPasswordShown_deviceWithPassword not test");
         }
     }
 
     @Test
     public void testConfirmLockPasswordShown_deviceWithPassword_phishingAttack() throws Throwable {
-        setPassword();
-        try {
-            // GIVEN a PIN password is set on this device at set up.
-            // WHEN ChooseLockGeneric is launched with extras to by-pass lock password confirmation.
-            mChooseLockGenericActivityRule.launchActivity(PHISHING_ATTACK_INTENT);
-            // THEN ConfirmLockPassword.InternalActivity is still shown.
-            final Activity activity = getCurrentActivity();
-            assertThat(isSecureWindow(activity)).isTrue();
-            assertThat(activity)
-                    .isInstanceOf(ConfirmLockPassword.InternalActivity.class);
-        } finally {
-            finishAllAppTasks();
-            mDevice.waitForIdle();
-            clearPassword();
+        if (mTestFlag) {
+            setPassword();
+            try {
+                // GIVEN a PIN password is set on this device at set up.
+                // WHEN ChooseLockGeneric is launched with extras to by-pass lock password confirmation.
+                mChooseLockGenericActivityRule.launchActivity(PHISHING_ATTACK_INTENT);
+                // THEN ConfirmLockPassword.InternalActivity is still shown.
+                final Activity activity = getCurrentActivity();
+                assertThat(isSecureWindow(activity)).isTrue();
+                assertThat(activity)
+                        .isInstanceOf(ConfirmLockPassword.InternalActivity.class);
+            } finally {
+                finishAllAppTasks();
+                mDevice.waitForIdle();
+                clearPassword();
+            }
+        } else {
+            Log.d(TAG, "testConfirmLockPasswordShown_deviceWithPassword_phishingAttack not test");
         }
     }
 
     @Test
     public void testForFingerprint_inflateLayout() {
-        mChooseLockGenericActivityRule.launchActivity(new Intent()
-                .putExtra(ChooseLockSettingsHelper.EXTRA_KEY_FOR_FINGERPRINT, true));
+        if (mTestFlag) {
+            mChooseLockGenericActivityRule.launchActivity(new Intent()
+                    .putExtra(ChooseLockSettingsHelper.EXTRA_KEY_FOR_FINGERPRINT, true));
 
-        assertThat(mChooseLockGenericActivityRule.getActivity().isResumed()).isTrue();
+            assertThat(mChooseLockGenericActivityRule.getActivity().isResumed()).isTrue();
+        } else {
+            Log.d(TAG, "testForFingerprint_inflateLayout not test");
+        }
     }
 
     private Activity getCurrentActivity() throws Throwable {

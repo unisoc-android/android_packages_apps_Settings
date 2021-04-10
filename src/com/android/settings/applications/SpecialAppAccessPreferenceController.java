@@ -42,19 +42,19 @@ public class SpecialAppAccessPreferenceController extends BasePreferenceControll
     ApplicationsState.Session mSession;
 
     private final ApplicationsState mApplicationsState;
-    private final AppStateDataUsageBridge mDataUsageBridge;
-    private final DataSaverBackend mDataSaverBackend;
+    private AppStateDataUsageBridge mDataUsageBridge;
+    private DataSaverBackend mDataSaverBackend;
 
     private Preference mPreference;
     private boolean mExtraLoaded;
+    private Context mContext;
 
 
     public SpecialAppAccessPreferenceController(Context context, String key) {
         super(context, key);
+        mContext = context;
         mApplicationsState = ApplicationsState.getInstance(
                 (Application) context.getApplicationContext());
-        mDataSaverBackend = new DataSaverBackend(context);
-        mDataUsageBridge = new AppStateDataUsageBridge(mApplicationsState, this, mDataSaverBackend);
     }
 
     public void setSession(Lifecycle lifecycle) {
@@ -74,6 +74,11 @@ public class SpecialAppAccessPreferenceController extends BasePreferenceControll
 
     @Override
     public void onStart() {
+        if (mDataUsageBridge != null) {
+            mDataUsageBridge.release();
+        }
+        mDataSaverBackend = new DataSaverBackend(mContext);
+        mDataUsageBridge = new AppStateDataUsageBridge(mApplicationsState, this, mDataSaverBackend);
         mDataUsageBridge.resume();
     }
 
@@ -84,7 +89,9 @@ public class SpecialAppAccessPreferenceController extends BasePreferenceControll
 
     @Override
     public void onDestroy() {
-        mDataUsageBridge.release();
+        if (mDataUsageBridge != null) {
+            mDataUsageBridge.release();
+        }
     }
 
     @Override

@@ -170,6 +170,8 @@ public class ContextualCardManager implements ContextualCardLoader.CardContentLo
         // here is empty, we only keep Conditional cards.
         if (cardTypes.isEmpty()) {
             final Set<Integer> conditionalCardTypes = new TreeSet() {{
+                // Add suggestion card to cardsToKeep list for bug1178400
+                add(ContextualCard.CardType.LEGACY_SUGGESTION);
                 add(ContextualCard.CardType.CONDITIONAL);
                 add(ContextualCard.CardType.CONDITIONAL_HEADER);
                 add(ContextualCard.CardType.CONDITIONAL_FOOTER);

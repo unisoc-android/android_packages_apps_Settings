@@ -54,6 +54,12 @@ public class TopLevelAccountEntryPreferenceController extends BasePreferenceCont
             int accountToAdd = Math.min(3, types.length);
 
             for (int i = 0; i < types.length && accountToAdd > 0; i++) {
+                /* Bug1117701:Remove sprd type accounts @{ */
+                if (AccountPreferenceController.filterSprdAccount(
+                    AccountPreferenceController.SPRD_ACCOUNTS, types[i])){
+                    continue;
+                }
+                /* @} */
                 final CharSequence label = authHelper.getLabelForType(mContext, types[i]);
                 if (TextUtils.isEmpty(label)) {
                     continue;
@@ -63,6 +69,13 @@ public class TopLevelAccountEntryPreferenceController extends BasePreferenceCont
                 accountToAdd--;
             }
         }
-        return ListFormatter.getInstance().format(summaries);
+
+        /* Bug1117701:Remove sprd type accounts @{ */
+        String summary = ListFormatter.getInstance().format(summaries);
+        if (null == summary || TextUtils.isEmpty(summary)) {
+            summary = mContext.getString(R.string.account_dashboard_default_summary);
+        }
+        /* @} */
+        return summary;
     }
 }

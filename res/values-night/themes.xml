@@ -40,4 +40,11 @@
         <item name="android:colorBackground">@color/dialog_background</item>
     </style>
 
+    <!-- set the background color for the select mock location app and select debug app -->
+    <style name="Theme.Dialog" parent="@style/Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="android:windowBackground">?android:attr/colorPrimaryDark</item>
+        <item name="colorPrimary">@*android:color/primary_device_default_settings</item>
+        <item name="android:windowNoTitle">false</item>
+    </style>
+
 </resources>

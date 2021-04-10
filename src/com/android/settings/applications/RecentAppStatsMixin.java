@@ -93,9 +93,9 @@ public class RecentAppStatsMixin implements Comparator<UsageStats>, LifecycleObs
     @Override
     public void onStart() {
         ThreadUtils.postOnBackgroundThread(() -> {
-            loadDisplayableRecentApps(mMaximumApps);
+            final List<UsageStats> tempRecentApps = loadDisplayableRecentApps(mMaximumApps);
             for (RecentAppStatsListener listener : mAppStatsListeners) {
-                ThreadUtils.postOnMainThread(() -> listener.onReloadDataCompleted(mRecentApps));
+                ThreadUtils.postOnMainThread(() -> listener.onReloadDataCompleted(tempRecentApps));
             }
         });
     }
@@ -111,7 +111,8 @@ public class RecentAppStatsMixin implements Comparator<UsageStats>, LifecycleObs
     }
 
     @VisibleForTesting
-    void loadDisplayableRecentApps(int number) {
+    List<UsageStats> loadDisplayableRecentApps(int number) {
+        final List<UsageStats> recentApps = new ArrayList<>();
         mRecentApps.clear();
         mCalendar = Calendar.getInstance();
         mCalendar.add(Calendar.DAY_OF_YEAR, -1);
@@ -146,12 +147,14 @@ public class RecentAppStatsMixin implements Comparator<UsageStats>, LifecycleObs
             if (appEntry == null) {
                 continue;
             }
-            mRecentApps.add(stat);
+            recentApps.add(stat);
             count++;
             if (count >= number) {
                 break;
             }
         }
+        mRecentApps.addAll(recentApps);
+        return recentApps;
     }
 
     /**

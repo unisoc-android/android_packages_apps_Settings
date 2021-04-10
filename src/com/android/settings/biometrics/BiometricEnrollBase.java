@@ -83,13 +83,17 @@ public abstract class BiometricEnrollBase extends InstrumentedActivity {
     protected int mUserId;
     protected boolean mFromSettingsSummary;
     protected FooterBarMixin mFooterBarMixin;
+    public static final String REENROLL_TOKEN = "reenroll_token";
+    protected boolean mReEnrollToken;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mToken = getIntent().getByteArrayExtra(ChooseLockSettingsHelper.EXTRA_KEY_CHALLENGE_TOKEN);
         mFromSettingsSummary = getIntent().getBooleanExtra(EXTRA_FROM_SETTINGS_SUMMARY, false);
-        if (savedInstanceState != null && mToken == null) {
+        // Unisoc: fix for bug 1162281
+        mReEnrollToken = getIntent().getBooleanExtra(REENROLL_TOKEN, false);
+        if (savedInstanceState != null && mToken == null && !mReEnrollToken) {
             mLaunchedConfirmLock = savedInstanceState.getBoolean(EXTRA_KEY_LAUNCHED_CONFIRM);
             mToken = savedInstanceState.getByteArray(
                     ChooseLockSettingsHelper.EXTRA_KEY_CHALLENGE_TOKEN);

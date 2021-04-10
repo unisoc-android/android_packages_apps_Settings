@@ -27,6 +27,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 
 import com.android.settings.core.BasePreferenceController;
+import com.android.settings.Utils;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settingslib.core.lifecycle.events.OnStart;
 
@@ -58,7 +59,10 @@ public class WallpaperTypePreferenceController extends BasePreferenceController
         if (preference.getIntent() == null) {
             return super.handlePreferenceTreeClick(preference);
         }
-        mContext.startActivity(preference.getIntent());
+        //bug 1196407 : avoid ActivityNotFoundException
+        if (Utils.isIntentCanBeResolved(mContext, preference.getIntent())) {
+            mContext.startActivity(preference.getIntent());
+        }
         return true;
     }
 

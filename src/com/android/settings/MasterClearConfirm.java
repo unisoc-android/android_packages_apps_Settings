@@ -19,6 +19,7 @@ package com.android.settings;
 
 import static com.android.settingslib.RestrictedLockUtils.EnforcedAdmin;
 
+import android.app.AlarmManager;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -50,6 +51,9 @@ import com.google.android.setupcompat.template.FooterBarMixin;
 import com.google.android.setupcompat.template.FooterButton;
 import com.google.android.setupcompat.template.FooterButton.ButtonType;
 import com.google.android.setupdesign.GlifLayout;
+
+import com.sprd.settings.timerpower.Alarms;
+import java.util.Calendar;
 
 /**
  * Confirm and execute a reset of the device to a clean "just out of the box"
@@ -140,15 +144,34 @@ public class MasterClearConfirm extends InstrumentedFragment {
     };
 
     private void doMasterClear() {
+        /* UNISOC:1072221 Reset the status of all scheduled power on/off alarms when factory reset @{ */
+        Context context = getActivity();
+        // If support Scheduled Power On/Off, do reset operation
+        if (context.getResources().getBoolean(R.bool.config_support_scheduledPowerOnOff)) {
+            Alarms.resetAlarmStates(context);
+        }
+        /* @} */
+
+        // Bug1118173:reset date of device
+        resetDate(context);
+
         Intent intent = new Intent(Intent.ACTION_FACTORY_RESET);
         intent.setPackage("android");
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         intent.putExtra(Intent.EXTRA_REASON, "MasterClearConfirm");
         intent.putExtra(Intent.EXTRA_WIPE_EXTERNAL_STORAGE, mEraseSdCard);
         intent.putExtra(Intent.EXTRA_WIPE_ESIMS, mEraseEsims);
-        getActivity().sendBroadcast(intent);
+        context.sendBroadcast(intent);
         // Intent handling is asynchronous -- assume it will happen soon.
     }
+
+    /* Bug1118173: The system's date and time cannot be reset after a factory reset @{ */
+    private void resetDate(Context context) {
+        Calendar c = Calendar.getInstance();
+        c.set(2008, 0, 1, 0, 0, 0);
+        ((AlarmManager) context.getSystemService(Context.ALARM_SERVICE)).setTime(c.getTimeInMillis());
+    }
+    /* @} */
 
     /**
      * Configure the UI for the final confirmation interaction

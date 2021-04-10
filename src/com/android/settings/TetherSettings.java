@@ -18,6 +18,7 @@ package com.android.settings;
 
 import static android.net.ConnectivityManager.TETHERING_BLUETOOTH;
 import static android.net.ConnectivityManager.TETHERING_USB;
+import static android.net.ConnectivityManager.TETHERING_WIFI;
 
 import android.app.Activity;
 import android.app.settings.SettingsEnums;
@@ -46,13 +47,24 @@ import com.android.settings.search.BaseSearchIndexProvider;
 import com.android.settings.search.Indexable;
 import com.android.settings.wifi.tether.WifiTetherPreferenceController;
 import com.android.settingslib.TetherUtil;
+import com.android.settings.Utils;
+import com.android.settings.widget.FixedLineSummaryPreference;
 import com.android.settingslib.search.SearchIndexable;
+import com.android.settings.widget.FixedLineSummaryPreference;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import android.os.SystemProperties;
+import android.widget.Toast;
+import com.sprd.settings.SprdChooseOS;
+import android.util.Log;
+import android.net.wifi.WifiManager;
+import android.util.Log;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiFeaturesUtils;
 
 /*
  * Displays preferences for Tethering.
@@ -70,6 +82,19 @@ public class TetherSettings extends RestrictedSettingsFragment
     @VisibleForTesting
     static final String KEY_ENABLE_BLUETOOTH_TETHERING = "enable_bluetooth_tethering";
     private static final String KEY_DATA_SAVER_FOOTER = "disabled_on_data_saver";
+
+    /* SPRD:Add for 692657 androido porting :pc net share @{ */
+    private static final String USB_PC_SHARE_SETTINGS = "usb_pc_share_settings";
+    private static final boolean SUPPORT_USB_REVERSE_TETHER = SystemProperties.getBoolean("persist.sys.usb-pc.tethering",true);
+    private static final int PROVISION_REQUEST_USB_PC_TETHER = 1;
+    public static final int TETHERING_INVALID   = -1;
+    private SwitchPreference mUsbPcShare;
+    private FixedLineSummaryPreference mWifiTether;
+    private FixedLineSummaryPreference mUnisocWifiTether;
+    private int mTetherChoice = TETHERING_INVALID;
+    private WifiManager mWifiManager;
+    /* Bug692657 end @} */
+    private static final String KEY_WIFI_TETHER_SPRD = "sprd_wifi_tether";
 
     private static final String TAG = "TetheringSettings";
 
@@ -90,7 +115,7 @@ public class TetherSettings extends RestrictedSettingsFragment
     private WifiTetherPreferenceController mWifiTetherPreferenceController;
 
     private boolean mUsbConnected;
-    private boolean mMassStorageActive;
+
 
     private boolean mBluetoothEnableForTether;
     private boolean mUnavailable;
@@ -111,8 +136,10 @@ public class TetherSettings extends RestrictedSettingsFragment
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        mWifiTetherPreferenceController =
-                new WifiTetherPreferenceController(context, getSettingsLifecycle());
+        if (!Utils.disabledWifiFeature(context)) {
+            mWifiTetherPreferenceController =
+                    new WifiTetherPreferenceController(context, getSettingsLifecycle());
+        }
     }
 
     @Override
@@ -120,8 +147,13 @@ public class TetherSettings extends RestrictedSettingsFragment
         super.onCreate(icicle);
 
         addPreferencesFromResource(R.xml.tether_prefs);
-        mFooterPreferenceMixin.createFooterPreference()
-            .setTitle(R.string.tethering_footer_info);
+        if (Utils.disabledWifiFeature(getContext())) {
+            mFooterPreferenceMixin.createFooterPreference()
+                    .setTitle(R.string.tethering_footer_info_no_wcn);
+        } else {
+            mFooterPreferenceMixin.createFooterPreference()
+                    .setTitle(R.string.tethering_footer_info);
+        }
 
         mDataSaverBackend = new DataSaverBackend(getContext());
         mDataSaverEnabled = mDataSaverBackend.isDataSaverEnabled();
@@ -136,29 +168,46 @@ public class TetherSettings extends RestrictedSettingsFragment
 
         final Activity activity = getActivity();
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        if (adapter != null) {
+         // SPRD: Modify for Bug#875145. Get PAN proxy just when Bluetooth is ON.
+        if (adapter != null &&adapter.getState() == BluetoothAdapter.STATE_ON) {
             adapter.getProfileProxy(activity.getApplicationContext(), mProfileServiceListener,
                     BluetoothProfile.PAN);
         }
 
+        mWifiTether = (FixedLineSummaryPreference) findPreference(KEY_WIFI_TETHER);
+        mUnisocWifiTether = (FixedLineSummaryPreference) findPreference(KEY_WIFI_TETHER_SPRD);
         mUsbTether = (SwitchPreference) findPreference(KEY_USB_TETHER_SETTINGS);
+        // SPRD:Add for bug692657 androido porting pc net share
+        mUsbPcShare = (SwitchPreference) findPreference(USB_PC_SHARE_SETTINGS);
+        mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         mBluetoothTether = (SwitchPreference) findPreference(KEY_ENABLE_BLUETOOTH_TETHERING);
-
-        mDataSaverBackend.addListener(this);
 
         mCm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
         mUsbRegexs = mCm.getTetherableUsbRegexs();
         mBluetoothRegexs = mCm.getTetherableBluetoothRegexs();
+        mDataSaverBackend.addListener(this);
 
         final boolean usbAvailable = mUsbRegexs.length != 0;
-        final boolean bluetoothAvailable = mBluetoothRegexs.length != 0;
+        final boolean bluetoothAvailable = (mBluetoothRegexs.length != 0)
+                      && BluetoothAdapter.isBluetoothSupported(activity);
 
         if (!usbAvailable || Utils.isMonkeyRunning()) {
             getPreferenceScreen().removePreference(mUsbTether);
+        /* SPRD:Add for bug692657 androido porting pc net share */
+            getPreferenceScreen().removePreference(mUsbPcShare);
         }
+        if (!SUPPORT_USB_REVERSE_TETHER && mUsbPcShare != null){
+            getPreferenceScreen().removePreference(mUsbPcShare);
+        }
+        /* Bug692657 end @ } */
 
-        mWifiTetherPreferenceController.displayPreference(getPreferenceScreen());
+        if (!Utils.disabledWifiFeature(getContext())) {
+            mWifiTetherPreferenceController.displayPreference(getPreferenceScreen());
+        } else {
+            getPreferenceScreen().removePreference(mUnisocWifiTether);
+            getPreferenceScreen().removePreference(mWifiTether);
+        }
 
         if (!bluetoothAvailable) {
             getPreferenceScreen().removePreference(mBluetoothTether);
@@ -190,7 +239,13 @@ public class TetherSettings extends RestrictedSettingsFragment
     @Override
     public void onDataSaverChanged(boolean isDataSaving) {
         mDataSaverEnabled = isDataSaving;
-        mUsbTether.setEnabled(!mDataSaverEnabled);
+        /* SPRD:Add for bug692657 androido porting pc net share @{ */
+        mUsbTether.setEnabled(!mDataSaverEnabled && mUsbConnected && !mUsbPcShare.isChecked());
+        if (mDataSaverEnabled) {
+            mTetherChoice = TETHERING_INVALID;
+            updateState();
+        }
+        /* Bug692657 end @} */
         mBluetoothTether.setEnabled(!mDataSaverEnabled);
         mDataSaverFooter.setVisible(mDataSaverEnabled);
     }
@@ -218,19 +273,28 @@ public class TetherSettings extends RestrictedSettingsFragment
                 updateState(available.toArray(new String[available.size()]),
                         active.toArray(new String[active.size()]),
                         errored.toArray(new String[errored.size()]));
-            } else if (action.equals(Intent.ACTION_MEDIA_SHARED)) {
-                mMassStorageActive = true;
-                updateState();
-            } else if (action.equals(Intent.ACTION_MEDIA_UNSHARED)) {
-                mMassStorageActive = false;
-                updateState();
             } else if (action.equals(UsbManager.ACTION_USB_STATE)) {
                 mUsbConnected = intent.getBooleanExtra(UsbManager.USB_CONNECTED, false);
+                /* SPRD:Add for bug692657 androido porting pc net share @{ */
+                boolean rndisEnabled = intent.getBooleanExtra(UsbManager.USB_FUNCTION_RNDIS, false);
+                if (mUsbConnected == false  || (mUsbConnected && !rndisEnabled) && mTetherChoice == TETHERING_USB) {
+                    mTetherChoice = TETHERING_INVALID;
+                }
+                /* Bug692657 end @} */
                 updateState();
             } else if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                  // SPRD: Modify for Bug#875145. Get PAN proxy just when Bluetooth is ON. START->
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                if (state == BluetoothAdapter.STATE_ON && mBluetoothPan.get() == null) {
+                    BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+                    if (adapter != null)  {
+                        adapter.getProfileProxy(content.getApplicationContext(), mProfileServiceListener,
+                                  BluetoothProfile.PAN);
+                    }
+                }
+                // <- END
                 if (mBluetoothEnableForTether) {
-                    switch (intent
-                            .getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
+                    switch (state) {
                         case BluetoothAdapter.STATE_ON:
                             startTethering(TETHERING_BLUETOOTH);
                             mBluetoothEnableForTether = false;
@@ -245,6 +309,12 @@ public class TetherSettings extends RestrictedSettingsFragment
                             // ignore transition states
                     }
                 }
+                /* SPRD:Add for bug692657 androido porting pc net share @{ */
+                if (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR) == BluetoothAdapter.STATE_OFF &&
+                        mTetherChoice == TETHERING_BLUETOOTH) {
+                    mTetherChoice = TETHERING_INVALID;
+                }
+                /* Bug692657 end @} */
                 updateState();
             }
         }
@@ -266,19 +336,13 @@ public class TetherSettings extends RestrictedSettingsFragment
 
         mStartTetheringCallback = new OnStartTetheringCallback(this);
 
-        mMassStorageActive = Environment.MEDIA_SHARED.equals(Environment.getExternalStorageState());
         mTetherChangeReceiver = new TetherChangeReceiver();
         IntentFilter filter = new IntentFilter(ConnectivityManager.ACTION_TETHER_STATE_CHANGED);
         Intent intent = activity.registerReceiver(mTetherChangeReceiver, filter);
 
         filter = new IntentFilter();
         filter.addAction(UsbManager.ACTION_USB_STATE);
-        activity.registerReceiver(mTetherChangeReceiver, filter);
 
-        filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_MEDIA_SHARED);
-        filter.addAction(Intent.ACTION_MEDIA_UNSHARED);
-        filter.addDataScheme("file");
         activity.registerReceiver(mTetherChangeReceiver, filter);
 
         filter = new IntentFilter();
@@ -302,6 +366,18 @@ public class TetherSettings extends RestrictedSettingsFragment
         mStartTetheringCallback = null;
     }
 
+    /* SPRD:Add for bug692657 androido porting pc net share @} @{ */
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.d(TAG, "onActivityResult requestCode = " + requestCode + ", resultCode = " + resultCode);
+        if (requestCode == PROVISION_REQUEST_USB_PC_TETHER) {
+            if (resultCode == Activity.RESULT_OK) {
+                setInternetShare(true, data.getStringExtra("usb_rndis_ip_address"));
+            }
+        }
+    }
+    /* Bug692657 end @} */
+
     private void updateState() {
         String[] available = mCm.getTetherableIfaces();
         String[] tethered = mCm.getTetheredIfaces();
@@ -317,7 +393,7 @@ public class TetherSettings extends RestrictedSettingsFragment
 
     private void updateUsbState(String[] available, String[] tethered,
             String[] errored) {
-        boolean usbAvailable = mUsbConnected && !mMassStorageActive;
+        boolean usbAvailable = mUsbConnected;
         int usbError = ConnectivityManager.TETHER_ERROR_NO_ERROR;
         for (String s : available) {
             for (String regex : mUsbRegexs) {
@@ -340,17 +416,29 @@ public class TetherSettings extends RestrictedSettingsFragment
                 if (s.matches(regex)) usbErrored = true;
             }
         }
-
-        if (usbTethered) {
+        Log.d(TAG, "updateUsbState: " + "usbTethered:" + usbTethered + " usbAvailable: " + usbAvailable + " mCm.getPCNetTether(): " + mCm.getPCNetTether());
+        /* SPRD:Add for bug692657 androido porting pc net share @} */
+        if (mCm.getPCNetTether()) {
+            mUsbTether.setEnabled(false);
+            mUsbPcShare.setEnabled(true);
+            mUsbPcShare.setChecked(true);
+        } else if (usbTethered) {
             mUsbTether.setEnabled(!mDataSaverEnabled);
             mUsbTether.setChecked(true);
+            mUsbPcShare.setEnabled(false);
+            mUsbPcShare.setChecked(false);
         } else if (usbAvailable) {
             mUsbTether.setEnabled(!mDataSaverEnabled);
             mUsbTether.setChecked(false);
+            mUsbPcShare.setEnabled(mTetherChoice!=TETHERING_USB);
+            mUsbPcShare.setChecked(false);
         } else {
             mUsbTether.setEnabled(false);
             mUsbTether.setChecked(false);
+            mUsbPcShare.setEnabled(false);
+            mUsbPcShare.setChecked(false);
         }
+        /* Bug692657 end @} */
     }
 
     private void updateBluetoothState() {
@@ -396,6 +484,11 @@ public class TetherSettings extends RestrictedSettingsFragment
     }
 
     private void startTethering(int choice) {
+        /* SPRD:Add for bug692657 androido porting pc net share @} */
+        if (choice == TETHERING_WIFI || choice == TETHERING_BLUETOOTH) {
+            mTetherChoice =choice;
+        }
+        /* Bug692657 end @} */
         if (choice == TETHERING_BLUETOOTH) {
             // Turn on Bluetooth first.
             BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
@@ -414,8 +507,11 @@ public class TetherSettings extends RestrictedSettingsFragment
     public boolean onPreferenceTreeClick(Preference preference) {
         if (preference == mUsbTether) {
             if (mUsbTether.isChecked()) {
+                mUsbPcShare.setEnabled(false);
+                mTetherChoice = TETHERING_USB;
                 startTethering(TETHERING_USB);
             } else {
+                mTetherChoice = TETHERING_INVALID;
                 mCm.stopTethering(TETHERING_USB);
             }
         } else if (preference == mBluetoothTether) {
@@ -424,10 +520,32 @@ public class TetherSettings extends RestrictedSettingsFragment
             } else {
                 mCm.stopTethering(TETHERING_BLUETOOTH);
             }
-        }
+        /* SPRD:Add for bug692657 androido porting pc net share @} */
+        } else if (preference == mUsbPcShare) {
+            if (!mUsbPcShare.isChecked()) {
+                setInternetShare(false, null);
+            } else {
+                mUsbPcShare.setEnabled(false);
+                Intent chooseOSIntent = new Intent(getActivity(),SprdChooseOS.class);
+                startActivityForResult(chooseOSIntent, PROVISION_REQUEST_USB_PC_TETHER);
+            }
+         }
 
         return super.onPreferenceTreeClick(preference);
     }
+
+    /* SPRD:Add for bug692657 androido porting pc net share @{ */
+    private void setInternetShare(boolean isShared, String ip) {
+        int result = ConnectivityManager.TETHER_ERROR_NO_ERROR;
+        Log.d(TAG, "setInternetShare(" + isShared +"," + " " + ip + ")");
+        if(isShared) {
+            mWifiManager.setWifiEnabled(false);
+            result = mCm.enableTetherPCInternet(ip);
+        } else {
+            result = mCm.disableTetherPCInternet();
+        }
+    }
+    /* Bug692657 end @} */
 
     @Override
     public int getHelpResource() {
@@ -462,7 +580,11 @@ public class TetherSettings extends RestrictedSettingsFragment
 
                     if (!TetherUtil.isTetherAvailable(context)) {
                         keys.add(KEY_TETHER_PREFS_SCREEN);
-                        keys.add(KEY_WIFI_TETHER);
+                        if (WifiFeaturesUtils.FeatureProperty.SUPPORT_SPRD_SOFTAP_FEATURES) {
+                            keys.add(KEY_WIFI_TETHER_SPRD);
+                        } else {
+                            keys.add(KEY_WIFI_TETHER);
+                        }
                     }
 
                     final boolean usbAvailable =
@@ -472,7 +594,8 @@ public class TetherSettings extends RestrictedSettingsFragment
                     }
 
                     final boolean bluetoothAvailable =
-                            cm.getTetherableBluetoothRegexs().length != 0;
+                            cm.getTetherableBluetoothRegexs().length != 0
+                            && BluetoothAdapter.isBluetoothSupported(context);
                     if (!bluetoothAvailable) {
                         keys.add(KEY_ENABLE_BLUETOOTH_TETHERING);
                     }
@@ -495,6 +618,12 @@ public class TetherSettings extends RestrictedSettingsFragment
 
         @Override
         public void onTetheringFailed() {
+            /* SPRD:Add for bug692657 androido porting pc net share @} */
+            TetherSettings settings = mTetherSettings.get();
+            if(TETHERING_USB == settings.mTetherChoice){
+                settings.mTetherChoice = TETHERING_INVALID;
+            }
+            /* Bug692657 end @} */
             update();
         }
 

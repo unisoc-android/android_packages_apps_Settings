@@ -55,6 +55,9 @@ public class BluetoothFilesPreferenceController extends BasePreferenceController
 
     @Override
     public int getAvailabilityStatus() {
+        if (!Utils.isBluetoothSupported(mContext)) {
+           return UNSUPPORTED_ON_DEVICE;
+        }
         return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
                 ? AVAILABLE
                 : UNSUPPORTED_ON_DEVICE;

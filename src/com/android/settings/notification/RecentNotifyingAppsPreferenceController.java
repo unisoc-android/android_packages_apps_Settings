@@ -256,8 +256,11 @@ public class RecentNotifyingAppsPreferenceController extends AbstractPreferenceC
                 pref = new NotificationAppPreference(prefContext);
                 rebindPref = false;
             }
+            // UNISOC: 1189090 update the label
+            CharSequence label = appEntry.info.loadLabel(mContext.getPackageManager());
+            String title = label != null ? label.toString() : pkgName;
             pref.setKey(getKey(app.getUserId(), pkgName));
-            pref.setTitle(appEntry.label);
+            pref.setTitle(title);
             pref.setIcon(mIconDrawableFactory.getBadgedIcon(appEntry.info));
             pref.setIconSize(TwoTargetPreference.ICON_SIZE_SMALL);
             pref.setSummary(StringUtil.formatRelativeTime(mContext,

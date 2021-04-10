@@ -82,6 +82,10 @@
     <PreferenceCategory
             android:key="interaction_control_category"
             android:title="@string/interaction_control_category_title">
+        <!--UNISCO: bug 1072213 Assistant touch -->
+        <Preference
+                  android:fragment="com.sprd.settings.accessibility.ToggleAssistantFragment"
+                  android:key="assistant_preference_screen" android:title="@string/assistant_title" />
 
         <Preference
                 android:fragment="com.android.settings.accessibility.ToggleAutoclickPreferenceFragment"

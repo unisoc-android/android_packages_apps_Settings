@@ -92,6 +92,7 @@ public class ButtonActionDialogFragment extends InstrumentedDialogFragment imple
     public void onClick(DialogInterface dialog, int which) {
         final AppButtonsDialogListener lsn =
                 (AppButtonsDialogListener) getTargetFragment();
+        dialog.dismiss();
         lsn.handleDialogClick(mId);
     }
 

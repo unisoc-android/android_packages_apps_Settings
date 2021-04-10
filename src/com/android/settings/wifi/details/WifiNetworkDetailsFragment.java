@@ -17,9 +17,12 @@ package com.android.settings.wifi.details;
 
 import static com.android.settings.wifi.WifiSettings.WIFI_DIALOG_ID;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -28,15 +31,18 @@ import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.util.Log;
 
 import com.android.settings.R;
 import com.android.settings.dashboard.DashboardFragment;
 import com.android.settings.wifi.WifiConfigUiBase;
 import com.android.settings.wifi.WifiDialog;
+import com.android.settings.wifi.dpp.WifiDppUtils;
 import com.android.settingslib.RestrictedLockUtils;
 import com.android.settingslib.RestrictedLockUtilsInternal;
 import com.android.settingslib.core.AbstractPreferenceController;
 import com.android.settingslib.wifi.AccessPoint;
+import com.android.settingslib.wifi.WifiSavedConfigUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,13 +54,16 @@ import java.util.List;
  * {@link AccessPoint#saveWifiState(Bundle)} in order to properly render this page.
  */
 public class WifiNetworkDetailsFragment extends DashboardFragment implements
-        WifiDialog.WifiDialogListener {
+        WifiDialog.WifiDialogListener, DialogInterface.OnDismissListener {
 
     private static final String TAG = "WifiNetworkDetailsFrg";
 
     private AccessPoint mAccessPoint;
     private WifiDetailPreferenceController mWifiDetailPreferenceController;
     private List<WifiDialog.WifiDialogListener> mWifiDialogListeners = new ArrayList<>();
+
+    private WifiDialog mDialog;
+    private static final int REQUEST_CODE_WIFI_DPP_ENROLLEE_QR_CODE_SCANNER = 0;
 
     @Override
     public void onAttach(Context context) {
@@ -91,16 +100,38 @@ public class WifiNetworkDetailsFragment extends DashboardFragment implements
                 || mAccessPoint == null) {
             return null;
         }
-        return WifiDialog.createModal(getActivity(), this, mAccessPoint,
+        final List<AccessPoint> accessPoints = WifiSavedConfigUtils.getAllConfigs(
+                getContext(), getContext().getSystemService(WifiManager.class));
+        for (AccessPoint accessPoint : accessPoints) {
+            if (mAccessPoint.matches(accessPoint.getConfig())) {
+                mAccessPoint = accessPoint;
+                break;
+            }
+        }
+        mDialog = WifiDialog.createModal(getActivity(), this, mAccessPoint,
                 WifiConfigUiBase.MODE_MODIFY);
+        return mDialog;
+    }
+
+    @Override
+    public void onDialogShowing() {
+        super.onDialogShowing();
+        setOnDismissListener(this);
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialog) {
+        mDialog = null;
     }
 
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        MenuItem item = menu.add(0, Menu.FIRST, 0, R.string.wifi_modify);
-        item.setIcon(com.android.internal.R.drawable.ic_mode_edit);
-        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        if (mAccessPoint.isSaved() && mAccessPoint.getConfig().canModify) {
+            MenuItem item = menu.add(0, Menu.FIRST, 0, R.string.wifi_modify);
+            item.setIcon(com.android.internal.R.drawable.ic_mode_edit);
+            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        }
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -112,6 +143,10 @@ public class WifiNetworkDetailsFragment extends DashboardFragment implements
                     RestrictedLockUtils.sendShowAdminSupportDetailsIntent(getContext(),
                             RestrictedLockUtilsInternal.getDeviceOwner(getContext()));
                 } else {
+                    if (mDialog != null) {
+                        removeDialog(WIFI_DIALOG_ID);
+                        mDialog = null;
+                    }
                     showDialog(WIFI_DIALOG_ID);
                 }
                 return true;
@@ -162,6 +197,45 @@ public class WifiNetworkDetailsFragment extends DashboardFragment implements
     public void onSubmit(WifiDialog dialog) {
         for (WifiDialog.WifiDialogListener listener : mWifiDialogListeners) {
             listener.onSubmit(dialog);
+        }
+    }
+
+    @Override
+    public void onScan(WifiDialog dialog, String ssid) {
+        startActivityForResult(WifiDppUtils.getEnrolleeQrCodeScannerIntent(ssid),
+                REQUEST_CODE_WIFI_DPP_ENROLLEE_QR_CODE_SCANNER);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_WIFI_DPP_ENROLLEE_QR_CODE_SCANNER) {
+            if (resultCode == Activity.RESULT_OK) {
+                if (mDialog != null) {
+                    mDialog.dismiss();
+                    mDialog = null;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        final List<AccessPoint> accessPoints = WifiSavedConfigUtils.getAllConfigs(
+                getContext(), getContext().getSystemService(WifiManager.class));
+        boolean exit = true;
+        for (AccessPoint accessPoint : accessPoints) {
+            if (mAccessPoint.matches(accessPoint.getConfig())) {
+                exit = false;
+                break;
+            }
+        }
+        if (exit) {
+            Log.d(TAG, "current AP key " + mAccessPoint.getKey() + " is not exist");
+            finish();
         }
     }
 }

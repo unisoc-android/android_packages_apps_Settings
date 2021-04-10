@@ -27,6 +27,7 @@ import androidx.preference.Preference;
 
 import com.android.internal.logging.nano.MetricsProto;
 import com.android.settings.widget.DisabledCheckBoxPreference;
+import com.android.settings.Utils;
 import com.android.settingslib.core.lifecycle.Lifecycle;
 
 public class ZenRuleVisEffectPreferenceController extends AbstractZenCustomRulePreferenceController
@@ -56,7 +57,7 @@ public class ZenRuleVisEffectPreferenceController extends AbstractZenCustomRuleP
 
         if (mEffect == ZenPolicy.VISUAL_EFFECT_LIGHTS) {
             return mContext.getResources()
-                    .getBoolean(com.android.internal.R.bool.config_intrusiveNotificationLed);
+                    .getBoolean(com.android.internal.R.bool.config_intrusiveNotificationLed) && Utils.ledFileIsExists();
         }
         return true;
     }

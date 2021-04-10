@@ -19,8 +19,11 @@ package com.android.settings.homepage;
 import android.animation.LayoutTransition;
 import android.app.ActivityManager;
 import android.app.settings.SettingsEnums;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.KeyEvent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toolbar;
@@ -32,6 +35,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.android.settings.R;
+import com.android.settings.Utils;
 import com.android.settings.accounts.AvatarViewMixin;
 import com.android.settings.homepage.contextualcards.ContextualCardsFragment;
 import com.android.settings.overlay.FeatureFactory;
@@ -90,4 +94,24 @@ public class SettingsHomepageActivity extends FragmentActivity {
         final int paddingTop = searchBarHeight + searchBarMargin * 2;
         view.setPadding(0 /* left */, paddingTop, 0 /* right */, 0 /* bottom */);
     }
+
+    /* Bug1108548:Can't use setting assistant search in Settings. @{ */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+         switch (keyCode) {
+             case KeyEvent.KEYCODE_SEARCH:
+                 final Intent intent = new Intent(android.provider.Settings.ACTION_APP_SEARCH_SETTINGS);
+                 intent.setPackage(FeatureFactory.getFactory(getApplicationContext())
+                         .getSearchFeatureProvider().getSettingsIntelligencePkgName(this));
+                 //Add for bug 1169791, avoid ActivityNotFoundException
+                 if (Utils.isIntentCanBeResolved(this, intent)) {
+                     startActivityForResult(intent, 0 /* requestCode */);
+                 }
+                 return true;
+             default:
+                 break;
+         }
+         return super.onKeyDown(keyCode, event);
+     }
+     /* @} */
 }

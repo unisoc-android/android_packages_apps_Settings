@@ -30,7 +30,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.ListPreference;
 import androidx.preference.ListPreferenceDialogFragmentCompat;
-
 import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
 
 public class CustomListPreference extends ListPreference {
@@ -194,7 +193,7 @@ public class CustomListPreference extends ListPreference {
             final ListPreference preference = getCustomizablePreference();
             final String value = getValue();
             if (positiveResult && value != null) {
-                if (preference.callChangeListener(value)) {
+                if (preference != null && preference.callChangeListener(value)) {
                     preference.setValue(value);
                 }
             }

@@ -16,6 +16,8 @@
 package com.android.settings.connecteddevice.usb;
 
 import static android.hardware.usb.UsbPortStatus.DATA_ROLE_DEVICE;
+import static android.hardware.usb.UsbPortStatus.DATA_ROLE_HOST;
+import static android.hardware.usb.UsbPortStatus.POWER_ROLE_NONE;
 import static android.hardware.usb.UsbPortStatus.POWER_ROLE_SINK;
 import static android.hardware.usb.UsbPortStatus.POWER_ROLE_SOURCE;
 
@@ -29,6 +31,10 @@ import com.android.settings.R;
 import com.android.settings.connecteddevice.DevicePreferenceCallback;
 import com.android.settings.core.SubSettingLauncher;
 import com.android.settings.dashboard.DashboardFragment;
+import com.sprd.settings.SprdUsbSettingsFragment;
+
+import android.net.ConnectivityManager;
+import android.os.SystemProperties;
 
 /**
  * Controller to maintain connected usb device
@@ -37,16 +43,19 @@ public class ConnectedUsbDeviceUpdater {
     private DashboardFragment mFragment;
     private UsbBackend mUsbBackend;
     private DevicePreferenceCallback mDevicePreferenceCallback;
+    private static Context mContext;
     @VisibleForTesting
     Preference mUsbPreference;
     @VisibleForTesting
     UsbConnectionBroadcastReceiver mUsbReceiver;
+    private boolean orignal_support = SystemProperties.getBoolean("ro.usb.orignal.design", false);
 
     @VisibleForTesting
     UsbConnectionBroadcastReceiver.UsbConnectionListener mUsbConnectionListener =
             (connected, functions, powerRole, dataRole) -> {
                 if (connected) {
-                    mUsbPreference.setSummary(getSummary(dataRole == DATA_ROLE_DEVICE
+                    if (mContext == null) mContext = mUsbPreference.getContext();
+                    mUsbPreference.setSummary(getSummary(dataRole != DATA_ROLE_HOST
                                     ? functions : UsbManager.FUNCTION_NONE, powerRole));
                     mDevicePreferenceCallback.onDeviceAdded(mUsbPreference);
                 } else {
@@ -85,7 +94,7 @@ public class ConnectedUsbDeviceUpdater {
         mUsbPreference.setOnPreferenceClickListener((Preference p) -> {
             // New version - uses a separate screen.
             new SubSettingLauncher(mFragment.getContext())
-                    .setDestination(UsbDetailsFragment.class.getName())
+                    .setDestination(orignal_support? UsbDetailsFragment.class.getName() : SprdUsbSettingsFragment.class.getName())
                     .setTitleRes(R.string.device_details_title)
                     .setSourceMetricsCategory(mFragment.getMetricsCategory())
                     .launch();
@@ -99,19 +108,33 @@ public class ConnectedUsbDeviceUpdater {
         // Register so we can get the connection state from sticky intent.
         //TODO(b/70336520): Use an API to get data instead of sticky intent
         mUsbReceiver.register();
+
+    }
+
+    private static int getTetherOrPcNetTether() {
+        if (mContext == null) return R.string.usb_summary_tether;
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        return (connectivityManager.getPCNetTether()) ? R.string.usb_pc_internet_share
+                : R.string.usb_summary_tether;
     }
 
     public static int getSummary(long functions, int power) {
         switch (power) {
+            case POWER_ROLE_NONE:
             case POWER_ROLE_SINK:
                 if (functions == UsbManager.FUNCTION_MTP) {
                     return R.string.usb_summary_file_transfers;
                 } else if (functions == UsbManager.FUNCTION_RNDIS) {
-                    return R.string.usb_summary_tether;
+                    return getTetherOrPcNetTether();
                 } else if (functions == UsbManager.FUNCTION_PTP) {
                     return R.string.usb_summary_photo_transfers;
                 } else if (functions == UsbManager.FUNCTION_MIDI) {
                     return R.string.usb_summary_MIDI;
+                } else if (functions == UsbManager.FUNCTION_CDROM) {
+                    return R.string.usb_virtual_drive_summary;
+                } else if (functions == UsbManager.FUNCTION_MASS_STORAGE) {
+                    return R.string.usb_storage_summary;
                 } else {
                     return R.string.usb_summary_charging_only;
                 }
@@ -124,6 +147,10 @@ public class ConnectedUsbDeviceUpdater {
                     return R.string.usb_summary_photo_transfers_power;
                 } else if (functions == UsbManager.FUNCTION_MIDI) {
                     return R.string.usb_summary_MIDI_power;
+                } else if (functions == UsbManager.FUNCTION_CDROM) {
+                    return R.string.usb_virtual_drive_summary;
+                } else if (functions == UsbManager.FUNCTION_MASS_STORAGE) {
+                    return R.string.usb_storage_summary;
                 } else {
                     return R.string.usb_summary_power_only;
                 }

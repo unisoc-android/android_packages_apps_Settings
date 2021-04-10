@@ -150,6 +150,11 @@ abstract public class AbstractZenModeAutomaticRulePreferenceController extends
                     NotificationManager.INTERRUPTION_FILTER_PRIORITY, true);
             String savedRuleId = mBackend.addZenRule(rule);
             if (savedRuleId != null) {
+                /* bug 1147090 : check if fragment has attached to a activity before click dialog @{ */
+                if (!parent.isAdded()) {
+                    return;
+                }
+                /* @} */
                 parent.startActivity(getRuleIntent(mRuleInfo.settingsAction, null,
                         savedRuleId));
             }

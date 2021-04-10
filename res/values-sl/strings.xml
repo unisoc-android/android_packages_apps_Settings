@@ -1835,7 +1835,12 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Nastavi vzorec za odklepanje"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Spremeni vzorec za odklepanje"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Kako narisati vzorec za odklepanje"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Preveč napačnih poskusov. Poskusite znova čez <xliff:g id="NUMBER">%d</xliff:g> s."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">Preveč napačnih poskusov. Poskusite znova čez <xliff:g id="NUMBER">%d</xliff:g> sekundo.</item>
+        <item quantity="two">Preveč napačnih poskusov. Poskusite znova čez <xliff:g id="NUMBER">%d</xliff:g> sekundi.</item>
+        <item quantity="few">Preveč napačnih poskusov. Poskusite znova čez <xliff:g id="NUMBER">%d</xliff:g> sekunde.</item>
+        <item quantity="other">Preveč napačnih poskusov. Poskusite znova čez <xliff:g id="NUMBER">%d</xliff:g> sekund.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Aplikacija ni nameščena v telefonu."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Varnost delovnega profila"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Zaklepanje zaslona za delovni profil"</string>

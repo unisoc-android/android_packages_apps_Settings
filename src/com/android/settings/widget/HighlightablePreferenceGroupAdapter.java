@@ -31,6 +31,7 @@ import android.util.TypedValue;
 import android.view.View;
 
 import androidx.annotation.VisibleForTesting;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.PreferenceGroupAdapter;
 import androidx.preference.PreferenceScreen;
@@ -135,7 +136,9 @@ public class HighlightablePreferenceGroupAdapter extends PreferenceGroupAdapter 
             mHighlightRequested = true;
             recyclerView.smoothScrollToPosition(position);
             mHighlightPosition = position;
-            notifyItemChanged(position);
+            if (!recyclerView.isComputingLayout()) {
+                notifyItemChanged(position);
+            }
         }, DELAY_HIGHLIGHT_DURATION_MILLIS);
     }
 

@@ -17,6 +17,11 @@ package com.android.settings.system;
 
 import android.app.settings.SettingsEnums;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.os.UserManager;
 import android.os.Bundle;
 import android.provider.SearchIndexableResource;
 
@@ -43,6 +48,7 @@ public class SystemDashboardFragment extends DashboardFragment {
     private static final String KEY_RESET = "reset_dashboard";
 
     public static final String EXTRA_SHOW_AWARE_DISABLED = "show_aware_dialog_disabled";
+    private static final String KEY_SYSTEM_UPDATE_SETTINGS = "system_update_settings";
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -102,6 +108,27 @@ public class SystemDashboardFragment extends DashboardFragment {
     /**
      * For Search.
      */
+    private final static String SYSTEM_UPDATE = "android.settings.SYSTEM_UPDATE_SETTINGS";
+
+    private static boolean haveSpecificActivityForSystemUpdate(Context context) {
+        Intent intent = new Intent(SYSTEM_UPDATE);
+        if (intent != null) {
+            // Find the activity that is in the system image
+            PackageManager pm = context.getPackageManager();
+            List<ResolveInfo> list = pm.queryIntentActivities(intent, 0);
+            int listSize = list.size();
+            for (int i = 0; i < listSize; i++) {
+                ResolveInfo resolveInfo = list.get(i);
+                if ((resolveInfo.activityInfo.applicationInfo.flags &
+                        (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0) {
+                    return true;
+                }
+            }
+        }
+        // Did not find a matching activity
+        return false;
+    }
+
     public static final Indexable.SearchIndexProvider SEARCH_INDEX_DATA_PROVIDER =
             new BaseSearchIndexProvider() {
                 @Override
@@ -111,5 +138,16 @@ public class SystemDashboardFragment extends DashboardFragment {
                     sir.xmlResId = R.xml.system_dashboard_fragment;
                     return Arrays.asList(sir);
                 }
+                /* Add for bug1182287, remove system update search if no system update activity @{ */
+                @Override
+                public List<String> getNonIndexableKeys(Context context) {
+                    List<String> keys = super.getNonIndexableKeys(context);
+                    UserManager um = UserManager.get(context);
+                    if (!um.isAdminUser() || !haveSpecificActivityForSystemUpdate(context)) {
+                        keys.add(KEY_SYSTEM_UPDATE_SETTINGS);
+                    }
+                    return keys;
+                }
+                /* @} */
             };
 }

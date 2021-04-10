@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Задаване на фигура за отключване"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Промяна на фигурата за отключване"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Как се чертае фигура за отключване"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Твърде много неправилни опити. Опитайте отново след <xliff:g id="NUMBER">%d</xliff:g> секунди."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Твърде много неправилни опити. Опитайте отново след <xliff:g id="NUMBER">%d</xliff:g> секунди.</item>
+        <item quantity="one">Твърде много неправилни опити. Опитайте отново след 1 секунда.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Приложението не е инсталирано на телефона ви."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Сигурност на служебния потребителски профил"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Заключване на екрана за служебния потребителски профил"</string>

@@ -19,6 +19,7 @@ package com.android.settings.backup;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.provider.SearchIndexableResource;
+import android.os.SystemProperties;
 
 import com.android.settings.R;
 import com.android.settings.dashboard.DashboardFragment;
@@ -84,8 +85,10 @@ public class PrivacySettings extends DashboardFragment {
                 @Override
                 protected boolean isPageSearchEnabled(Context context) {
                     final BackupSettingsHelper backupHelper = new BackupSettingsHelper(context);
+                    //Bug1146987:Hide the backup menu on non-gms versions, disable page search
                     return !backupHelper.isBackupProvidedByManufacturer() &&
-                            !backupHelper.isIntentProvidedByTransport();
+                            !backupHelper.isIntentProvidedByTransport() &&
+                            !SystemProperties.get("ro.com.google.gmsversion").isEmpty();
                 }
             };
 }

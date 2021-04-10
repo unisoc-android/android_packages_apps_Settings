@@ -474,10 +474,12 @@ public class ConfirmLockPassword extends ConfirmDeviceCredentialBaseActivity {
 
                 @Override
                 public void onTick(long millisUntilFinished) {
-                    final int secondsCountdown = (int) (millisUntilFinished / 1000);
-                    showError(getString(
-                            R.string.lockpattern_too_many_failed_confirmation_attempts,
-                            secondsCountdown), 0);
+                    // UNISOC: Fix for bug 1213187
+                    final int secondsCountdown = (int) (millisUntilFinished / 1000) + 1;
+                    String errorText = getResources().getQuantityString(
+                            R.plurals.lockpattern_too_many_failed_confirmation_attempts,
+                            secondsCountdown, secondsCountdown);
+                    showError(errorText, 0);
                 }
 
                 @Override

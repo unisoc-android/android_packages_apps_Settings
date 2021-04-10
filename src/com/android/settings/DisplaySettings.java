@@ -17,8 +17,12 @@
 package com.android.settings;
 
 import android.app.settings.SettingsEnums;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.sprdpower.PowerManagerEx;
 import android.provider.SearchIndexableResource;
 
 import com.android.settings.dashboard.DashboardFragment;
@@ -30,6 +34,7 @@ import com.android.settings.display.NightDisplayPreferenceController;
 import com.android.settings.display.NightModePreferenceController;
 import com.android.settings.display.ScreenSaverPreferenceController;
 import com.android.settings.display.ShowOperatorNamePreferenceController;
+import com.android.settings.display.SprdColorTemperaturePreferenceController;
 import com.android.settings.display.TapToWakePreferenceController;
 import com.android.settings.display.ThemePreferenceController;
 import com.android.settings.display.TimeoutPreferenceController;
@@ -70,6 +75,31 @@ public class DisplaySettings extends DashboardFragment {
         use(DarkUIPreferenceController.class).setParentFragment(this);
     }
 
+    /* bug 1196127：update time out state when power save mode has changed  @{*/
+    @Override
+    public void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(PowerManagerEx.ACTION_POWEREX_SAVE_MODE_CHANGED);
+        getContext().registerReceiver(mIntentReceiver, filter);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        getContext().unregisterReceiver(mIntentReceiver);
+    }
+
+    private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive (Context context, Intent intent) {
+            if (intent.getAction().equals(PowerManagerEx.ACTION_POWEREX_SAVE_MODE_CHANGED)) {
+                updatePreferenceStates();
+            }
+        }
+    };
+    /* @} */
+
     @Override
     protected List<AbstractPreferenceController> createPreferenceControllers(Context context) {
         return buildPreferenceControllers(context, getSettingsLifecycle());
@@ -94,6 +124,9 @@ public class DisplaySettings extends DashboardFragment {
         controllers.add(new ShowOperatorNamePreferenceController(context));
         controllers.add(new ThemePreferenceController(context));
         controllers.add(new BrightnessLevelPreferenceController(context, lifecycle));
+        /* UNISOC: Add for color temperature adjusting @{*/
+        controllers.add(new SprdColorTemperaturePreferenceController(context));
+        /*@}*/
         return controllers;
     }
 

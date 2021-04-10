@@ -16,14 +16,20 @@
 
 package com.android.settings.wifi.tether;
 
+import static android.net.wifi.WifiConfiguration.AP_BAND_2GHZ;
+import static android.net.wifi.WifiConfiguration.AP_BAND_5GHZ;
+
 import android.content.Context;
 import android.content.res.Resources;
+import android.icu.text.ListFormatter;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiFeaturesUtils;
 import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceScreen;
 
 import com.android.settings.R;
 
@@ -31,6 +37,9 @@ public class WifiTetherApBandPreferenceController extends WifiTetherBasePreferen
 
     private static final String TAG = "WifiTetherApBandPref";
     private static final String PREF_KEY = "wifi_tether_network_ap_band";
+    private static final String SPRD_PREF_KEY = "sprd_wifi_tether_network_ap_band";
+    public static final String[] BAND_VALUES =
+            {String.valueOf(AP_BAND_2GHZ), String.valueOf(AP_BAND_5GHZ)};
 
     private String[] mBandEntries;
     private String[] mBandSummaries;
@@ -48,19 +57,21 @@ public class WifiTetherApBandPreferenceController extends WifiTetherBasePreferen
     public void updateDisplay() {
         final WifiConfiguration config = mWifiManager.getWifiApConfiguration();
         if (config == null) {
-            mBandIndex = 0;
+            mBandIndex = WifiConfiguration.AP_BAND_2GHZ;
             Log.d(TAG, "Updating band index to 0 because no config");
         } else if (is5GhzBandSupported()) {
             mBandIndex = validateSelection(config.apBand);
             Log.d(TAG, "Updating band index to " + mBandIndex);
         } else {
-            config.apBand = 0;
-            mWifiManager.setWifiApConfiguration(config);
+            if (config.apBand != WifiConfiguration.AP_BAND_2GHZ) {
+                config.apBand = WifiConfiguration.AP_BAND_2GHZ;
+                mWifiManager.setWifiApConfiguration(config);
+            }
             mBandIndex = config.apBand;
             Log.d(TAG, "5Ghz not supported, updating band index to " + mBandIndex);
         }
         ListPreference preference =
-                (ListPreference) mPreference;
+            (ListPreference) mPreference;
         preference.setEntries(mBandSummaries);
         preference.setEntryValues(mBandEntries);
 
@@ -90,7 +101,10 @@ public class WifiTetherApBandPreferenceController extends WifiTetherBasePreferen
         mBandIndex = validateSelection(Integer.parseInt((String) newValue));
         Log.d(TAG, "Band preference changed, updating band index to " + mBandIndex);
         preference.setSummary(getConfigSummary());
-        mListener.onTetherConfigUpdated();
+        WifiConfiguration config = mWifiManager.getWifiApConfiguration();
+        if (mBandIndex != config.apBand) {
+            mListener.onTetherConfigUpdated();
+        }
         return true;
     }
 

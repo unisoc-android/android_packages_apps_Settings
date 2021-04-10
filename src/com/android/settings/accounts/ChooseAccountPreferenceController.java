@@ -37,6 +37,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 
+import com.android.settings.accounts.AccountPreferenceController;
 import com.android.settings.core.BasePreferenceController;
 import com.android.settingslib.RestrictedLockUtils;
 import com.android.settingslib.RestrictedLockUtilsInternal;
@@ -123,11 +124,20 @@ public class ChooseAccountPreferenceController extends BasePreferenceController 
      * and update any UI that depends on AuthenticatorDescriptions in onAuthDescriptionsUpdated().
      */
     private void updateAuthDescriptions() {
+        /* Add for bug1104405 , no need to show the Sprd type accounts @{*/
+        ArrayList<AuthenticatorDescription> tmp = new ArrayList<AuthenticatorDescription>();
         mAuthDescs = AccountManager.get(mContext).getAuthenticatorTypesAsUser(
                 mUserHandle.getIdentifier());
         for (int i = 0; i < mAuthDescs.length; i++) {
+            if (AccountPreferenceController.filterSprdAccount(AccountPreferenceController.SPRD_ACCOUNTS, mAuthDescs[i].type)) {
+                Log.d(TAG, "mAuthDescs[i].type = " + mAuthDescs[i].type);
+                continue;
+            }
+            tmp.add(mAuthDescs[i]);
             mTypeToAuthDescription.put(mAuthDescs[i].type, mAuthDescs[i]);
         }
+        mAuthDescs = tmp.toArray(new AuthenticatorDescription[0]);
+        /* @} */
         onAuthDescriptionsUpdated();
     }
 

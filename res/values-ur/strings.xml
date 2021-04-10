@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"غیر مقفل کرنے کا پیٹرن سیٹ کریں"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"غیر مقفل کرنے کا پیٹرن تبدیل کریں"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"غیر مقفل کرنے کا پیٹرن ڈرا کرنے کا طریقہ"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"کافی زیادہ غلط کوششیں کی گئیں۔ <xliff:g id="NUMBER">%d</xliff:g> سیکنڈ بعد دوبارہ کوشش کریں۔"</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">"کافی زیادہ غلط کوششیں کی گئیں۔ <xliff:g id="NUMBER">%d</xliff:g> سیکنڈ بعد دوبارہ کوشش کریں۔"</item>
+        <item quantity="one">کافی زیادہ غلط کوششیں کی گئیں۔1 سیکنڈ میں دوبارہ کوشش کریں۔ </item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"ایپلیکیشن آپ کے فون پر انسٹال نہیں ہے۔"</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"دفتری پروفائل کی سیکیورٹی"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"دفتری پروفائل اسکرین کا قفل"</string>

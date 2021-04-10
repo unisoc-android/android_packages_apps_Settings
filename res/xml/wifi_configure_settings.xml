@@ -20,6 +20,11 @@
     android:key="wifi_configure_settings_screen"
     android:title="@string/wifi_configure_settings_preference_title">
 
+    <!-- SPRD: Bug#474442 Add for Wifi Auto Roam Feature BEG -->
+    <SwitchPreference
+        android:key="wifi_auto_roam"
+        android:title="@string/wifi_auto_roam" />
+
     <SwitchPreference
         android:key="enable_wifi_wakeup"
         android:title="@string/wifi_wakeup"
@@ -38,6 +43,13 @@
         android:icon="@drawable/ic_open_wifi_notifications"
         android:summary="@string/wifi_notify_open_networks_summary"
         settings:keywords="@string/keywords_wifi_notify_open_networks"/>
+
+    <SwitchPreference
+        android:key="wlan_plus"
+        android:title="@string/wlan_plus"
+        android:icon="@drawable/ic_settings_wlanplus"
+        android:summary="@string/wlan_plus_summary"
+        settings:controller="com.android.settings.wifi.WlanPlusPreferenceController" />
 
     <SwitchPreference
         android:key="wifi_cellular_data_fallback"

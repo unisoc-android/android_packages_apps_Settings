@@ -118,7 +118,6 @@ public final class UserDialogs {
             DialogInterface.OnClickListener onConfirmListener) {
         return new AlertDialog.Builder(context)
                 .setTitle(R.string.user_enable_calling_and_sms_confirm_title)
-                .setMessage(R.string.user_enable_calling_and_sms_confirm_message)
                 .setPositiveButton(R.string.okay, onConfirmListener)
                 .setNegativeButton(android.R.string.cancel, null)
                 .create();
@@ -133,7 +132,6 @@ public final class UserDialogs {
             DialogInterface.OnClickListener onConfirmListener) {
         return new AlertDialog.Builder(context)
                 .setTitle(R.string.user_enable_calling_confirm_title)
-                .setMessage(R.string.user_enable_calling_confirm_message)
                 .setPositiveButton(R.string.okay, onConfirmListener)
                 .setNegativeButton(android.R.string.cancel, null)
                 .create();

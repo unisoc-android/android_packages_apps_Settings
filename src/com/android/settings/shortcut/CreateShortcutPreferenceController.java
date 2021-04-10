@@ -26,6 +26,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.location.LocationFeaturesUtils;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -42,6 +43,7 @@ import com.android.settings.R;
 import com.android.settings.Settings.TetherSettingsActivity;
 import com.android.settings.core.BasePreferenceController;
 import com.android.settings.overlay.FeatureFactory;
+import com.android.settings.Settings.LocationSettingsActivity;
 import com.android.settingslib.core.instrumentation.MetricsFeatureProvider;
 
 import java.util.ArrayList;
@@ -66,6 +68,7 @@ public class CreateShortcutPreferenceController extends BasePreferenceController
             .addCategory("com.android.settings.SHORTCUT")
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
+    private static boolean LOCATION_DISABLED = false;
     private final ShortcutManager mShortcutManager;
     private final PackageManager mPackageManager;
     private final ConnectivityManager mConnectivityManager;
@@ -80,6 +83,7 @@ public class CreateShortcutPreferenceController extends BasePreferenceController
         mPackageManager = context.getPackageManager();
         mMetricsFeatureProvider = FeatureFactory.getFactory(context)
                 .getMetricsFeatureProvider();
+        LOCATION_DISABLED = LocationFeaturesUtils.getInstance(context).isLocationDisabled();
     }
 
     public void setActivity(Activity host) {
@@ -186,6 +190,11 @@ public class CreateShortcutPreferenceController extends BasePreferenceController
             if (!info.activityInfo.applicationInfo.isSystemApp()) {
                 Log.d(TAG, "Skipping non-system app: " + info.activityInfo);
                 continue;
+            }
+            if (info.activityInfo.name.endsWith(LocationSettingsActivity.class.getSimpleName())) {
+                if (LOCATION_DISABLED) {
+                    continue;
+                }
             }
             shortcuts.add(info);
         }

@@ -54,7 +54,7 @@ public class PreferenceControllerContractTest {
     @Test
     @Presubmit
     public void controllersInSearchShouldImplementPreferenceControllerMixin() {
-        Looper.prepare(); // Required by AutofillLoggingLevelPreferenceController
+        //Looper.prepare(); // Required by AutofillLoggingLevelPreferenceController
         final Set<String> errorClasses = new ArraySet<>();
 
         final SearchIndexableResources resources =

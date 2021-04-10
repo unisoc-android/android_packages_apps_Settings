@@ -45,6 +45,12 @@ public class LocalePickerWithRegionActivity extends Activity
                 .commit();
     }
 
+    /* UNISOC:1157389 Override onSaveInstanceState, not call super @{ */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+    }
+    /* @} */
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {

@@ -24,6 +24,12 @@
 
     <com.android.settings.widget.SwitchBar
         android:id="@+id/switch_bar"
+        android:layout_height="56dip"
+        android:layout_width="match_parent"
+        android:theme="?attr/switchBarTheme"/>
+
+    <com.android.settings.widget.SwitchBar
+        android:id="@+id/bt_mode_switch_bar"
         android:layout_height="?android:attr/actionBarSize"
         android:layout_width="match_parent"
         android:theme="?attr/switchBarTheme"/>

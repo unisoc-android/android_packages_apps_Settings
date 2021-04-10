@@ -1792,7 +1792,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Кулпуну ачуу үлгүсүн коюу"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Кулпуну ачуу үлгүсүн өзгөртүү"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Кулпуну ачуу үлгүсүн кантип тартыш керек"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Туура эмес аракеттер өтө көп болду. <xliff:g id="NUMBER">%d</xliff:g> секунддан кийин кайра аракет кылыңыз."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Туура эмес аракеттер өтө көп болду. <xliff:g id="NUMBER">%d</xliff:g> секунддан кийин кайра аракет кылыңыз.</item>
+        <item quantity="one">Туура эмес аракеттер өтө көп болду. 1 секунддан кийин кайталаңыз.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Колдонмо сиздин телефонуңузда орнотулган эмес."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Жумуш профилинин коопсуздугу"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Жумуш профилинин экран кулпусу"</string>

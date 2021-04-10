@@ -56,6 +56,14 @@ public abstract class SimDialogFragment extends InstrumentedDialogFragment imple
         mChangeListener = new SubscriptionsChangeListener(context, this);
     }
 
+    /*UNISOC: if configuration change, Guarantee the object unchanged @{ */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
+    /*UNISOC: @}*/
+
     @Override
     public void onPause() {
         super.onPause();

@@ -40,8 +40,13 @@ import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.espresso.intent.Intents;
@@ -60,6 +65,7 @@ public class AppNotificationSettingsTest {
 
     private UiDevice mUiDevice;
     private Context mTargetContext;
+    private String mTargetPackage;
     private Instrumentation mInstrumentation;
 
     NotificationManager mNm;
@@ -74,7 +80,7 @@ public class AppNotificationSettingsTest {
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mTargetContext = mInstrumentation.getTargetContext();
-
+        mTargetPackage = mTargetContext.getPackageName();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mUiDevice.wakeUp();
         mUiDevice.executeShellCommand(WM_DISMISS_KEYGUARD_COMMAND);
@@ -120,21 +126,32 @@ public class AppNotificationSettingsTest {
     }
 
     @Test
-    public void launchNotificationSetting_showUngroupedChannels() {
+    public void launchNotificationSetting_showUngroupedChannels() throws UiObjectNotFoundException {
         final Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 .putExtra(Settings.EXTRA_APP_PACKAGE, mTargetContext.getPackageName())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mInstrumentation.startActivitySync(intent);
+
+        final UiScrollable settings = new UiScrollable(
+                new UiSelector().packageName(mTargetPackage).scrollable(true));
+        final String channel = mUngroupedChannel.getName().toString();
+        settings.scrollTextIntoView(channel);
+
         onView(allOf(withText(mUngroupedChannel.getName().toString())))
                 .check(matches(isDisplayed()));
     }
 
     @Test
-    public void launchNotificationSetting_showGroupsWithOneChannel() {
+    public void launchNotificationSetting_showGroupsWithOneChannel() throws UiObjectNotFoundException {
         final Intent intent = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 .putExtra(Settings.EXTRA_APP_PACKAGE, mTargetContext.getPackageName())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mInstrumentation.startActivitySync(intent);
+
+        final UiScrollable settings = new UiScrollable(
+                new UiSelector().packageName(mTargetPackage).scrollable(true));
+        final String channel = mGroup2.getName().toString();
+        settings.scrollTextIntoView(channel);
 
         onView(allOf(withText(mGroup2.getName().toString())))
                 .check(matches(isDisplayed()));

@@ -19,17 +19,21 @@ package com.android.settings.widget;
 import android.content.Context;
 import android.text.Editable;
 import android.text.InputType;
+import android.text.Selection;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.text.InputFilter;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.PreferenceViewHolder;
 
+import com.android.settings.wifi.WifiUtils;
 import com.android.settingslib.CustomEditTextPreferenceCompat;
 
 /**
@@ -44,7 +48,9 @@ public class ValidatedEditTextPreference extends CustomEditTextPreferenceCompat 
     private final EditTextWatcher mTextWatcher = new EditTextWatcher();
     private Validator mValidator;
     private boolean mIsPassword;
+    private boolean mIsSSID;
     private boolean mIsSummaryPassword;
+    private static final int SSID_ASCII_MAX_LENGTH = 32;
 
     public ValidatedEditTextPreference(Context context, AttributeSet attrs,
             int defStyleAttr, int defStyleRes) {
@@ -73,9 +79,13 @@ public class ValidatedEditTextPreference extends CustomEditTextPreferenceCompat 
         if (mValidator != null && editText != null) {
             editText.removeTextChangedListener(mTextWatcher);
             if (mIsPassword) {
+                editText.setFilters(new InputFilter[] {new WifiUtils.WifiDevicePassWordFilter()});
                 editText.setInputType(
                         InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
                 editText.setMaxLines(1);
+            }
+            if (isSSID()) {
+                editText.setFilters(new InputFilter[] {new WifiUtils.WifiDeviceNameFilter()});
             }
             editText.addTextChangedListener(mTextWatcher);
         }
@@ -102,6 +112,10 @@ public class ValidatedEditTextPreference extends CustomEditTextPreferenceCompat 
         mIsPassword = isPassword;
     }
 
+    public void setIsSSID(boolean isSSID) {
+        mIsSSID = isSSID;
+    }
+
     public void setIsSummaryPassword(boolean isPassword) {
         mIsSummaryPassword = isPassword;
     }
@@ -111,13 +125,40 @@ public class ValidatedEditTextPreference extends CustomEditTextPreferenceCompat 
         return mIsPassword;
     }
 
+    public boolean isSSID() {
+        return mIsSSID;
+    }
+
     public void setValidator(Validator validator) {
         mValidator = validator;
     }
 
     private class EditTextWatcher implements TextWatcher {
+        // Bug1113479:ValidatedEditTextPreference max length
+        private static final int MAX_LEN = 100;
+
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
+            /* Bug1113479: ValidatedEditTextPreference max length @{ */
+            final EditText editText = getEditText();
+            if (editText != null) {
+                Editable editable = editText.getText();
+                int len = editable.length();
+                if(len > MAX_LEN) {
+                    int selEndIndex = Selection.getSelectionEnd(editable);
+                    String str = editable.toString();
+                    String newStr = str.substring(0, MAX_LEN);
+                    editText.setText(newStr);
+                    editable = editText.getText();
+                    int newLen = editable.length();
+                    if(selEndIndex > newLen)
+                    {
+                        selEndIndex = editable.length();
+                    }
+                    Selection.setSelection(editable, selEndIndex);
+                }
+            }
+            /* @} */
         }
 
         @Override

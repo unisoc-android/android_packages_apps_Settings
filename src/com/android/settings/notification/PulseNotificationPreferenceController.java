@@ -29,6 +29,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 
 import com.android.settings.core.TogglePreferenceController;
+import com.android.settings.Utils;
 import com.android.settingslib.core.lifecycle.LifecycleObserver;
 import com.android.settingslib.core.lifecycle.events.OnPause;
 import com.android.settingslib.core.lifecycle.events.OnResume;
@@ -69,8 +70,8 @@ public class PulseNotificationPreferenceController extends TogglePreferenceContr
 
     @Override
     public int getAvailabilityStatus() {
-        return mContext.getResources().getBoolean(
-                com.android.internal.R.bool.config_intrusiveNotificationLed) ? AVAILABLE
+        return (mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_intrusiveNotificationLed) && Utils.ledFileIsExists()) ? AVAILABLE
                 : UNSUPPORTED_ON_DEVICE;
     }
 

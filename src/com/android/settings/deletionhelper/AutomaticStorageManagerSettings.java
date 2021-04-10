@@ -24,6 +24,8 @@ import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Menu;
+import android.view.MenuInflater;
 
 import androidx.preference.DropDownPreference;
 import androidx.preference.Preference;
@@ -95,6 +97,16 @@ public class AutomaticStorageManagerSettings extends DashboardFragment
                         mDaysToRetain,
                         getFragmentManager());
     }
+
+    /* bug 1104944 : on Ultra power saving mode, need to hide SearchMenu and Multiuser settings @{*/
+    @Override
+    public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+       if (Utils.inUtraPowerSavingMode()) {
+            menu.getItem(0).setVisible(false);
+        }
+    }
+    /* @} */
 
     @Override
     public void onResume() {

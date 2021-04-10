@@ -27,11 +27,9 @@
 
     <style name="Theme.Settings" parent="Theme.SettingsBase">
         <item name="preferenceTheme">@style/PreferenceTheme</item>
-        <item name="android:clipToPadding">false</item>
-        <item name="android:clipChildren">false</item>
         <item name="android:listPreferredItemHeight">72dip</item>
         <item name="android:homeAsUpIndicator">@drawable/ic_arrow_back</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!--<item name="android:navigationBarColor">@android:color/transparent</item>-->
 
         <item name="fingerprint_layout_theme">@style/FingerprintLayoutTheme</item>
         <item name="face_layout_theme">@style/FaceLayoutTheme</item>
@@ -177,7 +175,8 @@
     </style>
 
     <style name="FallbackHome.SetupWizard" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
-        <item name="android:windowBackground">@drawable/fallback_home_unprovisioned_background</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowShowWallpaper">true</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
@@ -196,7 +195,6 @@
 
         <!-- action bar, needed for search bar icon tinting -->
         <item name="android:actionBarTheme">@*android:style/ThemeOverlay.DeviceDefault.ActionBar</item>
-
         <!-- Define this color for material design -->
         <item name="colorPrimaryVariant">@android:color/white</item>
     </style>
@@ -205,7 +203,7 @@
         <item name="colorPrimaryDark">@*android:color/primary_dark_device_default_settings_light</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:navigationBarDividerColor">@*android:color/ripple_material_light</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!--<item name="android:navigationBarColor">@android:color/transparent</item>-->
         <item name="android:windowBackground">@android:color/white</item>
     </style>
 
@@ -251,5 +249,12 @@
         <item name="android:colorPrimary">@android:color/white</item>
         <item name="android:colorPrimaryDark">@android:color/white</item>
         <item name="android:colorAccent">@color/material_blue_700</item>
+    </style>
+
+    <!-- set the background color for the select mock location app and select debug app -->
+    <style name="Theme.Dialog" parent="@style/Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="android:windowBackground">@*android:color/background_device_default_light</item>
+        <item name="android:colorPrimary">@*android:color/primary_device_default_settings_light</item>
+        <item name="android:windowNoTitle">false</item>
     </style>
 </resources>

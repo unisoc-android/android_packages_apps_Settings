@@ -97,11 +97,14 @@ public class ImeiInfoDialogController {
             Log.w(TAG, "TelephonyManager for this slot is null. Invalid slot? id=" + mSlotId);
             return;
         }
-        if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+        /* Bug1145059: This menu only shows imei, remove meid @{ */
+        /*if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
             updateDialogForCdmaPhone();
         } else {
             updateDialogForGsmPhone();
-        }
+        }*/
+        updateDialogForGsmPhone();
+        /* @} */
     }
 
     private void updateDialogForCdmaPhone() {

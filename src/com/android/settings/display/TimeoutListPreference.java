@@ -107,7 +107,9 @@ public class TimeoutListPreference extends RestrictedListPreference {
         } else {
             setDisabledByAdmin(null);
         }
-
+        // Bug1164343, If there is no highlighted option indicating that nothing in the list
+        // matches currentTimeout, add log to confirm the currentTimeout.
+        Log.d(TAG, "maxTimeout = " + maxTimeout);
         if (revisedEntries.size() != getEntries().length) {
             final int userPreference = Integer.parseInt(getValue());
             setEntries(revisedEntries.toArray(new CharSequence[0]));

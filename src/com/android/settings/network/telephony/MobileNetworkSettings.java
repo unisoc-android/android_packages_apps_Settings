@@ -18,8 +18,10 @@ package com.android.settings.network.telephony;
 
 import android.app.Activity;
 import android.app.settings.SettingsEnums;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.provider.SearchIndexableResource;
@@ -43,6 +45,8 @@ import com.android.settings.network.telephony.cdma.CdmaSubscriptionPreferenceCon
 import com.android.settings.network.telephony.cdma.CdmaSystemSelectPreferenceController;
 import com.android.settings.network.telephony.gsm.AutoSelectPreferenceController;
 import com.android.settings.network.telephony.gsm.OpenNetworkSelectPagePreferenceController;
+import com.android.settings.network.telephony.gsm.UplmnPreferenceController;
+
 import com.android.settings.search.BaseSearchIndexProvider;
 import com.android.settings.search.Indexable;
 import com.android.settings.widget.PreferenceCategoryController;
@@ -55,12 +59,15 @@ import java.util.List;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
 
 @SearchIndexable(forTarget = SearchIndexable.ALL & ~SearchIndexable.ARC)
 public class MobileNetworkSettings extends RestrictedDashboardFragment {
 
     private static final String LOG_TAG = "NetworkSettings";
     public static final int REQUEST_CODE_EXIT_ECM = 17;
+    // UNISOC: FL0108030015 If manually selection failed, try auto select
+    public static final int REQUEST_NETWORK_SELECTION_MANUALLY_DONE = 100;
     public static final int REQUEST_CODE_DELETE_SUBSCRIPTION = 18;
     @VisibleForTesting
     static final String KEY_CLICKED_PREF = "key_clicked_pref";
@@ -77,6 +84,12 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
 
     private UserManager mUserManager;
     private String mClickedPrefKey;
+
+    // UNISOC: FL0108030015 If manually selection failed, try auto select
+    private List<onManualSelectNetworkDoneListener> mListeners = new ArrayList<>();
+    private AutoSelectPreferenceController mAutoSelectPreferenceController = null;
+    // UNISOC: Bug1113849
+    private OpenNetworkSelectPagePreferenceController mOpenNetworkSelectPagePreferenceController = null;
 
     public MobileNetworkSettings() {
         super(UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
@@ -142,7 +155,14 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
             use(DisabledSubscriptionController.class).init(getLifecycle(), mSubId);
             use(DeleteSimProfilePreferenceController.class).init(mSubId, this,
                     REQUEST_CODE_DELETE_SUBSCRIPTION);
-            use(DisableSimFooterPreferenceController.class).init(mSubId);
+            //UNISOC:Hide the DisableSimFooter,prevent users from misunderstanding the disable SIM.
+            //use(DisableSimFooterPreferenceController.class).init(mSubId);
+            // UNISOC: modify for bug1219678
+            use(NationalRoamingPreferenceController.class).init(mSubId);
+            use(MobileDataAlwaysOnlinePreferenceController.class).init(getFragmentManager(),mSubId);
+            use(PsDataOffPreferenceController.class).init(getFragmentManager(),mSubId);
+            // UNISOC: FL0108090007 UPLMN Preference
+            use(UplmnPreferenceController.class).init(mSubId);
         }
         use(MobileDataPreferenceController.class).init(getFragmentManager(), mSubId);
         use(RoamingPreferenceController.class).init(getFragmentManager(), mSubId);
@@ -150,21 +170,41 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
         use(CarrierPreferenceController.class).init(mSubId);
         use(DataUsagePreferenceController.class).init(mSubId);
         use(PreferredNetworkModePreferenceController.class).init(mSubId);
-        use(EnabledNetworkModePreferenceController.class).init(mSubId);
+        //UNISOC:Add for network mode type changed
+        use(EnabledNetworkModePreferenceController.class).init(getLifecycle(),mSubId);
         use(DataServiceSetupPreferenceController.class).init(mSubId);
         if (!FeatureFlagPersistent.isEnabled(getContext(), FeatureFlags.NETWORK_INTERNET_V2)) {
             use(EuiccPreferenceController.class).init(mSubId);
         }
-        use(WifiCallingPreferenceController.class).init(mSubId);
+        final WifiCallingPreferenceController wifiCallingPreferenceController =
+                use(WifiCallingPreferenceController.class).init(mSubId);
 
+        /** UNISOC: Bug1113489
         final OpenNetworkSelectPagePreferenceController openNetworkSelectPagePreferenceController =
                 use(OpenNetworkSelectPagePreferenceController.class).init(mSubId);
+         @{ */
+        mOpenNetworkSelectPagePreferenceController =
+                use(OpenNetworkSelectPagePreferenceController.class).initEx(getFragmentManager(), this, mSubId);
+        /** @} */
+
+        /**UNISOC: FL0108030015 If manually selection failed, try auto select
+         * @orig
         final AutoSelectPreferenceController autoSelectPreferenceController =
                 use(AutoSelectPreferenceController.class)
                         .init(mSubId)
                         .addListener(openNetworkSelectPagePreferenceController);
+         * @{
+         */
+        mAutoSelectPreferenceController =
+                use(AutoSelectPreferenceController.class);
+        mAutoSelectPreferenceController.initEx(getFragmentManager(), this, mSubId);
+        mAutoSelectPreferenceController.addListener(mOpenNetworkSelectPagePreferenceController);
+        // Listen to manual network select result
+        addManuallySelectDoneListener(mAutoSelectPreferenceController);
+        /** @｝*/
+
         use(PreferenceCategoryController.class).setChildren(
-                Arrays.asList(autoSelectPreferenceController));
+                Arrays.asList(mAutoSelectPreferenceController));
 
         mCdmaSystemSelectPreferenceController = use(CdmaSystemSelectPreferenceController.class);
         mCdmaSystemSelectPreferenceController.init(getPreferenceManager(), mSubId);
@@ -173,8 +213,27 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
 
         final VideoCallingPreferenceController videoCallingPreferenceController =
                 use(VideoCallingPreferenceController.class).init(mSubId);
-        use(Enhanced4gLtePreferenceController.class).init(mSubId)
-                .addListener(videoCallingPreferenceController);
+        final VideoResolutionPreferenceController videoResolutionPreferenceController =
+                use(VideoResolutionPreferenceController.class).init(mSubId);
+        use(CallingPreferenceCategoryController.class).setChildren(
+                Arrays.asList(wifiCallingPreferenceController, videoCallingPreferenceController,
+                        videoResolutionPreferenceController));
+        Enhanced4gBasePreferenceController enhanced4gLtePreferenceController =
+                use(Enhanced4gLtePreferenceController.class).init(mSubId);
+        enhanced4gLtePreferenceController.addListener(videoCallingPreferenceController);
+        enhanced4gLtePreferenceController.addListener(videoResolutionPreferenceController);
+
+        Enhanced4gBasePreferenceController enhanced4gCallingPreferenceController =
+                use(Enhanced4gCallingPreferenceController.class).init(mSubId);
+        enhanced4gCallingPreferenceController.addListener(videoCallingPreferenceController);
+        enhanced4gCallingPreferenceController.addListener(videoResolutionPreferenceController);
+
+        Enhanced4gBasePreferenceController enhanced4gAdvancedCallingPreferenceController =
+                use(Enhanced4gAdvancedCallingPreferenceController.class).init(mSubId);
+        enhanced4gLtePreferenceController.addListener(videoCallingPreferenceController);
+        enhanced4gLtePreferenceController.addListener(videoResolutionPreferenceController);
+
+        use(SmartDualSubscriptionController.class).init(mSubId);
     }
 
     @Override
@@ -182,10 +241,26 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
         Log.i(LOG_TAG, "onCreate:+");
         super.onCreate(icicle);
         final Context context = getContext();
-
+        context.registerReceiver(mReceiver, new IntentFilter(TelephonyManager.ACTION_SIM_CARD_STATE_CHANGED));
         mUserManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
         mTelephonyManager = TelephonyManager.from(context).createForSubscriptionId(mSubId);
 
+        /* UNISOC: Bug1113489 Parent Fragment(MobileNetworkSettings) is needed by
+         * NetworkSelectWarningDialogFragment to launch SubSettings @{ */
+        if (icicle != null) {
+            NetworkSelectWarningDialogFragment dialog = (NetworkSelectWarningDialogFragment) getFragmentManager()
+                    .findFragmentByTag(NetworkSelectWarningDialogFragment.DIALOG_TAG);
+            if (dialog != null) {
+                NetworkSelectWarningDialogFragment.setParentFragment(this);
+                if (mAutoSelectPreferenceController != null) {
+                    dialog.registerForAutoSelect(mAutoSelectPreferenceController);
+                }
+                if (mOpenNetworkSelectPagePreferenceController != null) {
+                    dialog.registerForOpenNetwork(mOpenNetworkSelectPagePreferenceController);
+                }
+            }
+        }
+        /* @} */
         onRestoreInstance(icicle);
     }
 
@@ -229,6 +304,18 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
                     }
                 }
                 break;
+                /* UNISOC FL0108030015 If manually selection failed, try auto select @{*/
+            case REQUEST_NETWORK_SELECTION_MANUALLY_DONE:
+                Log.i(LOG_TAG, "REQUEST_NETWORK_SELECTION_MANUALLY_DONE");
+                if (data!= null) {
+                    boolean success = data.getBooleanExtra("manual_select_success", true);
+                    Log.i(LOG_TAG, "network selection manually done: " + success);
+                    for (onManualSelectNetworkDoneListener lsn : mListeners) {
+                        lsn.onManualSelectNetworkDone(success);
+                    }
+                }
+                break;
+                /* @} */
 
             case REQUEST_CODE_DELETE_SUBSCRIPTION:
                 final Activity activity = getActivity();
@@ -259,8 +346,11 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
         if (FeatureFlagPersistent.isEnabled(getContext(), FeatureFlags.NETWORK_INTERNET_V2) &&
                 mSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
             if (menuItem.getItemId() == R.id.edit_sim_name) {
-                RenameMobileNetworkDialogFragment.newInstance(mSubId).show(
-                        getFragmentManager(), RenameMobileNetworkDialogFragment.TAG);
+                RenameMobileNetworkDialogFragment fragment = RenameMobileNetworkDialogFragment.newInstance(mSubId);
+                if (fragment.getDialog() != null && fragment.getDialog().isShowing()) {
+                    return false;
+                }
+                fragment.show(getFragmentManager(), RenameMobileNetworkDialogFragment.TAG);
                 return true;
             }
         }
@@ -275,7 +365,11 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
                     final ArrayList<SearchIndexableResource> result = new ArrayList<>();
 
                     final SearchIndexableResource sir = new SearchIndexableResource(context);
-                    sir.xmlResId = R.xml.mobile_network_settings;
+                    //UNISOC: fix for bug 1104592
+                    sir.xmlResId = FeatureFlagPersistent.isEnabled(context,
+                            FeatureFlags.NETWORK_INTERNET_V2)
+                            ? R.xml.mobile_network_settings_v2
+                            : R.xml.mobile_network_settings;
                     result.add(sir);
                     return result;
                 }
@@ -286,4 +380,43 @@ public class MobileNetworkSettings extends RestrictedDashboardFragment {
                     return context.getSystemService(UserManager.class).isAdminUser();
                 }
             };
+
+    /** UNISOC: FL0108030015 If manually selection failed, try auto select @{ */
+    public interface onManualSelectNetworkDoneListener{
+        void onManualSelectNetworkDone(boolean success);
+    }
+
+    public void addManuallySelectDoneListener(onManualSelectNetworkDoneListener lsn) {
+        mListeners.add(lsn);
+    }
+
+    public void removeManuallySelectDoneListener(onManualSelectNetworkDoneListener lsn) {
+        mListeners.remove(lsn);
+    }
+
+    @Override
+    public void onDestroy(){
+        Log.d(LOG_TAG, "onDestroy");
+        super.onDestroy();
+        getContext().unregisterReceiver(mReceiver);
+        if (mAutoSelectPreferenceController != null){
+            removeManuallySelectDoneListener(mAutoSelectPreferenceController);
+        }
+    }
+    /** @} */
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver (){
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(LOG_TAG, "onReceive: intent=" + intent);
+            final String action = intent.getAction();
+            if (action.equals(TelephonyManager.ACTION_SIM_CARD_STATE_CHANGED)) {
+                int state = intent.getIntExtra(TelephonyManager.EXTRA_SIM_STATE,
+                        TelephonyManager.SIM_STATE_UNKNOWN);
+                if (!SubscriptionManager.isValidPhoneId(SubscriptionManager.getPhoneId(mSubId)) && state == TelephonyManager.SIM_STATE_ABSENT) {
+                    finish();
+                }
+            }
+        }
+     };
 }

@@ -52,15 +52,21 @@ public class PrivateVolumeFormat extends InstrumentedFragment {
             Bundle savedInstanceState) {
         final StorageManager storage = getActivity().getSystemService(StorageManager.class);
         final String volumeId = getArguments().getString(VolumeInfo.EXTRA_VOLUME_ID);
-        mVolume = storage.findVolumeById(volumeId);
-        mDisk = storage.findDiskById(mVolume.getDiskId());
 
         final View view = inflater.inflate(R.layout.storage_internal_format, container, false);
         final TextView body = (TextView) view.findViewById(R.id.body);
         final Button confirm = (Button) view.findViewById(R.id.confirm);
 
-        body.setText(TextUtils.expandTemplate(getText(R.string.storage_internal_format_details),
-                mDisk.getDescription()));
+        /* UNISOC:modified for Bug1143988, Settings crashed after unmount sdcard and rotate the screen {@ */
+        mVolume = storage.findVolumeById(volumeId);
+        if (mVolume == null) {
+            getActivity().finish();
+        } else {
+            mDisk = storage.findDiskById(mVolume.getDiskId());
+            body.setText(TextUtils.expandTemplate(getText(R.string.storage_internal_format_details),
+                    mDisk.getDescription()));
+        }
+        /* @} */
         confirm.setOnClickListener(mConfirmListener);
 
         return view;

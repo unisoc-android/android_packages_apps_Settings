@@ -21,7 +21,11 @@ import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.UserInfo;
+import android.content.res.Resources;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.SearchIndexableResource;
 import android.view.View;
@@ -35,6 +39,7 @@ import com.android.settings.deviceinfo.DeviceNamePreferenceController;
 import com.android.settings.deviceinfo.FccEquipmentIdPreferenceController;
 import com.android.settings.deviceinfo.FeedbackPreferenceController;
 import com.android.settings.deviceinfo.IpAddressPreferenceController;
+import com.android.settings.deviceinfo.LocalSystemUpdatePreferenceController;
 import com.android.settings.deviceinfo.ManualPreferenceController;
 import com.android.settings.deviceinfo.RegulatoryInfoPreferenceController;
 import com.android.settings.deviceinfo.SafetyInfoPreferenceController;
@@ -49,9 +54,18 @@ import com.android.settingslib.core.lifecycle.Lifecycle;
 import com.android.settingslib.search.SearchIndexable;
 import com.android.settingslib.widget.LayoutPreference;
 
+import com.sprd.settings.sprdramdisplay.SprdRamDisplayPreferenceController;
+
+import com.android.settings.deviceinfo.SoftwareRevisionPreferenceController;
+import com.android.settings.deviceinfo.HardwareRevisionPreferenceController;
+import com.android.settings.search.SearchIndexableRaw;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import android.util.Log;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 
 @SearchIndexable
 public class MyDeviceInfoFragment extends DashboardFragment
@@ -59,6 +73,8 @@ public class MyDeviceInfoFragment extends DashboardFragment
 
     private static final String LOG_TAG = "MyDeviceInfoFragment";
     private static final String KEY_MY_DEVICE_INFO_HEADER = "my_device_info_header";
+    // Add for bug1104406, Support Local system update
+    private static String KEY_RECOVERY_SYSTEM_UPDATE = "RecoverySystemUpdate";
 
     private BuildNumberPreferenceController mBuildNumberPreferenceController;
 
@@ -85,7 +101,20 @@ public class MyDeviceInfoFragment extends DashboardFragment
     public void onStart() {
         super.onStart();
         initHeader();
+        /*UNISOC: bug for 977213 @{*/
+        SubscriptionManager.from(
+                getContext()).addOnSubscriptionsChangedListener(mSubscriptionListener);
+        /*UNISOC: @}*/
     }
+
+    /*UNISOC: bug for 977213 @{*/
+    @Override
+    public void onStop() {
+        super.onStop();
+        SubscriptionManager.from(getContext()).removeOnSubscriptionsChangedListener(
+                mSubscriptionListener);
+    }
+    /*UNISOC: @}*/
 
     @Override
     protected String getLogTag() {
@@ -115,6 +144,13 @@ public class MyDeviceInfoFragment extends DashboardFragment
         controllers.add(new FeedbackPreferenceController(fragment, context));
         controllers.add(new FccEquipmentIdPreferenceController(context));
         controllers.add(new UptimePreferenceController(context, lifecycle));
+        /* Add for Phone RAM Size in deviceinfo */
+        controllers.add(new SprdRamDisplayPreferenceController(context));
+        /* Add for SoftwareRevision && HardwareRevision*/
+        controllers.add(new SoftwareRevisionPreferenceController(context));
+        controllers.add(new HardwareRevisionPreferenceController(context));
+        /* Add for bug1104406, Support Local system update */
+        controllers.add(new LocalSystemUpdatePreferenceController(context));
         return controllers;
     }
 
@@ -184,6 +220,24 @@ public class MyDeviceInfoFragment extends DashboardFragment
                     return Arrays.asList(sir);
                 }
 
+                /* Add for bug1104406, Support Local system update @{ */
+                @Override
+                public List<SearchIndexableRaw> getRawDataToIndex(Context context, boolean enabled) {
+                    final List<SearchIndexableRaw> result = new ArrayList<SearchIndexableRaw>();
+                    final Resources res = context.getResources();
+
+                    if (res.getBoolean(R.bool.config_support_otaupdate)
+                            && (UserHandle.myUserId() == UserHandle.USER_OWNER)) {
+                        SearchIndexableRaw data = new SearchIndexableRaw(context);
+                        data.key = KEY_RECOVERY_SYSTEM_UPDATE;
+                        data.title = res.getString(R.string.recovery_update_title);
+                        data.screenTitle = res.getString(R.string.about_settings);
+                        result.add(data);
+                    }
+                    return result;
+                }
+                /* @} */
+
                 @Override
                 public List<AbstractPreferenceController> createPreferenceControllers(
                         Context context) {
@@ -191,4 +245,15 @@ public class MyDeviceInfoFragment extends DashboardFragment
                             null /* lifecycle */);
                 }
             };
+
+    /*UNISOC: bug for 977213 @{*/
+    private SubscriptionManager.OnSubscriptionsChangedListener mSubscriptionListener =
+            new SubscriptionManager.OnSubscriptionsChangedListener() {
+                @Override
+                public void onSubscriptionsChanged() {
+                    Log.d(LOG_TAG, "onSubscriptionsChanged updatePreferenceStates");
+                    updatePreferenceStates();
+                }
+            };
+    /*UNISOC: @}*/
 }

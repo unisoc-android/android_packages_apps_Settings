@@ -68,9 +68,10 @@ public class TopLevelNetworkEntryPreferenceController extends BasePreferenceCont
         if (mMobileNetworkPreferenceController.isAvailable() && !TextUtils.isEmpty(mobileSummary)) {
             summaries.add(mobileSummary);
         }
-        if (!TextUtils.isEmpty(dataUsageSummary)) {
-            summaries.add(dataUsageSummary);
-        }
+        //Removed for bug1137213, No dataUsage menu on Android Q.
+        //if (!TextUtils.isEmpty(dataUsageSummary)) {
+        //    summaries.add(dataUsageSummary);
+        //}
         if (mTetherPreferenceController.isAvailable()
                 && !TextUtils.isEmpty(hotspotSummary)) {
             summaries.add(hotspotSummary);

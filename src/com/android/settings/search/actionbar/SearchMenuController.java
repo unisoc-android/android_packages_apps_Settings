@@ -25,7 +25,6 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-
 import androidx.fragment.app.Fragment;
 
 import com.android.settings.R;
@@ -73,6 +72,11 @@ public class SearchMenuController implements LifecycleObserver, OnCreateOptionsM
         if (menu == null) {
             return;
         }
+        /* bug 1104944 :on Ultra power saving mode, need to hide SearchMenu and Multiuser settings. @{*/
+        if (Utils.inUtraPowerSavingMode()) {
+            return;
+        }
+        /*@}*/
         final Bundle arguments = mHost.getArguments();
         if (arguments != null && !arguments.getBoolean(NEED_SEARCH_ICON_IN_ACTION_BAR, true)) {
             return;
@@ -94,7 +98,10 @@ public class SearchMenuController implements LifecycleObserver, OnCreateOptionsM
 
             FeatureFactory.getFactory(context).getMetricsFeatureProvider()
                     .action(context, SettingsEnums.ACTION_SEARCH_RESULTS);
-            mHost.startActivityForResult(intent, SearchFeatureProvider.REQUEST_CODE);
+            //Add for bug 1169791, avoid ActivityNotFoundException
+            if (Utils.isIntentCanBeResolved(context, intent)) {
+                mHost.startActivityForResult(intent, SearchFeatureProvider.REQUEST_CODE);
+            }
             return true;
         });
     }

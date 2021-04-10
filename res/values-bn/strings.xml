@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"আনলক প্যাটার্ন সেট করুন"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"আনলক প্যাটার্ন পরিবর্তন করুন"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"কীভাবে একটি আনলক প্যাটার্ন আঁকবেন"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"অনেকবার ভুল প্রচেষ্টা করা হয়েছে৷ <xliff:g id="NUMBER">%d</xliff:g> সেকেন্ডের মধ্যে আবার চেষ্টা করুন৷"</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">অনেকবার ভুল প্রচেষ্টা করা হয়েছে৷ <xliff:g id="NUMBER">%d</xliff:g> সেকেন্ডের মধ্যে আবার চেষ্টা করুন।</item>
+        <item quantity="other">অনেকবার ভুল প্রচেষ্টা করা হয়েছে৷ <xliff:g id="NUMBER">%d</xliff:g> সেকেন্ডের মধ্যে আবার চেষ্টা করুন।</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"আপনার ফোনে অ্যাপ্লিকেশান ইনস্টল করা নেই৷"</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"কর্মস্থলের প্রোফাইলের নিরাপত্তা"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"অফিস প্রোফাইলের স্ক্রিন লক"</string>

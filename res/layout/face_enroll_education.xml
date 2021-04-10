@@ -54,14 +54,14 @@
                 style="@style/SudContentIllustration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:sudVideo="@raw/face_education"/>
+                app:sudVideo="@raw/face_education"
+                android:visibility="gone"/>
 
             <ImageView
                 android:id="@+id/illustration_accessibility"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:visibility="invisible"
                 android:background="@drawable/face_enroll_introduction"/>
 
         </FrameLayout>
@@ -87,7 +87,8 @@
                     android:layout_gravity="center"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/security_settings_face_enroll_introduction_accessibility"/>
+                    android:text="@string/security_settings_face_enroll_introduction_accessibility"
+                    android:visibility="gone"/>
 
                 <com.android.settings.biometrics.face.FaceEnrollAccessibilityToggle
                     android:id="@+id/toggle_diversity"

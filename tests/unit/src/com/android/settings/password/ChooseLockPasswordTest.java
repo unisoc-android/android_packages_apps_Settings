@@ -32,6 +32,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 
@@ -51,51 +52,70 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class ChooseLockPasswordTest {
+    private static final String TAG = "Settings_ut";
     private Instrumentation mInstrumentation;
     private Context mContext;
+    private boolean mTestFlag;
 
     @Before
     public void setUp() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
+        Context context = mInstrumentation.getContext();
+        mTestFlag = context.getResources()
+                .getBoolean(com.android.settings.tests.unit.R.bool.config_test_lockscreen);
     }
 
     @Test
     public void clearIsNotShown_when_activityLaunchedInitially() {
-        final Activity activity =
-                mInstrumentation.startActivitySync(new Intent(mContext, ChooseLockPassword.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        final PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
-        assertThat(
-                layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
-                        .isEqualTo(View.GONE);
+        if (mTestFlag) {
+            final Activity activity =
+                    mInstrumentation.startActivitySync(new Intent(mContext, ChooseLockPassword.class)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            final PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
+            assertThat(
+                    layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
+                            .isEqualTo(View.GONE);
+        } else {
+            Log.d(TAG, "clearIsNotShown_when_activityLaunchedInitially not test");
+        }
     }
 
     @Test
     public void clearIsNotShown_when_nothingEntered() {
-        final Activity activity =
-                mInstrumentation.startActivitySync(new Intent(mContext, ChooseLockPassword.class));
-        final PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
-        onView(withId(R.id.password_entry)).perform(ViewActions.typeText("1234"))
-                .perform(pressKey(KeyEvent.KEYCODE_ENTER));
-        assertThat(
-                layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
-                        .isEqualTo(View.GONE);
+        if (mTestFlag) {
+            final Activity activity =
+                    mInstrumentation.startActivitySync(new Intent(mContext, ChooseLockPassword.class)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            final PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
+            onView(withId(R.id.password_entry)).perform(ViewActions.typeText("1234"))
+                    .perform(pressKey(KeyEvent.KEYCODE_ENTER));
+            assertThat(
+                    layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
+                            .isEqualTo(View.GONE);
+        } else {
+            Log.d(TAG, "clearIsNotShown_when_nothingEntered not test");
+        }
     }
 
     @Test
     public void clearIsShown_when_somethingEnteredToConfirm() {
-        final Activity activity =
-                mInstrumentation.startActivitySync(new Intent(mContext, ChooseLockPassword.class));
-        final PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
-        onView(withId(R.id.password_entry)).perform(ViewActions.typeText("1234"))
-                .perform(pressKey(KeyEvent.KEYCODE_ENTER))
-                .perform(ViewActions.typeText("1"));
-        // clear should be present if text field contains content
-        assertThat(layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getText())
-                .isEqualTo(mContext.getString(R.string.lockpassword_clear_label));
-        assertThat(
-                layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
-                        .isEqualTo(View.VISIBLE);
+        if (mTestFlag) {
+            final Activity activity =
+                    mInstrumentation.startActivitySync(new Intent(mContext, ChooseLockPassword.class)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            final PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
+            onView(withId(R.id.password_entry)).perform(ViewActions.typeText("1234"))
+                    .perform(pressKey(KeyEvent.KEYCODE_ENTER))
+                    .perform(ViewActions.typeText("1"));
+            // clear should be present if text field contains content
+            assertThat(layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getText())
+                    .isEqualTo(mContext.getString(R.string.lockpassword_clear_label));
+            assertThat(
+                    layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
+                            .isEqualTo(View.VISIBLE);
+        } else {
+            Log.d(TAG, "clearIsShown_when_somethingEnteredToConfirm not test");
+        }
     }
 }

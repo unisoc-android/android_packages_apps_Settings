@@ -22,6 +22,7 @@ import android.net.NetworkTemplate;
 import android.provider.Settings;
 import android.telephony.SubscriptionManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.preference.Preference;
 
@@ -33,7 +34,7 @@ import com.android.settingslib.net.DataUsageController;
  * Preference controller for "Data usage"
  */
 public class DataUsagePreferenceController extends TelephonyBasePreferenceController {
-
+    private static final String LOG_TAG = "DataUsagePreferenceController";
     private NetworkTemplate mTemplate;
     private DataUsageController.DataUsageInfo mDataUsageInfo;
     private Intent mIntent;
@@ -63,15 +64,19 @@ public class DataUsagePreferenceController extends TelephonyBasePreferenceContro
     public void updateState(Preference preference) {
         super.updateState(preference);
         if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            Log.d(LOG_TAG, "mSubId:" + mSubId + " is a invalid subId");
             preference.setEnabled(false);
             return;
         }
         long usageLevel = mDataUsageInfo.usageLevel;
+        Log.d(LOG_TAG, "usageLevel from template is " + usageLevel);
         if (usageLevel <= 0L) {
             final DataUsageController controller = new DataUsageController(mContext);
             usageLevel = controller.getHistoricalUsageLevel(mTemplate);
+            Log.d(LOG_TAG, "usageLevel from history is " + usageLevel);
         }
         final boolean enabled = usageLevel > 0L;
+        Log.d(LOG_TAG, "usageLevel > 0 is " + enabled);
         preference.setEnabled(enabled);
 
         if (enabled) {

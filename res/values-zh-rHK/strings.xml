@@ -393,7 +393,7 @@
     <string name="security_passwords_title" msgid="2881269890053568809">"私隱權"</string>
     <string name="disabled_by_administrator_summary" msgid="1601828700318996341">"已由管理員停用"</string>
     <string name="security_status_title" msgid="5848766673665944640">"安全性狀態"</string>
-    <string name="security_dashboard_summary_face" msgid="268234254306703218">"螢幕鎖定, 臉容解鎖"</string>
+    <string name="security_dashboard_summary_face" msgid="268234254306703218">"螢幕鎖定、 臉容解鎖"</string>
     <string name="security_dashboard_summary" msgid="6757421634477554939">"螢幕鎖定、指紋"</string>
     <string name="security_dashboard_summary_no_fingerprint" msgid="8129641548372335540">"螢幕鎖定"</string>
     <string name="security_settings_face_preference_summary" msgid="1290187225482642821">"已加入臉孔"</string>
@@ -509,7 +509,7 @@
     <string name="security_settings_fingerprint_enroll_disclaimer" msgid="2624905914239271751">"除了解鎖您的手機，您也可以使用您的指紋授權購買和存取應用程式。"<annotation id="url">"瞭解詳情"</annotation></string>
     <string name="security_settings_fingerprint_enroll_disclaimer_lockscreen_disabled" msgid="7846871823167357942">" 已停用螢幕鎖定選項。如需瞭解詳情，請聯絡您機構的管理員。"<annotation id="admin_details">"瞭解詳情"</annotation>\n\n"您仍可以使用指紋核准購物和應用程式存取權。"<annotation id="url">"瞭解詳情"</annotation></string>
     <string name="security_settings_fingerprint_enroll_lift_touch_again" msgid="1888772560642539718">"提起手指，然後再次輕觸感應器"</string>
-    <string name="fingerprint_add_max" msgid="1020927549936895822">"你可以加入最多 <xliff:g id="COUNT">%d</xliff:g> 個指紋"</string>
+    <string name="fingerprint_add_max" msgid="1020927549936895822">"您可以加入最多 <xliff:g id="COUNT">%d</xliff:g> 個指紋"</string>
     <string name="fingerprint_intro_error_max" msgid="6864066984678078441">"您加入指紋的數目已達上限"</string>
     <string name="fingerprint_intro_error_unknown" msgid="1905692132326523040">"無法加入更多指紋"</string>
     <string name="fingerprint_last_delete_title" msgid="6410310101247028988">"確定移除所有指紋？"</string>
@@ -1448,7 +1448,7 @@
     <string name="storage_volume_summary" msgid="7023441974367853372">"已使用 <xliff:g id="USED">%1$s</xliff:g> (共 <xliff:g id="TOTAL">%2$s</xliff:g>)"</string>
     <string name="storage_size_large" msgid="5691585991420946254">"<xliff:g id="NUMBER">^1</xliff:g>"<small><small>" <xliff:g id="UNIT">^2</xliff:g>"</small></small>""</string>
     <string name="storage_volume_used" msgid="1303803057698959872">"(共 <xliff:g id="TOTAL">%1$s</xliff:g>)"</string>
-    <string name="storage_volume_used_total" msgid="6113121714019000244">"<xliff:g id="TOTAL">%1$s</xliff:g> 總共已使用"</string>
+    <string name="storage_volume_used_total" msgid="6113121714019000244">"總共 <xliff:g id="TOTAL">%1$s</xliff:g>"</string>
     <string name="storage_mount_success" msgid="687641090137253647">"已連接 <xliff:g id="NAME">%1$s</xliff:g>"</string>
     <string name="storage_mount_failure" msgid="1042621107954547316">"無法連接 <xliff:g id="NAME">%1$s</xliff:g>"</string>
     <string name="storage_unmount_success" msgid="5737203344673441677">"已安全移除 <xliff:g id="NAME">%1$s</xliff:g>"</string>
@@ -1460,7 +1460,7 @@
     <string name="storage_dialog_unmountable" msgid="3732209361668282254">"此 <xliff:g id="NAME_0">^1</xliff:g> 已受損。\n\n如要使用此 <xliff:g id="NAME_1">^1</xliff:g>，您必須先完成設定。"</string>
     <string name="storage_dialog_unsupported" msgid="4503128224360482228">"這部裝置不支援此 <xliff:g id="NAME_0">^1</xliff:g>。 \n\n如要在這部裝置使用此 <xliff:g id="NAME_1">^1</xliff:g> ，您必須先完成設定。"</string>
     <string name="storage_internal_format_details" msgid="4018647158382548820">"格式化後，您可在其他裝置使用此<xliff:g id="NAME_0">^1</xliff:g>。\n\n<xliff:g id="NAME_1">^1</xliff:g>的所有資料將被刪除，請先備份。\n\n"<b>"備份相片和其他媒體"</b>" \n將您的媒體檔案移至這部裝罝的其他儲存空間，或使用 USB 連接線轉移至電腦。\n\n"<b>"備份應用程式"</b>" \n儲存於此<xliff:g id="NAME_6">^1</xliff:g>的所有應用程式將解除安裝，其中資料也將被刪除。如要保留這些應用程式，您可以將其移至裝置的其他儲存空間。"</string>
-    <string name="storage_internal_unmount_details" msgid="3582802571684490057"><b>"當你移除此<xliff:g id="NAME_0">^1</xliff:g>時，已儲存的應用程式將停止運作，而媒體檔案在再次插入裝置前將不能播放。"</b>" \n\n此<xliff:g id="NAME_1">^1</xliff:g>經格式化後只能用於這部裝置。其他裝置將不能存取。"</string>
+    <string name="storage_internal_unmount_details" msgid="3582802571684490057"><b>"當您移除此<xliff:g id="NAME_0">^1</xliff:g>時，已儲存的應用程式將停止運作，而媒體檔案在再次插入裝置前將不能播放。"</b>" \n\n此<xliff:g id="NAME_1">^1</xliff:g>經格式化後只能用於這部裝置。其他裝置將不能存取。"</string>
     <string name="storage_internal_forget_details" msgid="9028875424669047327">"如需使用儲存在<xliff:g id="NAME">^1</xliff:g>內的應用程式、相片或資料，請重新插入。\n\n如果無法使用裝置，可選擇忘記此儲存空間。\n\n如果您選擇忘記儲存空間，裝置上的所有資料將被永久刪除。\n\n您可以稍後重新安裝應用程式，但儲存在此裝置的相關資料將被刪除。"</string>
     <string name="storage_internal_forget_confirm_title" msgid="1370847944388479245">"要忘記 <xliff:g id="NAME">^1</xliff:g> 嗎？"</string>
     <string name="storage_internal_forget_confirm" msgid="1148446041396902905">"儲存在此 <xliff:g id="NAME">^1</xliff:g> 上的所有應用程式、相片和資料將被永久刪除。"</string>
@@ -1501,7 +1501,7 @@
     <string name="storage_wizard_ready_external_body" msgid="2879508114260597474">"您的<xliff:g id="NAME">^1</xliff:g>已準備就緒，可用於相片和其他媒體。"</string>
     <string name="storage_wizard_ready_internal_body" msgid="122532674037860197">"您的新<xliff:g id="NAME">^1</xliff:g>正在運作。\n\n如要將相片、檔案和應用程式資料移至這部裝置，請前往 [設定及儲存空間]。"</string>
     <string name="storage_wizard_move_confirm_title" msgid="292782012677890250">"移動<xliff:g id="APP">^1</xliff:g>"</string>
-    <string name="storage_wizard_move_confirm_body" msgid="5176432115206478941">"將<xliff:g id="APP">^1</xliff:g>及其資料移至<xliff:g id="NAME_0">^2</xliff:g>只需要幾分鐘。你將無法使用該應用程式，直到移動完成。\n\n過程中請勿移除<xliff:g id="NAME_1">^2</xliff:g>。"</string>
+    <string name="storage_wizard_move_confirm_body" msgid="5176432115206478941">"將<xliff:g id="APP">^1</xliff:g>及其資料移至<xliff:g id="NAME_0">^2</xliff:g>只需要幾分鐘。您將無法使用該應用程式，直到移動完成。\n\n過程中請勿移除<xliff:g id="NAME_1">^2</xliff:g>。"</string>
     <string name="storage_wizard_move_unlock" msgid="1526216561023200694">"您必須解鎖使用者「<xliff:g id="APP">^1</xliff:g>」，才能移動資料。"</string>
     <string name="storage_wizard_move_progress_title" msgid="4443920302548035674">"正在移動<xliff:g id="APP">^1</xliff:g>…"</string>
     <string name="storage_wizard_move_progress_body" msgid="7802577486578105609">"移動過程中請勿移除<xliff:g id="NAME">^1</xliff:g>。\n\n您將無法使用這部裝置上的<xliff:g id="APP">^2</xliff:g>應用程式，直到移動完成。"</string>
@@ -1537,7 +1537,7 @@
     <string name="storage_wizard_slow_v2_body" msgid="6897444467730463117">"您仍可使用此 <xliff:g id="NAME_0">^1</xliff:g>，但速度可能會很慢。\n\n此 <xliff:g id="NAME_1">^2</xliff:g>所儲存的應用程式可能無法正常運作，且轉移內容需要很長時間。\n\n請嘗試使用較快的 <xliff:g id="NAME_2">^3</xliff:g>，或改用此 <xliff:g id="NAME_3">^4</xliff:g>作為外置儲存空間。"</string>
     <string name="storage_wizard_slow_v2_start_over" msgid="4126873669723115805">"重新開始"</string>
     <string name="storage_wizard_slow_v2_continue" msgid="49399942893518218">"繼續"</string>
-    <string name="storage_wizard_ready_v2_external_body" msgid="11937346870534608">"你可以將內容移至<xliff:g id="NAME">^1</xliff:g>"</string>
+    <string name="storage_wizard_ready_v2_external_body" msgid="11937346870534608">"您可以將內容移至<xliff:g id="NAME">^1</xliff:g>"</string>
     <string name="storage_wizard_ready_v2_internal_body" msgid="4658433206901211269">"如要將內容移至<xliff:g id="NAME">^1</xliff:g>，請前往 [設定] &gt; [儲存空間]"<b></b>"。"</string>
     <string name="storage_wizard_ready_v2_internal_moved_body" msgid="6239886818487538806">"您的內容已移至<xliff:g id="NAME_0">^1</xliff:g>。\n\n如要管理此<xliff:g id="NAME_1">^2</xliff:g>，請前往 [設定] &gt; [儲存空間]"<b></b>"。"</string>
     <string name="battery_status_title" msgid="9159414319574976203">"電池狀態"</string>
@@ -1794,7 +1794,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"設定解鎖圖形"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"更改解鎖圖形"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"如何畫出解鎖圖形"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"太多錯誤嘗試。請於 <xliff:g id="NUMBER">%d</xliff:g> 秒後再試。"</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">太多錯誤嘗試。請於 <xliff:g id="NUMBER">%d</xliff:g> 秒後再試。</item>
+        <item quantity="one">太多錯誤嘗試。請於 1 秒後再試。</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"您的手機未安裝應用程式。"</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"工作設定檔安全性"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"工作設定檔螢幕鎖定"</string>
@@ -2132,8 +2135,8 @@
     <string name="accessibility_hearingaid_title" msgid="8312145423610648518">"助聽器"</string>
     <string name="accessibility_hearingaid_not_connected_summary" msgid="6240237523789614599">"冇連接任何助聽器"</string>
     <string name="accessibility_hearingaid_adding_summary" msgid="2947474468412309778">"新增助聽器"</string>
-    <string name="accessibility_hearingaid_pair_instructions_first_message" msgid="3912093691643131154">"如果要配對助聽器，請喺下一個畫面搵出你嘅裝置，然後扲一下。"</string>
-    <string name="accessibility_hearingaid_pair_instructions_second_message" msgid="5596683393607650243">"請確定你嘅助聽器已經處於配對模式。"</string>
+    <string name="accessibility_hearingaid_pair_instructions_first_message" msgid="3912093691643131154">"如果要配對助聽器，請喺下一個畫面搵出您嘅裝置，然後扲一下。"</string>
+    <string name="accessibility_hearingaid_pair_instructions_second_message" msgid="5596683393607650243">"請確定您嘅助聽器已經處於配對模式。"</string>
     <string name="accessibility_hearingaid_active_device_summary" msgid="3924362383258688984">"「<xliff:g id="DEVICE_NAME">%1$s</xliff:g>」已啟用"</string>
     <plurals name="show_number_hearingaid_count" formatted="false" msgid="3160782397139295486">
       <item quantity="other">儲存咗 <xliff:g id="NUMBER_DEVICE_COUNT_1">%1$d</xliff:g> 個助聽器</item>
@@ -2946,12 +2949,12 @@
     <string name="user_exit_guest_confirm_message" msgid="2194459201944413257">"這個工作階段中的所有應用程式和資料都會被刪除。"</string>
     <string name="user_exit_guest_dialog_remove" msgid="6351370829952745350">"移除"</string>
     <string name="user_enable_calling" msgid="5128605672081602348">"開啟通話功能"</string>
-    <string name="user_enable_calling_sms" msgid="9172507088023097063">"開啟通話和短訊功能"</string>
+    <string name="user_enable_calling_sms" msgid="9172507088023097063">"開啟通話和訊息功能"</string>
     <string name="user_remove_user" msgid="3612979309028881318">"刪除使用者"</string>
     <string name="user_enable_calling_confirm_title" msgid="4315789475268695378">"開啟通話功能？"</string>
     <string name="user_enable_calling_confirm_message" msgid="8061594235219352787">"通話記錄將與這位使用者分享。"</string>
-    <string name="user_enable_calling_and_sms_confirm_title" msgid="7243308401401932681">"開啟通話和短訊功能？"</string>
-    <string name="user_enable_calling_and_sms_confirm_message" msgid="4025082715546544967">"通話和短訊記錄都會與這位使用者分享。"</string>
+    <string name="user_enable_calling_and_sms_confirm_title" msgid="7243308401401932681">"開啟通話和訊息功能？"</string>
+    <string name="user_enable_calling_and_sms_confirm_message" msgid="4025082715546544967">"通話和訊息記錄都會與這位使用者分享。"</string>
     <string name="emergency_info_title" msgid="208607506217060337">"緊急資料"</string>
     <string name="emergency_info_summary" msgid="5062945162967838521">"<xliff:g id="USER_NAME">%1$s</xliff:g>的相關資訊和聯絡資料"</string>
     <string name="application_restrictions" msgid="8207332020898004394">"允許應用程式和內容"</string>
@@ -3628,7 +3631,7 @@
     <string name="switch_on_text" msgid="1124106706920572386">"開啟"</string>
     <string name="switch_off_text" msgid="1139356348100829659">"關閉"</string>
     <string name="screen_pinning_title" msgid="2292573232264116542">"螢幕固定"</string>
-    <string name="screen_pinning_description" msgid="1110847562111827766">"開啟此設定時，您可以使用螢幕固定功能來繼續顯示目前的畫面，直到取消固定為止。\n\n如何使用螢幕固定功能：\n\n1. 確認已開啟螢幕固定功能\n\n2. 開啟 [概覽]\n\n3. 輕按螢幕頂部的應用程式圖示，然後輕按 [固定]"</string>
+    <string name="screen_pinning_description" msgid="1110847562111827766">"開啟此設定時，您可以使用螢幕固定功能來繼續顯示目前的畫面，直到取消固定為止。\n\n如何使用螢幕固定功能：\n\n1. 確認已開啟螢幕固定功能\n\n2. 開啟「概覽」\n\n3. 輕按螢幕頂部的應用程式圖示，然後輕按「固定」"</string>
     <string name="screen_pinning_unlock_pattern" msgid="8282268570060313339">"取消固定時必須提供解鎖圖形"</string>
     <string name="screen_pinning_unlock_pin" msgid="8757588350454795286">"取消固定時必須輸入 PIN"</string>
     <string name="screen_pinning_unlock_password" msgid="2514079566873826434">"取消固定時必須輸入密碼"</string>
@@ -4422,6 +4425,27 @@
     <string name="pref_title_network_details" msgid="7186418845727358964">"網絡詳細資料"</string>
     <string name="about_phone_device_name_warning" msgid="8885670415541365348">"您的裝置名稱會在手機的應用程式上顯示。當您連接藍牙裝置或設定 Wi-Fi 熱點時，其他人亦可能會看到您的裝置名稱。"</string>
     <string name="devices_title" msgid="7701726109334110391">"裝置"</string>
+    <!--SPRD:Add for bug708221 Translation mistake @{ -->
+    <string name="usb_charge_only">僅充電</string>
+    <string name="usb_charge_only_summary">當USB連接時，僅使用充電功能</string>
+    <string name="usb_virtual_drive">"USB 虛擬光驅"</string>
+    <string name="usb_virtual_drive_summary">"啟用USB虛擬光驅"</string>
+    <string name="usb_storage">USB 儲存 </string>
+    <string name="usb_storage_summary">啟用USB大容量儲存 </string>
+
+    <string name="usb_pc_internet_share">USB—網際網路PC</string>
+    <string name="usb_pc_internet_share_available_subtext">USB 已連接，選中以啟用USB—網際網路PC</string>
+    <string name="usb_pc_internet_share_active_subtext">"USB訪問PC網際網路功能已開啟"</string>
+    <string name="usb_pc_internet_share_errored_subtext">"USB-PC 共享網路出錯"</string>
+    <string name="usb_pc_internet_share_storage_active_subtext">使用 USB 存儲裝置時無法共享網路</string>
+    <string name="usb_pc_choose_os">選擇電腦系統版本</string>
+    <string name="usb_pc_cancel">取消</string>
+    <string name="usb_pc_ok">完成</string>
+    <string name="usb_pc_next">下一步</string>
+    <string name="usb_pc_back">上一步</string>
+    <string name="usb_pc_guide">1.打開 Windows PC 網路.\n\n2.在想要分享的網路上點擊右鍵，選擇屬性.\n\n3.點擊進階選項,選擇\'允許其他網路用戶共享此計算機的Internet 來連接\'(如果出現家庭網路選項,請選擇新增的USB網路連接).</string>
+    <string name="os_string_array_value_none">(未指定)</string>
+    <!-- Bug708221 end@} -->
     <string name="homepage_all_settings" msgid="1245540304900512919">"所有設定"</string>
     <string name="homepage_personal_settings" msgid="1570415428680432319">"建議"</string>
     <string name="choose_network_title" msgid="5702586742615861037">"選擇網絡"</string>
@@ -4617,6 +4641,8 @@
     <string name="enable_sending_mms_notification_title" msgid="3852773093703966351">"無法傳送 MMS 訊息"</string>
     <string name="enable_mms_notification_summary" msgid="7643379825980866408">"輕按即可在流動數據關閉的情況下透過<xliff:g id="OPERATOR_NAME">%1$s</xliff:g>傳送 MMS 訊息"</string>
     <string name="enable_mms_notification_channel_title" msgid="4402474709766126987">"MMS 訊息"</string>
+    <!-- UNISOC: Limited ownerinfo length -->
+    <string name="name_too_long">"輸入內容過長，最大輸入字符為50。"</string>
     <string name="sim_combination_warning_notification_title" msgid="3717178238465948430">"SIM 卡組合問題"</string>
     <string name="dual_cdma_sim_warning_notification_summary" msgid="2602011424635850202">"使用<xliff:g id="OPERATOR_NAMES">%1$s</xliff:g>可能會使部分功能受到限制。輕按即可瞭解詳情。"</string>
     <string name="dual_cdma_sim_warning_notification_channel_title" msgid="4144088600737896010">"SIM 卡組合"</string>

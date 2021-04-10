@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -50,6 +51,8 @@ public final class BluetoothPairingService extends Service {
     private static final String TAG = "BluetoothPairingService";
 
     private BluetoothDevice mDevice;
+    private PowerManager.WakeLock mWakeLock = null;
+    private PowerManager mPm = null;
 
     public static Intent getPairingDialogIntent(Context context, Intent intent) {
         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
@@ -106,6 +109,7 @@ public final class BluetoothPairingService extends Service {
          this.getString(R.string.bluetooth),
          NotificationManager.IMPORTANCE_HIGH);
       mgr.createNotificationChannel(notificationChannel);
+      mPm = (PowerManager) getSystemService(Context.POWER_SERVICE);
     }
 
     @Override
@@ -166,12 +170,23 @@ public final class BluetoothPairingService extends Service {
         registerReceiver(mCancelReceiver, filter);
         mRegistered = true;
 
+        /* SPRD bug#749048: add for that make sure that screen on when a pairing request come in  @{ */
+        if (!mPm.isInteractive()) {
+            mWakeLock = mPm.newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP|PowerManager.ON_AFTER_RELEASE, TAG);
+            mWakeLock.acquire(15000);
+        }
+        /* @} */
         startForeground(NOTIFICATION_ID, builder.getNotification());
         return START_REDELIVER_INTENT;
     }
 
     @Override
     public void onDestroy() {
+        /* SPRD bug#749048: add for release the wakelock @{ */
+        if (mWakeLock != null && mWakeLock.isHeld()) {
+            mWakeLock.release();
+        }
+        /* @} */
         if (mRegistered) {
             unregisterReceiver(mCancelReceiver);
             mRegistered = false;

@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"កំណត់​លំនាំ​ចាក់សោ"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"ប្ដូរ​លំនាំ​ដោះ​សោ"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"វិធី​គូរ​លំនាំ​ដោះ​សោ"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"ការព្យាយាមចូលខុសច្រើនពេក។ សូមព្យាយាមម្តងទៀតក្នុងពេល <xliff:g id="NUMBER">%d</xliff:g> វិនាទី។"</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">ការព្យាយាមចូលខុសច្រើនពេក។ ព្យាយាមម្តងទៀតក្នុងរយៈពេល <xliff:g id="NUMBER">%d</xliff:g> វិនាទី។</item>
+        <item quantity="one">ការព្យាយាមចូលខុសច្រើនពេក។ ព្យាយាមម្តងទៀតក្នុងរយៈពេល 1 វិនាទី។</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"មិន​បាន​ដំឡើង​កម្មវិធី​ក្នុង​ទូរស័ព្ទ​របស់​អ្នក​ទេ"</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"សុវត្ថិភាពប្រវត្តិរូបការងារ"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"ការចាក់សោអេក្រង់របស់ប្រវត្តិរូបការងារ"</string>

@@ -27,6 +27,7 @@ import android.graphics.drawable.Drawable;
 import android.os.UserManager;
 import android.text.Html;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.View;
@@ -147,6 +148,9 @@ public final class BluetoothDevicePreference extends GearPreference implements
         // Device is only visible in the UI if it has a valid name besides MAC address or when user
         // allows showing devices without user-friendly name in developer settings
         setVisible(mShowDevicesWithoutNames || mCachedDevice.hasHumanReadableName());
+        if (mShowDevicesWithoutNames && !mCachedDevice.hasHumanReadableName()) {
+            Log.w(TAG, "There is not human readable name!");
+        }
 
         // This could affect ordering, so notify that
         if (mNeedNotifyHierarchyChanged) {

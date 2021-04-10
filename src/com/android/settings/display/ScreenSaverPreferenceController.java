@@ -14,7 +14,7 @@
 package com.android.settings.display;
 
 import android.content.Context;
-
+import android.content.Intent;
 import androidx.preference.Preference;
 
 import com.android.settings.core.PreferenceControllerMixin;
@@ -44,5 +44,13 @@ public class ScreenSaverPreferenceController extends AbstractPreferenceControlle
     @Override
     public void updateState(Preference preference) {
         preference.setSummary(DreamSettings.getSummaryTextWithDreamName(mContext));
+        /* UNISOC:1195884 change the way to open DreamSettings @{ */
+        preference.setOnPreferenceClickListener(target -> {
+            final Context context = target.getContext();
+            Intent intent = new Intent("android.settings.DREAM_SETTINGS");
+            context.startActivity(intent);
+            return true;
+        });
+        /* @} */
     }
 }

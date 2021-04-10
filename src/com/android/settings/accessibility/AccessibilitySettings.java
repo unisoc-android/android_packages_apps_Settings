@@ -23,9 +23,12 @@ import static com.android.settingslib.TwoTargetPreference.ICON_SIZE_MEDIUM;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.admin.DevicePolicyManager;
 import android.app.settings.SettingsEnums;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
@@ -34,8 +37,14 @@ import android.hardware.display.ColorDisplayManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.os.UserHandle;
 import android.os.Vibrator;
+import android.os.SystemProperties;
+import android.os.sprdpower.PowerManagerEx;
+import android.os.sprdpower.IPowerManagerEx;
+import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.provider.DeviceConfig;
 import android.provider.SearchIndexableResource;
 import android.provider.Settings;
@@ -68,8 +77,8 @@ import com.android.settingslib.RestrictedLockUtilsInternal;
 import com.android.settingslib.RestrictedPreference;
 import com.android.settingslib.accessibility.AccessibilityUtils;
 import com.android.settingslib.search.SearchIndexable;
-
 import com.google.common.primitives.Ints;
+import com.sprd.settings.accessibility.AssistantSecure;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,6 +96,8 @@ public class AccessibilitySettings extends SettingsPreferenceFragment implements
 
     // Index of the first preference in a preference category.
     private static final int FIRST_PREFERENCE_IN_CATEGORY_INDEX = -1;
+
+    private static final boolean SUPPORT_SUPER_POWER_SAVE = (1 == SystemProperties.getInt("ro.sys.pwctl.ultrasaving",0));
 
     // Preference categories
     private static final String CATEGORY_SCREEN_READER = "screen_reader_category";
@@ -140,6 +151,10 @@ public class AccessibilitySettings extends SettingsPreferenceFragment implements
     private static final String LIVE_CAPTION_PREFERENCE_KEY =
             "live_caption";
 
+    /*UNISOC: bug 1072213 Assistant touch @{*/
+    private static final String ASSISTANT_PREFERENCE_SCREEN = "assistant_preference_screen";
+    private Preference mAssistantPreferenceScreen;
+    /*@}*/
 
     // Extras passed to sub-fragments.
     static final String EXTRA_PREFERENCE_KEY = "preference_key";
@@ -253,6 +268,8 @@ public class AccessibilitySettings extends SettingsPreferenceFragment implements
 
     private DevicePolicyManager mDpm;
 
+    private Context mContext;
+
     /**
      * Check if the color transforms are color accelerated. Some transforms are experimental only
      * on non-accelerated platforms due to the performance implications.
@@ -294,9 +311,24 @@ public class AccessibilitySettings extends SettingsPreferenceFragment implements
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         addPreferencesFromResource(R.xml.accessibility_settings);
+        mContext = getActivity();
         initializeAllPreferences();
         mDpm = (DevicePolicyManager) (getActivity()
                 .getSystemService(Context.DEVICE_POLICY_SERVICE));
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED);
+        mContext.registerReceiver(mIntentReceiver,filter);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mContext.unregisterReceiver(mIntentReceiver);
     }
 
     @Override
@@ -343,6 +375,15 @@ public class AccessibilitySettings extends SettingsPreferenceFragment implements
         }
         return false;
     }
+
+    private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)) {
+                mDarkUIPreferenceController.updateState(mDarkUIModePreference);
+            }
+        }
+    };
 
     private void handleLongPressTimeoutPreferenceChange(String stringValue) {
         Settings.Secure.putInt(getContentResolver(),
@@ -530,6 +571,9 @@ public class AccessibilitySettings extends SettingsPreferenceFragment implements
         // Vibrations.
         mVibrationPreferenceScreen = findPreference(VIBRATION_PREFERENCE_SCREEN);
 
+        /*UNISOC: bug 1072213 Assistant touch @{*/
+        mAssistantPreferenceScreen = findPreference(ASSISTANT_PREFERENCE_SCREEN);
+        /*@}*/
         // Dark Mode.
         mDarkUIModePreference = findPreference(DARK_UI_MODE_PREFERENCE);
         mDarkUIPreferenceController = new DarkUIPreferenceController(getContext(),
@@ -804,7 +848,63 @@ public class AccessibilitySettings extends SettingsPreferenceFragment implements
 
         updateAccessibilityTimeoutSummary(getContentResolver(),
                 findPreference(ACCESSIBILITY_CONTROL_TIMEOUT_PREFERENCE));
+
+        /*UNISOC: bug 1072213 Assistant touch @{*/
+        if (SystemProperties.getBoolean("ro.product.assistanttouch",true) && UserHandle.myUserId() == UserHandle.USER_OWNER) {
+            boolean assistantEnabled = new AssistantSecure(this.getActivity()).getAssistantStatus() != 0;
+            if (assistantEnabled) {
+                if (SUPPORT_SUPER_POWER_SAVE && getPowerSaveMode() == PowerManagerEx.MODE_ULTRASAVING) {
+                    if(mAssistantPreferenceScreen != null){
+                        mAssistantPreferenceScreen.setSummary(R.string.accessibility_feature_state_off);
+                    }
+                } else {
+                    if (mAssistantPreferenceScreen != null) {
+                        mAssistantPreferenceScreen.setSummary(R.string.accessibility_feature_state_on);
+                    }
+                }
+            } else {
+                if(mAssistantPreferenceScreen != null){
+                    mAssistantPreferenceScreen.setSummary(R.string.accessibility_feature_state_off);
+                }
+            }
+        }
+        /*@}*/
+        /* SPRD: Bug 598664  display only for owner @{ */
+        if (!SystemProperties.getBoolean("ro.product.assistanttouch",true) || UserHandle.myUserId() != UserHandle.USER_OWNER
+                // SPRD: modify for Bug 616372 remove assistant with gms version.
+                /*|| !SystemProperties.get("ro.com.google.gmsversion").isEmpty()*/) {
+            if(mCategoryToPrefCategoryMap != null && mAssistantPreferenceScreen != null){
+                mCategoryToPrefCategoryMap.get(CATEGORY_INTERACTION_CONTROL).removePreference(mAssistantPreferenceScreen);
+            }
+        }
+        /* @} */
+        /*UNISOC: Modify for bug 967319@{*/
+        if (SUPPORT_SUPER_POWER_SAVE && getPowerSaveMode() == PowerManagerEx.MODE_ULTRASAVING) {
+            if (mAssistantPreferenceScreen != null) {
+                mAssistantPreferenceScreen.setEnabled(false);
+            }
+        } else if (mAssistantPreferenceScreen != null) {
+            mAssistantPreferenceScreen.setEnabled(true);
+        }
+        /* @} */
     }
+
+    /*UNISOC: Modify for bug 967319@{*/
+    private IPowerManagerEx mPowerManagerEx;
+    private int getPowerSaveMode(){
+        mPowerManagerEx = IPowerManagerEx.Stub.asInterface(ServiceManager.getService("power_ex"));
+        try {
+            int mode = mPowerManagerEx.getPowerSaveMode();
+            return mode;
+        } catch (RemoteException e) {
+            // TODO: handle exception
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    /* @} */
 
     void updateAccessibilityTimeoutSummary(ContentResolver resolver, Preference pref) {
         String[] timeoutSummarys = getResources().getStringArray(
@@ -1011,5 +1111,18 @@ public class AccessibilitySettings extends SettingsPreferenceFragment implements
                     indexables.add(indexable);
                     return indexables;
                 }
+
+                /*UNISOC: add for bug 1112394 @{*/
+                @Override
+                public List<String> getNonIndexableKeys(Context context) {
+                    List<String> nonIndexableKeys = new ArrayList<>();
+                    nonIndexableKeys.addAll(super.getNonIndexableKeys(context));
+                    if ((!SystemProperties.getBoolean("ro.product.assistanttouch",true))
+                        || UserHandle.myUserId() != UserHandle.USER_OWNER){
+                        nonIndexableKeys.add(ASSISTANT_PREFERENCE_SCREEN);
+                    }
+                    return nonIndexableKeys;
+                }
+                /*}@*/
             };
 }

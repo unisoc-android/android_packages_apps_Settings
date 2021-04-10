@@ -17,6 +17,7 @@
 package com.android.settings.fuelgauge.batterytip;
 
 import android.content.Context;
+import android.os.SystemProperties;
 
 import androidx.annotation.VisibleForTesting;
 
@@ -47,6 +48,8 @@ public class BatteryTipLoader extends AsyncLoaderCompat<List<BatteryTip>> {
     private static final String TAG = "BatteryTipLoader";
 
     private static final boolean USE_FAKE_DATA = false;
+    //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp batteryTip of lowBattery tip and earlyWaring tip
+    private final boolean isSupportSprdPowerManager = (1 == SystemProperties.getInt("persist.sys.pwctl.enable", 1));
 
     private BatteryStatsHelper mBatteryStatsHelper;
     @VisibleForTesting
@@ -68,11 +71,15 @@ public class BatteryTipLoader extends AsyncLoaderCompat<List<BatteryTip>> {
         final BatteryInfo batteryInfo = mBatteryUtils.getBatteryInfo(mBatteryStatsHelper, TAG);
         final Context context = getContext();
 
-        tips.add(new LowBatteryDetector(context, policy, batteryInfo).detect());
+        //UNISOC: 1073195 modifed for Power saving management, if support sprd power manager, hide aosp batteryTip of lowBattery tip and earlyWaring tip
+        if (!isSupportSprdPowerManager) {
+            tips.add(new LowBatteryDetector(context, policy, batteryInfo).detect());
+            tips.add(new EarlyWarningDetector(policy, context).detect());
+        }
+
         tips.add(new HighUsageDetector(context, policy, mBatteryStatsHelper,
                 batteryInfo.discharging).detect());
         tips.add(new SmartBatteryDetector(policy, context.getContentResolver()).detect());
-        tips.add(new EarlyWarningDetector(policy, context).detect());
         tips.add(new SummaryDetector(policy, batteryInfo.averageTimeToDischarge).detect());
         tips.add(new RestrictAppDetector(context, policy).detect());
 

@@ -40,7 +40,7 @@ public class ZenModeSettingsIntegrationTest {
         onView(withText("Calls")).check(matches(isDisplayed()));
         onView(withText("SMS, MMS, and messaging apps")).check(matches(isDisplayed()));
         onView(withText("Restrict notifications")).check(matches(isDisplayed()));
-        onView(withText("Duration")).check(matches(isDisplayed()));
+        onView(withText("Default duration")).check(matches(isDisplayed()));
         onView(withText("Schedules")).check(matches(isDisplayed()));
     }
 
@@ -50,7 +50,7 @@ public class ZenModeSettingsIntegrationTest {
         onView(withText("Calls")).check(matches(isDisplayed()));
         onView(withText("SMS, MMS, and messaging apps")).check(matches(isDisplayed()));
         onView(withText("Restrict notifications")).check(matches(isDisplayed()));
-        onView(withText("Duration")).check(matches(isDisplayed()));
+        onView(withText("Default duration")).check(matches(isDisplayed()));
         onView(withText("Schedules")).check(matches(isDisplayed()));
     }
 

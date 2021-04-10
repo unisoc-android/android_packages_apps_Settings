@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Velja opnunarmynstur"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Breyta opnunarmynstri"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Hvernig opnunarmynstur er teiknað"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Of margar misheppnaðar tilraunir. Reyndu aftur eftir <xliff:g id="NUMBER">%d</xliff:g> sekúndur."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">Of margar misheppnaðar tilraunir. Reyndu aftur eftir <xliff:g id="NUMBER">%d</xliff:g> sekúndu.</item>
+        <item quantity="other">Of margar misheppnaðar tilraunir. Reyndu aftur eftir <xliff:g id="NUMBER">%d</xliff:g> sekúndur.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Forritið er ekki uppsett í símanum."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Öryggi vinnusniðs"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Skjálás fyrir vinnusnið"</string>

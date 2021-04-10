@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
@@ -27,6 +28,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 
 import com.android.settings.R;
+import com.android.settings.Utils;
 import com.android.settings.search.BaseSearchIndexProvider;
 import com.android.settings.search.Indexable;
 import com.android.settings.search.SearchIndexableRaw;
@@ -77,7 +79,10 @@ public class UserBackupSettingsActivity extends FragmentActivity implements Inde
             }
 
             // use startActivityForResult to let the activity check the caller signature
-            startActivityForResult(intent, 1);
+            //Add for bug 1170391, avoid ActivityNotFoundException
+            if (Utils.isIntentCanBeResolved(this, intent)) {
+                startActivityForResult(intent, 1);
+            }
             finish();
         } else {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -123,7 +128,9 @@ public class UserBackupSettingsActivity extends FragmentActivity implements Inde
                 @Override
                 public List<String> getNonIndexableKeys(Context context) {
                     final List<String> keys = super.getNonIndexableKeys(context);
-                    if (!new BackupSettingsHelper(context).isBackupServiceActive()) {
+                    //Bug1146987:Hide the backup menu on non-gms versions, disable backup search
+                    if (!new BackupSettingsHelper(context).isBackupServiceActive()
+                            || SystemProperties.get("ro.com.google.gmsversion").isEmpty()) {
                         keys.add(BACKUP_SEARCH_INDEX_KEY);
                     }
                     return keys;

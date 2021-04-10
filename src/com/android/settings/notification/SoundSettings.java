@@ -24,8 +24,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.UserHandle;
+import android.os.SystemProperties;
+import android.media.RingtoneManager;
 import android.preference.SeekBarVolumizer;
 import android.provider.SearchIndexableResource;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
 import androidx.annotation.VisibleForTesting;
@@ -48,6 +51,8 @@ import com.android.settingslib.search.SearchIndexable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import android.util.Log;
 
 @SearchIndexable
 public class SoundSettings extends DashboardFragment implements OnActivityResultListener {
@@ -147,8 +152,21 @@ public class SoundSettings extends DashboardFragment implements OnActivityResult
 
     @Override
     protected int getPreferenceScreenResId() {
-        return R.xml.sound_settings;
+        // Bug 1073319,  Feature List in Settings-Sound:dual slot sim ringtone config in android Q
+        return isGoogleSound(getActivity()) ? R.xml.sound_settings : R.xml.sound_settings_ex;
     }
+
+    /* Bug 1073319,  Feature List in Settings-Sound:dual slot sim ringtone config in android Q @{ */
+    private static boolean isGoogleSound(Context context) {
+        boolean isSupportDualSIMRingtone = context.getResources().getBoolean(R.bool.config_support_dual_SIM_card_ringtone);
+        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        int phoneCount = telephonyManager.getPhoneCount();
+        if (isSupportDualSIMRingtone && phoneCount >= 2) {
+            return false;
+        }
+        return true;
+    }
+    /* Bug 1073319 }@ */
 
     @Override
     protected List<AbstractPreferenceController> createPreferenceControllers(Context context) {
@@ -239,6 +257,9 @@ public class SoundSettings extends DashboardFragment implements OnActivityResult
         // === Work Sound Settings ===
         controllers.add(new WorkSoundPreferenceController(context, fragment, lifecycle));
 
+        // Bug 1073319,  Feature List in Settings-Sound:dual slot sim ringtone config in android Q
+        controllers.add(new PhoneRingtone1PreferenceController(context));
+
         // === Other Sound Settings ===
         final DialPadTonePreferenceController dialPadTonePreferenceController =
                 new DialPadTonePreferenceController(context, fragment, lifecycle);
@@ -291,7 +312,8 @@ public class SoundSettings extends DashboardFragment implements OnActivityResult
                 public List<SearchIndexableResource> getXmlResourcesToIndex(
                         Context context, boolean enabled) {
                     final SearchIndexableResource sir = new SearchIndexableResource(context);
-                    sir.xmlResId = R.xml.sound_settings;
+                    // Bug 1073319,  Feature List in Settings-Sound:dual slot sim ringtone config in android Q
+                    sir.xmlResId = isGoogleSound(context) ? R.xml.sound_settings : R.xml.sound_settings_ex;
                     return Arrays.asList(sir);
                 }
 

@@ -42,6 +42,7 @@ import com.android.settings.R;
 import com.android.settings.Utils;
 import com.android.settings.overlay.FeatureFactory;
 import com.android.settingslib.CustomDialogPreferenceCompat;
+import com.android.settingslib.WirelessUtils;
 
 import java.util.List;
 
@@ -55,6 +56,8 @@ public class CellDataPreference extends CustomDialogPreferenceCompat implements 
     private TelephonyManager mTelephonyManager;
     @VisibleForTesting
     SubscriptionManager mSubscriptionManager;
+    // UNISOC: bug 1140502: when airplane mode on, disable the mobile data option in data usage
+    private boolean mIsAirplaneModeOn = false;
 
     public CellDataPreference(Context context, AttributeSet attrs) {
         super(context, attrs, TypedArrayUtils.getAttr(context,
@@ -113,6 +116,8 @@ public class CellDataPreference extends CustomDialogPreferenceCompat implements 
         mTelephonyManager = TelephonyManager.from(getContext());
 
         mSubscriptionManager.addOnSubscriptionsChangedListener(mOnSubscriptionsChangeListener);
+        // UNISOC: bug 1140502:when airplane mode on, disable the mobile data option in data usage
+        mIsAirplaneModeOn = WirelessUtils.isAirplaneModeOn(getContext());
 
         if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
             mSubId = subId;
@@ -129,8 +134,17 @@ public class CellDataPreference extends CustomDialogPreferenceCompat implements 
     private void updateEnabled() {
         // If this subscription is not active, for example, SIM card is taken out, we disable
         // the button.
-        setEnabled(mSubscriptionManager.getActiveSubscriptionInfo(mSubId) != null);
+        /* UNISOC: bug 1140502:when airplane mode on, disable the mobile data option in data usage @{ */
+        Log.d(TAG, "updateEnabled() mIsAirplaneModeOn = " + mIsAirplaneModeOn);
+        setEnabled(mSubscriptionManager.getActiveSubscriptionInfo(mSubId) != null && !mIsAirplaneModeOn);
     }
+
+    public void updateAirplaneMode(boolean airplaneModeOn) {
+        Log.d(TAG, "updateAirPlanMode() airPlaneModeOn = " + airplaneModeOn);
+        mIsAirplaneModeOn = airplaneModeOn;
+        updateEnabled();
+    }
+    /* @} */
 
     @Override
     protected void performClick(View view) {

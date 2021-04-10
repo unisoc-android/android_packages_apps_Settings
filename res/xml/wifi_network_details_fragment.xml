@@ -36,6 +36,11 @@
         android:key="buttons"
         android:selectable="false" />
 
+    <!-- Buttons -->
+    <com.android.settingslib.widget.ActionButtonsPreference
+        android:key="disconnect_buttons"
+        android:selectable="false" />
+
     <!-- General Details Preferences -->
     <Preference
         android:key="signal_strength"

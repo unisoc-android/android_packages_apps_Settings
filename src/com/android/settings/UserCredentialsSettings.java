@@ -65,6 +65,7 @@ import java.util.TreeMap;
 public class UserCredentialsSettings extends SettingsPreferenceFragment
         implements View.OnClickListener {
     private static final String TAG = "UserCredentialsSettings";
+    private static CredentialDialogFragment.RemoveCredentialsTask removeTask;
 
     @Override
     public int getMetricsCategory() {
@@ -102,6 +103,17 @@ public class UserCredentialsSettings extends SettingsPreferenceFragment
         if (isAdded()) {
             new AliasLoader().execute();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        if(removeTask != null) {
+            removeTask.cancel(true);
+            if(removeTask.conn != null && !removeTask.isClose) {
+                removeTask.conn.close();
+            }
+        }
+        super.onDestroy();
     }
 
     public static class CredentialDialogFragment extends InstrumentedDialogFragment {
@@ -142,14 +154,14 @@ public class UserCredentialsSettings extends SettingsPreferenceFragment
                     myUserId)) {
                 DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int id) {
-                        final EnforcedAdmin admin = RestrictedLockUtilsInternal
-                                .checkIfRestrictionEnforced(getContext(), restriction, myUserId);
-                        if (admin != null) {
-                            RestrictedLockUtils.sendShowAdminSupportDetailsIntent(getContext(),
-                                    admin);
-                        } else {
-                            new RemoveCredentialsTask(getContext(), getTargetFragment())
-                                    .execute(item);
+                        if(getContext() != null) {
+                            final EnforcedAdmin admin = RestrictedLockUtilsInternal.checkIfRestrictionEnforced(getContext(), restriction, myUserId);
+                            if (admin != null) {
+                                RestrictedLockUtils.sendShowAdminSupportDetailsIntent(getContext(), admin);
+                            } else {
+                                removeTask = new RemoveCredentialsTask(getContext(), getTargetFragment());
+                                removeTask.execute(item);
+                            }
                         }
                         dialog.dismiss();
                     }
@@ -182,6 +194,8 @@ public class UserCredentialsSettings extends SettingsPreferenceFragment
         private class RemoveCredentialsTask extends AsyncTask<Credential, Void, Credential[]> {
             private Context context;
             private Fragment targetFragment;
+            private KeyChainConnection conn;
+            private boolean isClose = false;
 
             public RemoveCredentialsTask(Context context, Fragment targetFragment) {
                 this.context = context;
@@ -220,8 +234,8 @@ public class UserCredentialsSettings extends SettingsPreferenceFragment
             }
 
             private void removeGrantsAndDelete(final Credential credential) {
-                final KeyChainConnection conn;
                 try {
+                    if(getContext() == null) return;
                     conn = KeyChain.bind(getContext());
                 } catch (InterruptedException e) {
                     Log.w(TAG, "Connecting to KeyChain", e);
@@ -234,7 +248,11 @@ public class UserCredentialsSettings extends SettingsPreferenceFragment
                 } catch (RemoteException e) {
                     Log.w(TAG, "Removing credentials", e);
                 } finally {
-                    conn.close();
+                    if(!isCancelled()) {
+                        isClose = true;
+                        conn.close();
+                        conn = null;
+                    }
                 }
             }
 
@@ -247,6 +265,7 @@ public class UserCredentialsSettings extends SettingsPreferenceFragment
                     }
                     target.refreshItems();
                 }
+                removeTask = null;
             }
         }
     }

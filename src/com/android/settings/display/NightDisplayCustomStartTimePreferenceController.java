@@ -20,6 +20,7 @@ import android.content.Context;
 import android.hardware.display.ColorDisplayManager;
 import androidx.preference.Preference;
 import com.android.settings.core.BasePreferenceController;
+import androidx.preference.PreferenceScreen;
 
 public class NightDisplayCustomStartTimePreferenceController extends BasePreferenceController {
 
@@ -37,6 +38,15 @@ public class NightDisplayCustomStartTimePreferenceController extends BasePrefere
     public int getAvailabilityStatus() {
         return ColorDisplayManager.isNightDisplayAvailable(mContext) ? AVAILABLE
                 : UNSUPPORTED_ON_DEVICE;
+    }
+
+    @Override
+    public void displayPreference(PreferenceScreen screen) {
+        super.displayPreference(screen);
+        final Preference preference = screen.findPreference(getPreferenceKey());
+        if (preference != null) {
+            updateState(preference);
+        }
     }
 
     @Override

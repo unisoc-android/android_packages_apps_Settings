@@ -36,13 +36,11 @@ import com.android.settingslib.Utils;
 import com.android.settingslib.core.AbstractPreferenceController;
 
 import java.util.List;
-
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
-
 public class MobileNetworkSummaryController extends AbstractPreferenceController implements
         SubscriptionsChangeListener.SubscriptionsChangeListenerClient, LifecycleObserver,
         PreferenceControllerMixin {
@@ -106,7 +104,7 @@ public class MobileNetworkSummaryController extends AbstractPreferenceController
                 return mContext.getResources().getString(
                         R.string.mobile_network_summary_add_a_network);
             }
-            return null;
+            return "";
         } else if (subs.size() == 1) {
             final SubscriptionInfo info = subs.get(0);
             final int subId = info.getSubscriptionId();

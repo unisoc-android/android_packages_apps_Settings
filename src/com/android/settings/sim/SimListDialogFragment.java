@@ -92,6 +92,7 @@ public class SimListDialogFragment extends SimDialogFragment implements
     }
 
     protected List<SubscriptionInfo> getCurrentSubscriptions() {
+        if (getContext() == null) return null;
         final SubscriptionManager manager = getContext().getSystemService(
                 SubscriptionManager.class);
         return manager.getActiveSubscriptionInfoList(true);
@@ -100,9 +101,15 @@ public class SimListDialogFragment extends SimDialogFragment implements
     @Override
     public void updateDialog() {
         List<SubscriptionInfo> currentSubscriptions = getCurrentSubscriptions();
-        if (currentSubscriptions == null) {
-            dismiss();
-            return;
+        /* UNISOC: Bug 1114633: only one sim card, no need to display pop when hout plug @{ */
+        if (currentSubscriptions == null || currentSubscriptions.size() <= 1) {
+        /* UNISOC: Bug 1114633 @} */
+            if(getContext() == null) {
+                return;
+            } else {
+                dismiss();
+                return;
+            }
         }
         if (getArguments().getBoolean(KEY_INCLUDE_ASK_EVERY_TIME)) {
             final List<SubscriptionInfo> tmp = new ArrayList<>(currentSubscriptions.size() + 1);

@@ -24,11 +24,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.SystemProperties;
 
 import com.android.settings.R;
 import com.android.settings.core.BasePreferenceController;
 
 import java.util.ArrayList;
+
+import com.sprd.settings.navigation.NavigationBarSettings;
 
 public class SystemNavigationPreferenceController extends BasePreferenceController {
 
@@ -57,11 +60,12 @@ public class SystemNavigationPreferenceController extends BasePreferenceControll
 
     static boolean isGestureAvailable(Context context) {
         // Skip if the swipe up settings are not available
-        if (!context.getResources().getBoolean(
+        /* UNISOC: Modify for bug 1111853 @{ */
+        if (!NavigationBarSettings.hasNavigationBar(context) || !context.getResources().getBoolean(
                 com.android.internal.R.bool.config_swipe_up_gesture_setting_available)) {
             return false;
         }
-
+        /* }@ */
         // Skip if the recents component is not defined
         final ComponentName recentsComponentName = ComponentName.unflattenFromString(
                 context.getString(com.android.internal.R.string.config_recentsComponentName));
@@ -90,15 +94,18 @@ public class SystemNavigationPreferenceController extends BasePreferenceControll
     }
 
     static boolean isSwipeUpEnabled(Context context) {
-        if (isEdgeToEdgeEnabled(context)) {
+        /*UNISOC: Modify for bug 1111853 @{*/
+        if (!NavigationBarSettings.hasNavigationBar(context) || isEdgeToEdgeEnabled(context)) {
             return false;
         }
+        /*}@*/
         return NAV_BAR_MODE_2BUTTON == context.getResources().getInteger(
                 com.android.internal.R.integer.config_navBarInteractionMode);
     }
 
     static boolean isEdgeToEdgeEnabled(Context context) {
-        return NAV_BAR_MODE_GESTURAL == context.getResources().getInteger(
+        /*UNISOC: Modify for bug 1111853*/
+        return  NavigationBarSettings.hasNavigationBar(context) && NAV_BAR_MODE_GESTURAL == context.getResources().getInteger(
                 com.android.internal.R.integer.config_navBarInteractionMode);
     }
 

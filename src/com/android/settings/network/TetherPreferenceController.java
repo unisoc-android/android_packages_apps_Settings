@@ -182,6 +182,9 @@ public class TetherPreferenceController extends AbstractPreferenceController imp
         String[] allTethered = mConnectivityManager.getTetheredIfaces();
         String[] wifiTetherRegex = mConnectivityManager.getTetherableWifiRegexs();
         String[] bluetoothRegex = mConnectivityManager.getTetherableBluetoothRegexs();
+        //SPRD: add for bug1144951 pc net tether @}
+        boolean pcNetTether = mConnectivityManager.getPCNetTether();
+        /* bug1144951 end @} */
 
         boolean hotSpotOn = false;
         boolean tetherOn = false;
@@ -216,6 +219,9 @@ public class TetherPreferenceController extends AbstractPreferenceController imp
             final BluetoothPan pan = mBluetoothPan.get();
             tetherOn = pan != null && pan.isTetheringOn();
         }
+        //SPRD: add for bug1144951 pc net tether @}
+        if(!tetherOn) tetherOn = pcNetTether;
+        /* bug1144951 end @} */
         if (!hotSpotOn && !tetherOn) {
             // Both off
             mPreference.setSummary(R.string.switch_off_text);

@@ -41,7 +41,7 @@ import com.android.settings.password.ChooseLockGeneric;
 import com.android.settings.search.BaseSearchIndexProvider;
 import com.android.settings.widget.SwitchBar;
 import com.android.settingslib.search.SearchIndexable;
-
+import android.widget.TextView;
 import java.util.Arrays;
 import java.util.List;
 
@@ -87,9 +87,19 @@ public class ScreenPinningSettings extends SettingsPreferenceFragment
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        final boolean lowRamTaskSnapshotsAndRecents;
         ViewGroup parent = (ViewGroup) view.findViewById(android.R.id.list_container);
         View emptyView = LayoutInflater.from(getContext())
                 .inflate(R.layout.screen_pinning_instructions, parent, false);
+
+        lowRamTaskSnapshotsAndRecents = getContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_lowRamTaskSnapshotsAndRecents);
+        if (lowRamTaskSnapshotsAndRecents) {
+            ((TextView)emptyView.findViewById(R.id.screen_pinning_description)).setText(R.string.screen_pinning_description_go);
+        } else {
+            ((TextView)emptyView.findViewById(R.id.screen_pinning_description)).setText(R.string.screen_pinning_description);
+        }
+
         parent.addView(emptyView);
         setEmptyView(emptyView);
     }

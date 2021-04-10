@@ -151,6 +151,11 @@ public class RemoveAccountPreferenceController extends AbstractPreferenceControl
         @Override
         public void onClick(DialogInterface dialog, int which) {
             Activity activity = getTargetFragment().getActivity();
+            //Add for bug1149347, check activity
+            if (activity == null || activity.isFinishing()) {
+                Log.w(TAG, "Activity is no longer alive");
+                return;
+            }
             AccountManager.get(activity).removeAccountAsUser(mAccount, activity,
                     future -> {
                         final Activity targetActivity = getTargetFragment().getActivity();

@@ -43,7 +43,8 @@ import com.android.settingslib.core.lifecycle.events.OnStop;
  */
 public class VideoCallingPreferenceController extends TelephonyTogglePreferenceController implements
         LifecycleObserver, OnStart, OnStop,
-        Enhanced4gLtePreferenceController.On4gLteUpdateListener {
+        Enhanced4gBasePreferenceController.On4gLteUpdateListener,
+        BroadcastReceiverChanged.BroadcastReceiverChangedClient {
 
     private Preference mPreference;
     private TelephonyManager mTelephonyManager;
@@ -52,18 +53,22 @@ public class VideoCallingPreferenceController extends TelephonyTogglePreferenceC
     ImsManager mImsManager;
     private PhoneCallStateListener mPhoneStateListener;
     private DataContentObserver mDataContentObserver;
+    // UNISOC: fix for bug 1146093
+    private BroadcastReceiverChanged mBroadcastReceiverChanged;
+    private PreferenceScreen mPreferenceScreen;
 
     public VideoCallingPreferenceController(Context context, String key) {
         super(context, key);
         mCarrierConfigManager = context.getSystemService(CarrierConfigManager.class);
         mDataContentObserver = new DataContentObserver(new Handler(Looper.getMainLooper()));
         mPhoneStateListener = new PhoneCallStateListener(Looper.getMainLooper());
+        // UNISOC: fix for bug 1146093
+        mBroadcastReceiverChanged = new BroadcastReceiverChanged(context,this);
     }
 
     @Override
     public int getAvailabilityStatus(int subId) {
         return subId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
-                && MobileNetworkUtils.isWifiCallingEnabled(mContext, subId)
                 && isVideoCallEnabled(subId)
                 ? AVAILABLE
                 : CONDITIONALLY_UNAVAILABLE;
@@ -72,6 +77,7 @@ public class VideoCallingPreferenceController extends TelephonyTogglePreferenceC
     @Override
     public void displayPreference(PreferenceScreen screen) {
         super.displayPreference(screen);
+        mPreferenceScreen = screen;
         mPreference = screen.findPreference(getPreferenceKey());
     }
 
@@ -79,13 +85,34 @@ public class VideoCallingPreferenceController extends TelephonyTogglePreferenceC
     public void onStart() {
         mPhoneStateListener.register(mSubId);
         mDataContentObserver.register(mContext, mSubId);
+        // UNISOC: fix for bug 1146093
+        mBroadcastReceiverChanged.start();
     }
 
     @Override
     public void onStop() {
         mPhoneStateListener.unregister();
         mDataContentObserver.unRegister(mContext);
+        // UNISOC: fix for bug 1146093
+        mBroadcastReceiverChanged.stop();
     }
+
+    /* UNISOC: fix for bug 1146093 @{ */
+    @Override
+    public void onPhoneStateChanged() {}
+
+    @Override
+    public void onCarrierConfigChanged(int phoneId) {
+        if(SubscriptionManager.isValidPhoneId(phoneId) && SubscriptionManager.getPhoneId(mSubId) == phoneId) {
+            if(SubscriptionManager.getSimStateForSlotIndex(phoneId) ==TelephonyManager.SIM_STATE_LOADED) {
+                if(mPreferenceScreen != null) {
+                    this.displayPreference(mPreferenceScreen);
+                    updateState(mPreference);
+                }
+            }
+        }
+    }
+    /* @} */
 
     @Override
     public void updateState(Preference preference) {

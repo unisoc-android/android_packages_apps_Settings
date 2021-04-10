@@ -17,11 +17,15 @@
 package com.android.settings.biometrics.face;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.app.settings.SettingsEnums;
 import android.hardware.face.FaceManager;
 import android.os.UserHandle;
+import android.view.Surface;
+import android.util.Log;
 
 import com.android.settings.Utils;
+import com.android.settings.biometrics.BiometricEnrollBase;
 import com.android.settings.biometrics.BiometricEnrollSidecar;
 
 import java.util.Arrays;
@@ -30,10 +34,12 @@ import java.util.Arrays;
  * Sidecar fragment to handle the state around face enrollment
  */
 public class FaceEnrollSidecar extends BiometricEnrollSidecar {
+    private static final String TAG = "FaceEnrollSidecar";
 
     private final int[] mDisabledFeatures;
 
     private FaceManager mFaceManager;
+    private Surface mSurfaceTexture;
 
     public FaceEnrollSidecar(int[] disabledFeatures) {
         mDisabledFeatures = Arrays.copyOf(disabledFeatures, disabledFeatures.length);
@@ -47,13 +53,36 @@ public class FaceEnrollSidecar extends BiometricEnrollSidecar {
 
     @Override
     public void startEnrollment() {
+        Log.d(TAG, "startEnrollment");
         super.startEnrollment();
         if (mUserId != UserHandle.USER_NULL) {
             mFaceManager.setActiveUser(mUserId);
         }
 
-        mFaceManager.enroll(mToken, mEnrollmentCancel,
-                mEnrollmentCallback, mDisabledFeatures);
+        // Fix for bug 1227675, this may not be happen in normal mode,
+        // just in case.
+        if (mToken == null) {
+            Activity activity = getActivity();
+            Intent intent = new Intent(activity, FaceEnrollIntroduction.class);
+            intent.putExtra(BiometricEnrollBase.REENROLL_TOKEN, true);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            activity.startActivity(intent);
+            activity.finish();
+            return;
+        }
+
+        if (mSurfaceTexture != null) {
+            Log.d(TAG, "enroll with surface texture");
+            mFaceManager.enroll(mToken, mEnrollmentCancel,
+                    mEnrollmentCallback, mDisabledFeatures, mSurfaceTexture);
+        } else {
+            mFaceManager.enroll(mToken, mEnrollmentCancel,
+                    mEnrollmentCallback, mDisabledFeatures);
+        }
+    }
+
+    public void setSurfaceTexture(Surface surface) {
+        mSurfaceTexture = surface;
     }
 
     private FaceManager.EnrollmentCallback mEnrollmentCallback

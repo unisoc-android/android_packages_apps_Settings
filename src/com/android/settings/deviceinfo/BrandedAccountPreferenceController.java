@@ -64,23 +64,25 @@ public class BrandedAccountPreferenceController extends BasePreferenceController
             return;
         }
 
-        accountPreference.setSummary(mAccounts[0].name);
-        accountPreference.setOnPreferenceClickListener(preference -> {
-            final Bundle args = new Bundle();
-            args.putParcelable(AccountDetailDashboardFragment.KEY_ACCOUNT,
-                    mAccounts[0]);
-            args.putParcelable(AccountDetailDashboardFragment.KEY_USER_HANDLE,
-                    android.os.Process.myUserHandle());
-            args.putString(AccountDetailDashboardFragment.KEY_ACCOUNT_TYPE,
-                    accountFeatureProvider.getAccountType());
+        if (accountPreference != null) {
+            accountPreference.setSummary(mAccounts[0].name);
+            accountPreference.setOnPreferenceClickListener(preference -> {
+                final Bundle args = new Bundle();
+                args.putParcelable(AccountDetailDashboardFragment.KEY_ACCOUNT,
+                        mAccounts[0]);
+                args.putParcelable(AccountDetailDashboardFragment.KEY_USER_HANDLE,
+                        android.os.Process.myUserHandle());
+                args.putString(AccountDetailDashboardFragment.KEY_ACCOUNT_TYPE,
+                        accountFeatureProvider.getAccountType());
 
-            new SubSettingLauncher(mContext)
-                    .setDestination(AccountDetailDashboardFragment.class.getName())
-                    .setTitleRes(R.string.account_sync_title)
-                    .setArguments(args)
-                    .setSourceMetricsCategory(SettingsEnums.DEVICEINFO)
-                    .launch();
-            return true;
-        });
+                new SubSettingLauncher(mContext)
+                        .setDestination(AccountDetailDashboardFragment.class.getName())
+                        .setTitleRes(R.string.account_sync_title)
+                        .setArguments(args)
+                        .setSourceMetricsCategory(SettingsEnums.DEVICEINFO)
+                        .launch();
+                return true;
+            });
+        }
     }
 }

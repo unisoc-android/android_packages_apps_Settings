@@ -76,7 +76,8 @@ public class FingerprintEnrollIntroductionTest
                 .getEnrolledFingerprints(anyInt());
 
         getInstrumentation().runOnMainSync(() -> {
-            getInstrumentation().callActivityOnCreate(mActivity, null);
+            // callActivityOnCreate has been called by startActivity method in parent class.
+            // getInstrumentation().callActivityOnCreate(mActivity, null);
             getInstrumentation().callActivityOnResume(mActivity);
         });
 
@@ -85,7 +86,9 @@ public class FingerprintEnrollIntroductionTest
 
         PartnerCustomizationLayout layout = mActivity.findViewById(R.id.setup_wizard_layout);
         final Button nextButton = layout.getMixin(FooterBarMixin.class).getPrimaryButtonView();
-        assertEquals(View.GONE, nextButton.getVisibility());
+        // According to the implementation of BiometricEnrollIntroduction.onResume,
+        // the state of nextButton should be visible.
+        assertEquals(View.VISIBLE, nextButton.getVisibility());
     }
 
     private List<Fingerprint> generateFingerprintList(int num) {

@@ -1835,7 +1835,12 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Установить ключ"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Изменить ключ"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Как начертить графический ключ разблокировки"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Слишком много неудачных попыток подряд. Повторите через <xliff:g id="NUMBER">%d</xliff:g> сек."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one">Слишком много неудачных попыток подряд. Повторите попытку через <xliff:g id="NUMBER">%d</xliff:g> секунду.</item>
+        <item quantity="few">Слишком много неудачных попыток подряд. Повторите попытку через <xliff:g id="NUMBER">%d</xliff:g> секунды.</item>
+        <item quantity="many">Слишком много неудачных попыток подряд. Повторите попытку через <xliff:g id="NUMBER">%d</xliff:g> секунд.</item>
+        <item quantity="other">Слишком много неудачных попыток подряд. Повторите попытку через <xliff:g id="NUMBER">%d</xliff:g> секунды.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Приложение не установлено на телефоне."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Защита рабочего профиля"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Блокировка экрана рабочего профиля"</string>

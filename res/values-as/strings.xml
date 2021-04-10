@@ -1792,7 +1792,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"আনলক আৰ্হি ছেট কৰক"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"আনলক আৰ্হি সলনি কৰক"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"আনলক আৰ্হি কেনেকৈ আঁকিব"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"বহুসংখ্যক ভুল প্ৰয়াস। <xliff:g id="NUMBER">%d</xliff:g> ছেকেণ্ডত পুনৰ চেষ্টা কৰক।"</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="one"><xliff:g id="NUMBER">%d</xliff:g> ছেকেণ্ডত আকৌ চেষ্টা কৰক।</item>
+        <item quantity="other"><xliff:g id="NUMBER">%d</xliff:g> ছেকেণ্ডত আকৌ চেষ্টা কৰক।</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"আপোনাৰ ফ\'নত এপ্লিকেশ্বনটো ইনষ্টল হৈ থকা নাই।"</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"কৰ্মস্থানৰ প্ৰ’ফাইলৰ নিৰাপত্তা"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"কৰ্মস্থান প্ৰ\'ফাইলৰ স্ক্ৰীণ লক"</string>

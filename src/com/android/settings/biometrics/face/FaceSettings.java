@@ -33,6 +33,7 @@ import android.util.Log;
 
 import androidx.preference.Preference;
 
+import com.android.internal.widget.LockPatternUtils;
 import com.android.settings.R;
 import com.android.settings.SettingsActivity;
 import com.android.settings.Utils;
@@ -121,8 +122,9 @@ public class FaceSettings extends DashboardFragment {
         Preference appPref = findPreference(FaceSettingsAppPreferenceController.KEY);
         Preference attentionPref = findPreference(FaceSettingsAttentionPreferenceController.KEY);
         Preference confirmPref = findPreference(FaceSettingsConfirmPreferenceController.KEY);
+        Preference livenessPref = findPreference(FaceSettingsLivenessModePreferenceController.KEY);
         mTogglePreferences = new ArrayList<>(
-                Arrays.asList(keyguardPref, appPref, attentionPref, confirmPref));
+                Arrays.asList(keyguardPref, appPref, attentionPref, confirmPref, livenessPref));
 
         mRemoveButton = findPreference(FaceSettingsRemoveButtonPreferenceController.KEY);
         mEnrollButton = findPreference(FaceSettingsEnrollButtonPreferenceController.KEY);
@@ -141,6 +143,15 @@ public class FaceSettings extends DashboardFragment {
         if (mUserManager.isManagedProfile(mUserId)) {
             removePreference(FaceSettingsKeyguardPreferenceController.KEY);
         }
+
+        // Unisoc: fix for bug 1139068
+        removePreference(FaceSettingsVideoPreferenceController.KEY_VIDEO);
+
+        // Unisoc: fix for bug 1137791
+        removePreference(FaceSettingsAttentionPreferenceController.KEY);
+
+        // Unisoc: fix for bug 1185703
+        removePreference(FaceSettingsAppPreferenceController.KEY);
 
         if (savedInstanceState != null) {
             mToken = savedInstanceState.getByteArray(KEY_TOKEN);
@@ -236,11 +247,17 @@ public class FaceSettings extends DashboardFragment {
         controllers.add(new FaceSettingsKeyguardPreferenceController(context));
         controllers.add(new FaceSettingsAppPreferenceController(context));
         controllers.add(new FaceSettingsAttentionPreferenceController(context));
+        // Unisoc: add for bug 1139483
+        controllers.add(new FaceSettingsLivenessModePreferenceController(context));
         controllers.add(new FaceSettingsRemoveButtonPreferenceController(context));
         controllers.add(new FaceSettingsFooterPreferenceController(context));
         controllers.add(new FaceSettingsConfirmPreferenceController(context));
         controllers.add(new FaceSettingsEnrollButtonPreferenceController(context));
         return controllers;
+    }
+
+    private static boolean isSecure(Context context) {
+        return new LockPatternUtils(context).isSecure(UserHandle.myUserId());
     }
 
     public static final SearchIndexProvider SEARCH_INDEX_DATA_PROVIDER =
@@ -265,7 +282,8 @@ public class FaceSettings extends DashboardFragment {
 
                 @Override
                 protected boolean isPageSearchEnabled(Context context) {
-                    return isAvailable(context);
+                    // UNISOC: Fix for bug 1252645
+                    return isAvailable(context) && isSecure(context);
                 }
             };
 

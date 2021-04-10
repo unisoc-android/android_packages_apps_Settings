@@ -1,0 +1,9 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- UNISOC: PS Data Off @{ -->
+    <string-array name="except_service_name">
+        <item>无豁免服务</item>
+        <item>基于PS服务的USIM文件管理服务</item>
+        <item>基于PS服务的设备管理服务</item>
+        <item>基于PS服务的USIM文件管理服务与基于PS服务的设备管理服务</item>
+    </string-array>
+</resources>

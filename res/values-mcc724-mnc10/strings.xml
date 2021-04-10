@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string-array translatable="false" name="carrier_customize_network_choices">
+        <item>@string/network_4g_auto</item>
+        <item>@string/network_3G_auto</item>
+        <item>@string/network_2G_only</item>
+        <item>@string/network_4G_only</item>
+        <item>@string/network_3G_only</item>
+    </string-array>
+
+    <string-array translatable="false" name="carrier_customize_network_values">
+        <item>"9"</item>
+        <item>"0"</item>
+        <item>"1"</item>
+        <item>"11"</item>
+        <item>"2"</item>
+    </string-array>
+</resources>

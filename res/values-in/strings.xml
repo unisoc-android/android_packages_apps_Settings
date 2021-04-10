@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Setel pola pembuka kunci"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Ubah pola pembuka kunci"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Cara membuat pola pembuka kunci"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Terlalu banyak kesalahan pola. Coba kembali dalam <xliff:g id="NUMBER">%d</xliff:g> detik."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Terlalu banyak kesalahan pola. Coba kembali dalam <xliff:g id="NUMBER">%d</xliff:g> detik.</item>
+        <item quantity="one">Terlalu banyak kesalahan pola. Coba kembali dalam 1 detik.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Aplikasi tidak dipasang pada ponsel Anda."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Keamanan profil kerja"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Kunci layar profil kerja"</string>

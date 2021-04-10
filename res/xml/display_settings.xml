@@ -39,6 +39,12 @@
         settings:widgetLayout="@null"
         settings:searchable="false" />
 
+    <!-- UNISOC: Add for Color Temperature Adjusting -->
+    <Preference
+        android:key="colors_contrast"
+        android:title="@string/colors_contrast_title">
+    </Preference>
+
     <Preference
         android:key="auto_brightness_entry"
         android:title="@string/auto_brightness_title"

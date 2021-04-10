@@ -20,6 +20,7 @@
 <resources>
 
     <style name="PreferenceTheme" parent="@style/PreferenceThemeOverlay.SettingsBase">
+        <item name="android:scrollbars">none</item>
         <item name="apnPreferenceStyle">@style/ApnPreference</item>
         <item name="cardPreferenceStyle">@style/CardPreference</item>
         <item name="slicePreferenceStyle">@style/SlicePreference</item>

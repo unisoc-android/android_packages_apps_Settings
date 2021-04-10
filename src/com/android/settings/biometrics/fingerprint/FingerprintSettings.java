@@ -22,6 +22,7 @@ import static com.android.settings.Utils.SETTINGS_PACKAGE_NAME;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.admin.DevicePolicyManager;
+import android.app.KeyguardManager;
 import android.app.settings.SettingsEnums;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -33,9 +34,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.text.Annotation;
+import android.text.InputFilter;
+import android.text.Editable;
+import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.VisibleForTesting;
@@ -63,6 +70,9 @@ import com.android.settingslib.RestrictedLockUtilsInternal;
 import com.android.settingslib.TwoTargetPreference;
 import com.android.settingslib.widget.FooterPreference;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -81,6 +91,8 @@ public class FingerprintSettings extends SubSettings {
     private static final int RESULT_FINISHED = BiometricEnrollBase.RESULT_FINISHED;
     private static final int RESULT_SKIP = BiometricEnrollBase.RESULT_SKIP;
     private static final int RESULT_TIMEOUT = BiometricEnrollBase.RESULT_TIMEOUT;
+    //add by unisoc for bug1114185
+    private static final int TEXT_MAX_LENGTH = 50;
 
     @Override
     public Intent getIntent() {
@@ -132,6 +144,7 @@ public class FingerprintSettings extends SubSettings {
         private boolean mLaunchedConfirm;
         private Drawable mHighlightDrawable;
         private int mUserId;
+        private boolean mNeedRetryFingerprint = false;
 
         private static final String TAG_AUTHENTICATE_SIDECAR = "authenticate_sidecar";
         private static final String TAG_REMOVAL_SIDECAR = "removal_sidecar";
@@ -258,6 +271,16 @@ public class FingerprintSettings extends SubSettings {
             if (mLaunchedConfirm) {
                 return;
             }
+            //Don't start authentication if keyguard is locked
+            KeyguardManager keyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            boolean keyguardLocked = false;
+            if (keyguardManager != null) {
+                keyguardLocked = keyguardManager.inKeyguardRestrictedInputMode();
+            }
+            Log.w(TAG, "retryFingerprint  keyguardLocked =  " + keyguardLocked + "mNeedRetryFingerprint = " + mNeedRetryFingerprint);
+            if (keyguardLocked && !mNeedRetryFingerprint) {
+                return;
+            }
             if (!mInFingerprintLockout) {
                 mAuthenticateSidecar.startAuthentication(mUserId);
                 mAuthenticateSidecar.setListener(mAuthenticateListener);
@@ -332,12 +355,19 @@ public class FingerprintSettings extends SubSettings {
             });
             final Intent helpIntent = HelpUtils.getHelpIntent(
                     activity, getString(getHelpResource()), activity.getClass().getName());
+            CharSequence rawText = getText(R.string.security_settings_fingerprint_enroll_disclaimer);
+            CharSequence adminText = getText(R.string.security_settings_fingerprint_enroll_disclaimer_lockscreen_disabled);
+            SpannableString msg = new SpannableString(rawText);
+            Annotation[] spans = msg.getSpans(0, msg.length(), Annotation.class);
+            int start = msg.getSpanStart(spans[0]);
+            if(helpIntent == null){
+                rawText = rawText.toString().substring(0, start);
+            }
             final AnnotationSpan.LinkInfo linkInfo = new AnnotationSpan.LinkInfo(
                     activity, ANNOTATION_URL, helpIntent);
-            pref.setTitle(AnnotationSpan.linkify(getText(admin != null
-                            ? R.string
-                            .security_settings_fingerprint_enroll_disclaimer_lockscreen_disabled
-                            : R.string.security_settings_fingerprint_enroll_disclaimer),
+            pref.setTitle(AnnotationSpan.linkify(admin != null
+                            ? adminText
+                            : rawText,
                     linkInfo, adminLinkInfo));
         }
 
@@ -427,6 +457,8 @@ public class FingerprintSettings extends SubSettings {
         public void onResume() {
             super.onResume();
             mInFingerprintLockout = false;
+            Log.w(TAG, "onResume");
+            mNeedRetryFingerprint = true;
             // Make sure we reload the preference hierarchy since fingerprints may be added,
             // deleted or renamed.
             updatePreferences();
@@ -450,6 +482,8 @@ public class FingerprintSettings extends SubSettings {
                 mAuthenticateSidecar.setListener(null);
                 mAuthenticateSidecar.stopAuthentication();
             }
+            Log.w(TAG, "onPause");
+            mNeedRetryFingerprint = false;
         }
 
         @Override
@@ -652,6 +686,10 @@ public class FingerprintSettings extends SubSettings {
             @Override
             public void run() {
                 mInFingerprintLockout = false;
+                if (!mNeedRetryFingerprint) {
+                    Log.d(TAG, "not in fingerprintSetting activity,do not retryFingerprint");
+                    return;
+                }
                 retryFingerprint();
             }
         };
@@ -715,6 +753,32 @@ public class FingerprintSettings extends SubSettings {
             private ImeAwareEditText mDialogTextField;
             private AlertDialog mAlertDialog;
             private boolean mDeleteInProgress;
+            //add by unisoc for bug1114203
+            private Button mPositiveButton;
+            //add by unisoc for bug1114247 begin
+            private static final int MSG_FINGER_RENAME_FILTER_UPDATE = 2000;
+
+            private Handler renameHandler = new Handler() {
+                @Override
+                public void handleMessage(android.os.Message msg) {
+                    switch (msg.what) {
+                        case MSG_FINGER_RENAME_FILTER_UPDATE:
+                            String name = (String) msg.obj;
+                            int index = msg.arg1;
+                            mDialogTextField.setText(name);
+                            mDialogTextField.setSelection(index);
+                        break;
+                    }
+                };
+            };
+
+            public static String stringFilter(String str) throws PatternSyntaxException {
+                String regEx = "[\uDBEC-\uDFF4]";
+                Pattern p = Pattern.compile(regEx);
+                Matcher m = p.matcher(str);
+                return m.replaceAll("");
+            }
+            //add by unisoc for bug1114247 end
 
             public void setDeleteInProgress(boolean deleteInProgress) {
                 mDeleteInProgress = deleteInProgress;
@@ -763,8 +827,61 @@ public class FingerprintSettings extends SubSettings {
                     @Override
                     public void onShow(DialogInterface dialog) {
                         mDialogTextField = mAlertDialog.findViewById(R.id.fingerprint_rename_field);
+                        //add by unisoc for bug1114185
+                        mDialogTextField.setFilters(new InputFilter[]{new InputFilter.LengthFilter(TEXT_MAX_LENGTH)});
                         CharSequence name = fingerName == null ? mFp.getName() : fingerName;
                         mDialogTextField.setText(name);
+                        //add by unisoc for bug1114203 begin
+                        //for fingerprint screen switch , button state changed begin
+                        if(mPositiveButton == null) {
+                           mPositiveButton = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                        }
+                        if(TextUtils.isEmpty(name.toString())) {
+                           mPositiveButton.setEnabled(false);
+                        } else {
+                           mPositiveButton.setEnabled(true);
+                        }
+                        //for fingerprint screen switch , button state changed end
+                        mDialogTextField.addTextChangedListener(new TextWatcher() {
+                            @Override
+                            public void onTextChanged(CharSequence s, int start, int before,
+                                    int count) {
+                                //add by unisoc for bug1114247 begin
+                                String name = mDialogTextField.getText().toString();
+                                String filterName = stringFilter(name);
+                                if (filterName != null && !name.equals(filterName)) {
+                                    char[] nameArray = name.toCharArray();
+                                    char[] filterNameArray = filterName.toCharArray();
+                                    int index;
+                                    for (index = 0; index < filterNameArray.length; index++) {
+                                        if (filterNameArray[index] != nameArray[index]) {
+                                            break;
+                                        }
+                                    }
+                                    renameHandler.obtainMessage(MSG_FINGER_RENAME_FILTER_UPDATE,
+                                            index, 0, filterName).sendToTarget();
+                                }
+                                //add by unisoc for bug1114247 end
+                            }
+
+                            @Override
+                            public void beforeTextChanged(CharSequence s, int start, int count,
+                                    int after) {
+                            }
+
+                            @Override
+                            public void afterTextChanged(Editable s) {
+                                if(mPositiveButton == null) {
+                                    mPositiveButton = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                                }
+                                String content = s.toString();
+                                if(TextUtils.isEmpty(content)) {
+                                    mPositiveButton.setEnabled(false);
+                                } else {
+                                    mPositiveButton.setEnabled(true);
+                                }                    }
+                        });
+                         //add by sprd for bug1114203 end
                         if (textSelectionStart != -1 && textSelectionEnd != -1) {
                             mDialogTextField.setSelection(textSelectionStart, textSelectionEnd);
                         } else {

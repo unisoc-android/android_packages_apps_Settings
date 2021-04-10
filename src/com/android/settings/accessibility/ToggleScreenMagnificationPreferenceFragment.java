@@ -46,6 +46,8 @@ import androidx.preference.PreferenceViewHolder;
 import com.android.settings.R;
 import com.android.settings.widget.SwitchBar;
 
+import com.sprd.settings.navigation.NavigationBarSettings;
+
 public class ToggleScreenMagnificationPreferenceFragment extends
         ToggleFeaturePreferenceFragment implements SwitchBar.OnSwitchChangeListener {
 
@@ -259,7 +261,8 @@ public class ToggleScreenMagnificationPreferenceFragment extends
     }
 
     private boolean isGestureNavigateEnabled() {
-        return getContext().getResources().getInteger(
+        /*UNISOC: Modify for bug 1111853*/
+        return NavigationBarSettings.hasNavigationBar(getContext()) && getContext().getResources().getInteger(
                 com.android.internal.R.integer.config_navBarInteractionMode)
                 == NAV_BAR_MODE_GESTURAL;
     }

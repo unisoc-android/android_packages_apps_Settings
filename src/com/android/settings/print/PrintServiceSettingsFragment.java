@@ -296,6 +296,7 @@ public class PrintServiceSettingsFragment extends SettingsPreferenceFragment
         if (service == null) {
             // The print service was uninstalled
             finishFragment();
+            return;
         }
 
         mServiceEnabled = service.isEnabled();

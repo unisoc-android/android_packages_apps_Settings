@@ -65,9 +65,11 @@ public abstract class CdmaBasePreferenceController extends TelephonyBasePreferen
 
     @Override
     public int getAvailabilityStatus(int subId) {
-        return MobileNetworkUtils.isCdmaOptions(mContext, subId)
-                ? AVAILABLE
-                : CONDITIONALLY_UNAVAILABLE;
+        // UNISOC: remove for Bug 1155222
+//        return MobileNetworkUtils.isCdmaOptions(mContext, subId)
+//                ? AVAILABLE
+//                : CONDITIONALLY_UNAVAILABLE;
+        return UNSUPPORTED_ON_DEVICE;
     }
 
     public void init(PreferenceManager preferenceManager, int subId) {

@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.LocationManager;
+import android.location.LocationFeaturesUtils;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.permission.PermissionControllerManager;
@@ -32,6 +33,7 @@ public class TopLevelLocationPreferenceController extends BasePreferenceControll
             new IntentFilter(LocationManager.MODE_CHANGED_ACTION);
     private final LocationManager mLocationManager;
     /** Total number of apps that has location permission. */
+    private static boolean LOCATION_DISABLED = false;
     private int mNumTotal = -1;
     private int mNumTotalLoading = 0;
     private BroadcastReceiver mReceiver;
@@ -41,11 +43,20 @@ public class TopLevelLocationPreferenceController extends BasePreferenceControll
     public TopLevelLocationPreferenceController(Context context, String preferenceKey) {
         super(context, preferenceKey);
         mLocationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        LOCATION_DISABLED = LocationFeaturesUtils.getInstance(mContext).isLocationDisabled();
     }
 
     @Override
     public int getAvailabilityStatus() {
+        if (LOCATION_DISABLED) {
+            return UNSUPPORTED_ON_DEVICE;
+        }
         return AVAILABLE;
+    }
+
+    public boolean isSearchAble() {
+        int availabilityStatus = getAvailabilityStatus();
+        return availabilityStatus == AVAILABLE;
     }
 
     @Override

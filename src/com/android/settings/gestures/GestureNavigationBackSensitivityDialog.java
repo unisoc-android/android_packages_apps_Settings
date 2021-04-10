@@ -66,10 +66,14 @@ public class GestureNavigationBackSensitivityDialog extends InstrumentedDialogFr
                 .setMessage(R.string.back_sensitivity_dialog_message)
                 .setView(view)
                 .setPositiveButton(R.string.okay, (dialog, which) -> {
-                    int sensitivity = seekBar.getProgress();
-                    getArguments().putInt(KEY_BACK_SENSITIVITY, sensitivity);
-                    SystemNavigationGestureSettings.setBackSensitivity(getActivity(),
-                            getOverlayManager(), sensitivity);
+                    // UNISOC: 1197057 Settings crashed when click the dialog
+                    Context context = getActivity();
+                    if (context != null) {
+                        int sensitivity = seekBar.getProgress();
+                        getArguments().putInt(KEY_BACK_SENSITIVITY, sensitivity);
+                        SystemNavigationGestureSettings.setBackSensitivity(context,
+                                getOverlayManager(), sensitivity);
+                    }
                 })
                 .create();
     }

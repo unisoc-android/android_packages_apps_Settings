@@ -1793,7 +1793,10 @@
     <string name="lockpattern_settings_choose_lock_pattern" msgid="1652352830005653447">"Тайлах хээ тохируулах"</string>
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Тайлах хээг өөрчлөх"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Тайлах загварыг хэрхэн зурах вэ"</string>
-    <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Хэт олон удаа буруу оруулсан байна. <xliff:g id="NUMBER">%d</xliff:g> секундын дараа дахин оролдоно уу."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Хэт олон удаа буруу оруулсан байна. <xliff:g id="NUMBER">%d</xliff:g> секундын дараа дахин оролдоно уу.</item>
+        <item quantity="one">Хэт олон удаа буруу оруулсан байна. 1 секундын дараа дахин оролдоно уу.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Таны утсан дээр аппликейшн суугаагүй байна."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"Ажлын профайлын аюулгүй байдал"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"Ажлын профайлын дэлгэцийн түгжээ"</string>

@@ -29,7 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
-
+import android.util.Log;
 import com.android.settings.R;
 import com.android.settings.Utils;
 import com.android.settings.core.BasePreferenceController;
@@ -143,7 +143,6 @@ public class UserDictionaryListPreferenceController extends BasePreferenceContro
         final TreeSet<String> localeSet = getUserDictLocalesSet(mContext);
         final int prefCount = mScreen.getPreferenceCount();
         String prefKey;
-
         if (mLocale != null) {
             // If the caller explicitly specify empty string as a locale, we'll show "all languages"
             // in the list.
@@ -169,8 +168,7 @@ public class UserDictionaryListPreferenceController extends BasePreferenceContro
                 mScreen.removePreference(mScreen.findPreference(prefKey));
             }
         }
-
-        if (localeSet.isEmpty() && prefCount == 0) {
+        if (localeSet.isEmpty() && mScreen.getPreferenceCount() == 0) {
             mScreen.addPreference(createUserDictionaryPreference(null));
         } else {
             for (String locale : localeSet) {

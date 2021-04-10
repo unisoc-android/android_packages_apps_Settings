@@ -52,6 +52,38 @@
         android:summary="@string/battery_percentage_description"
         settings:controller="com.android.settings.display.BatteryPercentagePreferenceController" />
 
+    <!-- UNISOC: add for power saving management start@{ -->
+    <Preference
+        android:key="battery_saver_manage"
+        android:title="@string/battery_saver_optimization"
+        settings:controller="com.android.settings.fuelgauge.SprdBatterySaverManagePreferenceController"/>
+
+    <PreferenceCategory
+        android:key="app_battery_saver_setting"
+        android:title="@string/app_battery_saving_setting">
+
+        <Preference
+            android:key="app_battery_saver"
+            android:title="@string/app_battery_saver_manager"
+            settings:controller="com.android.settings.fuelgauge.SprdAppStandbyOptimizerPreferenceController" />
+
+        <Preference
+            android:key="lock_screen_battery_save"
+            android:title="@string/lock_screen_battery_save"
+            settings:controller="com.android.settings.fuelgauge.SprdLockScreenBatterySaverPreferenceController"/>
+
+        <Preference
+            android:key="app_auto_run"
+            android:title="@string/app_auto_run_management"
+            android:fragment="com.android.settings.fuelgauge.SprdAppAutoRunFragment"
+            settings:controller="com.android.settings.fuelgauge.SprdAppAutoRunManagementPreferenceController"/>
+
+        <Preference
+            android:key="power_intensive_apps"
+            android:title="@string/power_intensive_apps"
+            settings:controller="com.android.settings.fuelgauge.SprdPowerIntensiveAppsPreferenceController"/>
+    </PreferenceCategory>
+    <!-- UNISOC: add for power saving management end @{ -->
 
     <com.android.settings.fuelgauge.PowerGaugePreference
         android:key="last_full_charge"

@@ -107,18 +107,18 @@ public class WifiEnabler implements SwitchWidgetController.OnSwitchChangeListene
     public void setupSwitchController() {
         final int state = mWifiManager.getWifiState();
         handleWifiStateChanged(state);
-        if (!mListeningToOnSwitchChange) {
+        /*if (!mListeningToOnSwitchChange) {
             mSwitchWidget.startListening();
             mListeningToOnSwitchChange = true;
-        }
+        }*/
         mSwitchWidget.setupView();
     }
 
     public void teardownSwitchController() {
-        if (mListeningToOnSwitchChange) {
+        /*if (mListeningToOnSwitchChange) {
             mSwitchWidget.stopListening();
             mListeningToOnSwitchChange = false;
-        }
+        }*/
         mSwitchWidget.teardownView();
     }
 

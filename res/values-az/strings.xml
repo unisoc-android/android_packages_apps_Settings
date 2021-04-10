@@ -1794,6 +1794,10 @@
     <string name="lockpattern_settings_change_lock_pattern" msgid="1123908306116495545">"Kilidi açma modelini dəyişin"</string>
     <string name="lockpattern_settings_help_how_to_record" msgid="2614673439060830433">"Kilid modeli necə çəkilsin"</string>
     <string name="lockpattern_too_many_failed_confirmation_attempts" msgid="6909161623701848863">"Həddindən çox yanlış cəhdlər. <xliff:g id="NUMBER">%d</xliff:g> saniyəyə yenidən cəhd edin."</string>
+    <plurals name="lockpattern_too_many_failed_confirmation_attempts" formatted="false" msgid="6909161623701848863">
+        <item quantity="other">Həddindən çox yanlış cəhdlər. <xliff:g id="NUMBER">%d</xliff:g> saniyə ərzində yenidən cəhd edin.</item>
+        <item quantity="one">Həddindən çox yanlış cəhdlər. 1 saniyə ərzində yenidən cəhd edin.</item>
+    </plurals>
     <string name="activity_not_found" msgid="5551664692991605325">"Tətbiq telefonunuzda quraşdırılmayıb."</string>
     <string name="lock_settings_profile_title" msgid="2121876391814535295">"İş profili təhlükəsizliyi"</string>
     <string name="lock_settings_profile_screen_lock_title" msgid="3334747927367115256">"İş profili ekran kilidi"</string>

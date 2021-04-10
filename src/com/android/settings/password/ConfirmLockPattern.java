@@ -25,6 +25,7 @@ import android.os.CountDownTimer;
 import android.os.SystemClock;
 import android.os.UserManager;
 import android.os.storage.StorageManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -78,6 +79,7 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
 
     public static class ConfirmLockPatternFragment extends ConfirmDeviceCredentialBaseFragment
             implements AppearAnimationCreator<Object>, CredentialCheckResultTracker.Listener {
+        private static final String TAG = "ConfirmLockPatternFragment";
 
         private static final String FRAGMENT_TAG_CHECK_LOCK_RESULT = "check_lock_result";
 
@@ -108,12 +110,24 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
             ConfirmLockPattern activity = (ConfirmLockPattern) getActivity();
-            View view = inflater.inflate(
-                    activity.getConfirmCredentialTheme() == ConfirmCredentialTheme.NORMAL
-                            ? R.layout.confirm_lock_pattern_normal
-                            : R.layout.confirm_lock_pattern,
-                    container,
-                    false);
+            /* UNISOC: Modify for Bug 1147820 {@ */
+            View view = null;
+            if (activity.isInMultiWindowMode()) {
+                    view = inflater.inflate(
+                        activity.getConfirmCredentialTheme() == ConfirmCredentialTheme.NORMAL
+                                ? R.layout.confirm_lock_pattern_normal_splitscreen
+                                : R.layout.confirm_lock_pattern_splitscreen,
+                        container,
+                        false);
+            } else {
+                    view = inflater.inflate(
+                        activity.getConfirmCredentialTheme() == ConfirmCredentialTheme.NORMAL
+                                ? R.layout.confirm_lock_pattern_normal
+                                : R.layout.confirm_lock_pattern,
+                        container,
+                        false);
+            }
+            /* @} */
             mHeaderTextView = (TextView) view.findViewById(R.id.headerText);
             mLockPatternView = (LockPatternView) view.findViewById(R.id.lockPattern);
             mDetailsTextView = (TextView) view.findViewById(R.id.sud_layout_description);
@@ -196,6 +210,7 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
                 mCountdownTimer.cancel();
             }
             mCredentialCheckResultTracker.setListener(null);
+            Log.d(TAG, "onPause");
         }
 
         @Override
@@ -218,6 +233,7 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
                 updateStage(Stage.NeedToUnlock);
             }
             mCredentialCheckResultTracker.setListener(this);
+            Log.d(TAG, "onResume");
         }
 
         @Override
@@ -343,6 +359,7 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
 
         @Override
         protected void authenticationSucceeded() {
+            Log.d(TAG, "authenticationSucceeded");
             mCredentialCheckResultTracker.setResult(true, new Intent(), 0, mEffectiveUserId);
         }
 
@@ -381,10 +398,12 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
                 = new LockPatternView.OnPatternListener()  {
 
             public void onPatternStart() {
+                Log.d(TAG, "onPatternStart");
                 mLockPatternView.removeCallbacks(mClearPatternRunnable);
             }
 
             public void onPatternCleared() {
+                Log.d(TAG, "onPatternCleared");
                 mLockPatternView.removeCallbacks(mClearPatternRunnable);
             }
 
@@ -396,6 +415,7 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
                 if (mPendingLockCheck != null || mDisappearing) {
                     return;
                 }
+                Log.d(TAG, "onPatternDetected");
 
                 mLockPatternView.setEnabled(false);
 
@@ -441,6 +461,7 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
                             }
                             mCredentialCheckResultTracker.setResult(matched, intent, timeoutMs,
                                     localEffectiveUserId);
+                            Log.d(TAG, "onVerified matched:" + matched);
                         }
                     };
                 mPendingLockCheck = (localEffectiveUserId == localUserId)
@@ -477,6 +498,7 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
                                 }
                                 mCredentialCheckResultTracker.setResult(matched, intent, timeoutMs,
                                         localEffectiveUserId);
+                                Log.d(TAG, "onChecked matched:" + matched);
                             }
                         });
             }
@@ -484,6 +506,7 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
 
         private void onPatternChecked(boolean matched, Intent intent, int timeoutMs,
                 int effectiveUserId, boolean newResult) {
+            Log.d(TAG, "onPatternChecked matched:" + matched);
             mLockPatternView.setEnabled(true);
             if (matched) {
                 if (newResult) {
@@ -531,6 +554,8 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
 
         private void handleAttemptLockout(long elapsedRealtimeDeadline) {
             updateStage(Stage.LockedOut);
+            //Unisoc: fix for bug 899978
+            resetErrorRunnableTimeout();
             long elapsedRealtime = SystemClock.elapsedRealtime();
             mCountdownTimer = new CountDownTimer(
                     elapsedRealtimeDeadline - elapsedRealtime,
@@ -538,10 +563,12 @@ public class ConfirmLockPattern extends ConfirmDeviceCredentialBaseActivity {
 
                 @Override
                 public void onTick(long millisUntilFinished) {
-                    final int secondsCountdown = (int) (millisUntilFinished / 1000);
-                    mErrorTextView.setText(getString(
-                            R.string.lockpattern_too_many_failed_confirmation_attempts,
-                            secondsCountdown));
+                    // UNISOC: Fix for bug 1213187
+                    final int secondsCountdown = (int) (millisUntilFinished / 1000) + 1;
+                    String errorText = getResources().getQuantityString(
+                            R.plurals.lockpattern_too_many_failed_confirmation_attempts,
+                            secondsCountdown, secondsCountdown);
+                    mErrorTextView.setText(errorText);
                 }
 
                 @Override

@@ -537,4 +537,15 @@
     <!-- no translation found for enhanced_4g_lte_mode_sumary_variant:0 (3632552041956113517) -->
     <!-- no translation found for enhanced_4g_lte_mode_sumary_variant:1 (8886675223048911179) -->
     <!-- no translation found for enhanced_4g_lte_mode_sumary_variant:2 (8669821968941658558) -->
+  <!-- SPRD: Bug#1031099 support GPS automatic update time BEG -->
+  <string-array name="auto_time_entries">
+    <item>使用网络提供时间</item>
+    <item>使用GPS提供时间</item>
+    <item>关闭</item>
+  </string-array>
+  <string-array name="auto_time_entries_no_gps">
+    <item>使用网络提供时间</item>
+    <item>关闭</item>
+  </string-array>
+  <!-- support GPS automatic update time END -->
 </resources>

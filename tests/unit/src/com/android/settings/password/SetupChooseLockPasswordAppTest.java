@@ -31,6 +31,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.hamcrest.CoreMatchers.not;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
@@ -55,8 +56,9 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class SetupChooseLockPasswordAppTest {
-
+    private static final String TAG = "Settings_ut";
     private Context mContext;
+    private boolean mTestFlag;
 
     @Rule
     public ActivityTestRule<SetupChooseLockPassword> mActivityTestRule =
@@ -68,42 +70,58 @@ public class SetupChooseLockPasswordAppTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        mTestFlag = context.getResources()
+                .getBoolean(com.android.settings.tests.unit.R.bool.config_test_lockscreen);
     }
 
     @Test
     public void testSkipDialogIsShown() throws Throwable {
-        SetupChooseLockPassword activity = mActivityTestRule.launchActivity(null);
-        PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
-        final Button skipOrClearButton =
-                layout.getMixin(FooterBarMixin.class).getSecondaryButtonView();
+        if (mTestFlag) {
+            SetupChooseLockPassword activity = mActivityTestRule.launchActivity(null);
+            PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
+            final Button skipOrClearButton =
+                    layout.getMixin(FooterBarMixin.class).getSecondaryButtonView();
 
-        assertThat(skipOrClearButton.getText()).isEqualTo(mContext.getString(R.string.skip_label));
-        assertThat(skipOrClearButton.getVisibility()).isEqualTo(View.VISIBLE);
-        skipOrClearButton.performClick();
-        assertThat(activity.isFinishing()).named("Is finishing").isTrue();
+            assertThat(skipOrClearButton.getText()).isEqualTo(mContext.getString(R.string.skip_label));
+            assertThat(skipOrClearButton.getVisibility()).isEqualTo(View.VISIBLE);
+            skipOrClearButton.performClick();
+            assertThat(activity.isFinishing()).named("Is finishing").isTrue();
+        } else {
+            Log.d(TAG, "testSkipDialogIsShown not test");
+        }
     }
 
     @Test
     public void clearIsNotShown_when_activityLaunchedInitially() {
-        SetupChooseLockPassword activity = mActivityTestRule.launchActivity(null);
-        PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
-        assertThat(layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getText())
-                .isEqualTo(mContext.getString(R.string.lockpassword_clear_label));
+        if (mTestFlag) {
+            SetupChooseLockPassword activity = mActivityTestRule.launchActivity(null);
+            PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
+            assertThat(layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getText())
+                   .isEqualTo(mContext.getString(R.string.lockpassword_clear_label));
+        } else {
+            Log.d(TAG, "clearIsNotShown_when_activityLaunchedInitially not test");
+        }
     }
 
     @Test
     public void clearIsNotShown_when_nothingEntered() throws Throwable {
-        SetupChooseLockPassword activity = mActivityTestRule.launchActivity(null);
-        PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
-        onView(withId(R.id.password_entry)).perform(ViewActions.typeText("1234"))
-                .perform(pressKey(KeyEvent.KEYCODE_ENTER));
-        assertThat(
-                layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
-                        .isEqualTo(View.GONE);
+        if (mTestFlag) {
+            SetupChooseLockPassword activity = mActivityTestRule.launchActivity(null);
+            PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
+            onView(withId(R.id.password_entry)).perform(ViewActions.typeText("1234"))
+                    .perform(pressKey(KeyEvent.KEYCODE_ENTER));
+            assertThat(
+                    layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
+                            .isEqualTo(View.GONE);
+        } else {
+            Log.d(TAG, "clearIsNotShown_when_nothingEntered not test");
+        }
     }
 
     @Test
     public void clearIsShown_when_somethingEnteredToConfirm() {
+        if (mTestFlag) {
         SetupChooseLockPassword activity = mActivityTestRule.launchActivity(null);
         PartnerCustomizationLayout layout = activity.findViewById(R.id.setup_wizard_layout);
         onView(withId(R.id.password_entry)).perform(ViewActions.typeText("1234"))
@@ -116,5 +134,8 @@ public class SetupChooseLockPasswordAppTest {
         assertThat(
                 layout.getMixin(FooterBarMixin.class).getSecondaryButtonView().getVisibility())
                         .isEqualTo(View.VISIBLE);
+        } else {
+            Log.d(TAG, "clearIsShown_when_somethingEnteredToConfirm not test");
+        }
     }
 }

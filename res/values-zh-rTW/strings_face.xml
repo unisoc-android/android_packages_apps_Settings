@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  Copyright (C) 2007 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+
+     Add resource for UNISOC FaceID
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="face_data_remaining">"剩余 %d %%"</string>
+    <string name="security_settings_faceid_enroll_introduction_message">"使用人臉識別前，請牢記以下事項：\n1.您的手機可能會被面貌、外形與您相近的人或物品解鎖。\n2.人臉識別的安全性低於指紋、圖案密碼、數字密碼和自定字母數字密碼。\n3.在暗光、強光和逆光環境下，人臉識別的解鎖成功率會有所降低。\n"</string>
+    <string name="security_settings_faceid_enroll_introduction_message_warning">"為更好地使用人臉識別，請註意：\n1.錄入時，避免暗光、強光和逆光環境，確保錄入的面部圖像清晰。\n2.錄入成功後，點亮螢幕時即可通過人臉識別解鎖。"</string>
+    <string name="security_settings_face_settings_require_livenessmode">活體檢測</string>
+    <string name="security_settings_face_settings_require_livenessmode_details">開啟此功能，解鎖時需要眨眼睛以確保當前是本人而非照片或者其他物體試圖解鎖</string>
+    <string name="not_support_in_split_mode">分屏模式下不支持錄入操作</string>
+</resources>

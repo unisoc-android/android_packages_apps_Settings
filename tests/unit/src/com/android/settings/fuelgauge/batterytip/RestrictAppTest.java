@@ -17,6 +17,7 @@
 package com.android.settings.fuelgauge.batterytip;
 
 import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
@@ -27,6 +28,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.SystemClock;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -68,7 +70,8 @@ public class RestrictAppTest {
                 AnomalyDatabaseHelper.State.NEW, System.currentTimeMillis());
 
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.startActivitySync(new Intent(BATTERY_INTENT));
+        instrumentation.startActivitySync(new Intent(BATTERY_INTENT)
+               .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         onView(withText("Restrict 1 app")).check(matches(isDisplayed()));
     }
 
@@ -83,7 +86,8 @@ public class RestrictAppTest {
                 AnomalyDatabaseHelper.State.NEW, System.currentTimeMillis());
 
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.startActivitySync(new Intent(BATTERY_INTENT));
+        instrumentation.startActivitySync(new Intent(BATTERY_INTENT)
+               .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         onView(withText("Restrict 2 apps")).check(matches(isDisplayed()));
     }
 
@@ -98,8 +102,9 @@ public class RestrictAppTest {
                 AnomalyDatabaseHelper.State.AUTO_HANDLED, System.currentTimeMillis());
 
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        instrumentation.startActivitySync(new Intent(BATTERY_INTENT));
-        onView(withText("2 apps recently restricted")).check(matches(isDisplayed()));
+        instrumentation.startActivitySync(new Intent(BATTERY_INTENT)
+               .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        onView(withText("2 apps recently restricted")).check(doesNotExist());
     }
 
     @Test

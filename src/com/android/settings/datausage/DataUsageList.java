@@ -25,8 +25,10 @@ import android.app.ActivityManager;
 import android.app.settings.SettingsEnums;
 import android.app.usage.NetworkStats;
 import android.app.usage.NetworkStats.Bucket;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.UserInfo;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
@@ -54,6 +56,7 @@ import androidx.loader.content.Loader;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceGroup;
 
+import com.android.internal.telephony.TelephonyIntents;
 import com.android.settings.R;
 import com.android.settings.core.SubSettingLauncher;
 import com.android.settings.datausage.CycleAdapter.SpinnerInterface;
@@ -134,7 +137,6 @@ public class DataUsageList extends DataUsageBaseFragment {
             Log.w(TAG, "No bandwidth control; leaving");
             activity.finish();
         }
-
         mUidDetailProvider = new UidDetailProvider(activity);
         mTelephonyManager = activity.getSystemService(TelephonyManager.class);
         mUsageAmount = findPreference(KEY_USAGE_AMOUNT);
@@ -146,11 +148,12 @@ public class DataUsageList extends DataUsageBaseFragment {
     @Override
     public void onViewCreated(View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
-
         mHeader = setPinnedHeaderView(R.layout.apps_filter_spinner);
         mHeader.findViewById(R.id.filter_settings).setOnClickListener(btn -> {
             final Bundle args = new Bundle();
             args.putParcelable(DataUsageList.EXTRA_NETWORK_TEMPLATE, mTemplate);
+            //Add for bug1129528, No subId cause settings crashed
+            args.putInt(EXTRA_SUB_ID, mSubId);
             new SubSettingLauncher(getContext())
                     .setDestination(BillingCycleSettings.class.getName())
                     .setTitleRes(R.string.billing_cycle)
@@ -187,12 +190,52 @@ public class DataUsageList extends DataUsageBaseFragment {
         mLoadingViewController.showLoadingViewDelayed();
     }
 
+    /* Add for bug1186709, monitor sim card state chanage events @{ */
+    @Override
+    public void onStart() {
+        super.onStart();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(TelephonyIntents.ACTION_SIM_STATE_CHANGED);
+        intentFilter.addAction(TelephonyIntents.ACTION_DEFAULT_DATA_SUBSCRIPTION_CHANGED);
+        getActivity().registerReceiver(mReceiver, intentFilter);
+    }
+    /* @} */
+
     @Override
     public void onResume() {
         super.onResume();
+        //Add for bug1174116, this page should finish after simcard absent or data simcard switched
+        processSimRemoveOrSwitch();
         mDataStateListener.setListener(true, mSubId, getContext());
         updateBody();
     }
+
+    /* Add for bug1186709, monitor sim card state chanage events @{ */
+    @Override
+    public void onStop() {
+        super.onStop();
+        getActivity().unregisterReceiver(mReceiver);
+    }
+    /* @} */
+
+    /* Add for bug1174116, this page should finish after simcard absent or data simcard switched @{ */
+    private void processSimRemoveOrSwitch() {
+        if (mNetworkType == ConnectivityManager.TYPE_MOBILE) {
+            int defaultDataSubId = DataUsageUtils.getDefaultSubscriptionId(getContext());
+            if (mSubId != -1 && defaultDataSubId != -1
+                    && mSubId != defaultDataSubId) {
+                mHeader.findViewById(R.id.filter_settings).setVisibility(View.GONE);
+                return;
+            }
+            int slotIndex = SubscriptionManager.getSlotIndex(mSubId);
+            if (slotIndex == SubscriptionManager.SIM_NOT_INSERTED
+                    || !mTelephonyManager.hasIccCard(slotIndex)) {
+                getActivity().finish();
+                return;
+            }
+        }
+    }
+    /* @} */
 
     @Override
     public void onPause() {
@@ -552,4 +595,12 @@ public class DataUsageList extends DataUsageBaseFragment {
             }
         }
     };
+
+    /* Add for bug1186709, monitor sim card state chanage events @{ */
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            processSimRemoveOrSwitch();
+        }
+    };
+    /* @} */
 }

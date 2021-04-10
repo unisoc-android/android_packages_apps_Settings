@@ -35,6 +35,7 @@ import android.net.NetworkInfo.State;
 import android.net.NetworkRequest;
 import android.net.NetworkTemplate;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiFeaturesUtils;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -103,6 +104,7 @@ public class WifiSettings extends RestrictedSettingsFragment
     @VisibleForTesting
     static final int MENU_ID_FORGET = Menu.FIRST + 7;
     private static final int MENU_ID_MODIFY = Menu.FIRST + 8;
+    private static final int MENU_ID_AUTO_JOIN = Menu.FIRST + 9;
 
     public static final int WIFI_DIALOG_ID = 1;
 
@@ -179,6 +181,7 @@ public class WifiSettings extends RestrictedSettingsFragment
 
     private AccessPointPreference.UserBadgeCache mUserBadgeCache;
 
+    private PreferenceCategory mSavedAccessPointPreferenceCategory;
     private PreferenceCategory mConnectedAccessPointPreferenceCategory;
     private PreferenceCategory mAccessPointsPreferenceCategory;
     @VisibleForTesting
@@ -234,7 +237,12 @@ public class WifiSettings extends RestrictedSettingsFragment
     }
 
     private void addPreferences() {
-        addPreferencesFromResource(R.xml.wifi_settings);
+        mSupportAppConnectPolicy = WifiFeaturesUtils.getInstance(getActivity()).isSupportAppConnectPolicy();
+        if (mSupportAppConnectPolicy) {
+            addPreferencesFromResource(R.xml.wifi_settings_ex);
+        } else {
+            addPreferencesFromResource(R.xml.wifi_settings);
+        }
 
         mConnectedAccessPointPreferenceCategory =
                 (PreferenceCategory) findPreference(PREF_KEY_CONNECTED_ACCESS_POINTS);
@@ -250,6 +258,17 @@ public class WifiSettings extends RestrictedSettingsFragment
         mDataUsagePreference.setTemplate(NetworkTemplate.buildTemplateWifiWildcard(),
                 0 /*subId*/,
                 null /*service*/);
+
+        if (mSupportAppConnectPolicy) {
+            if (mConnectedAccessPointPreferenceCategory.getPreferenceCount() < 1) {
+                mConnectedAccessPointPreferenceCategory.setVisible(false);
+            }
+            mConnectedAccessPointPreferenceCategory.setTitle(R.string.trust_accesspoints_list);
+            if (mAccessPointsPreferenceCategory.getPreferenceCount() < 1) {
+                mAccessPointsPreferenceCategory.setVisible(false);
+            }
+            mAccessPointsPreferenceCategory.setTitle(R.string.unkown_accesspoints_list);
+        }
     }
 
     @Override
@@ -469,15 +488,25 @@ public class WifiSettings extends RestrictedSettingsFragment
                 return;
             }
 
+            if (WifiUtils.isShowAutoJoinMenu(getActivity(), mSelectedAccessPoint)) {
+                MenuItem autoJoinMenu = menu.add(Menu.FIRST, MENU_ID_AUTO_JOIN, 0, R.string.wifi_menu_autojoin);
+                menu.setGroupCheckable(Menu.FIRST, true, false);
+                if (config != null && config.networkId != WifiConfiguration.INVALID_NETWORK_ID) {
+                    autoJoinMenu.setChecked(config.autoJoin);
+                }
+            }
+
             // "forget" for normal saved network. And "disconnect" for ephemeral network because it
             // could only be disconnected and be put in blacklists so it won't be used again.
-            if (mSelectedAccessPoint.isSaved() || mSelectedAccessPoint.isEphemeral()) {
+            if ((mSelectedAccessPoint.isSaved() && mSelectedAccessPoint.getConfig().canForget) ||
+                    mSelectedAccessPoint.isEphemeral()) {
                 final int stringId = mSelectedAccessPoint.isEphemeral() ?
                     R.string.wifi_disconnect_button_text : R.string.forget;
                 menu.add(Menu.NONE, MENU_ID_FORGET, 0 /* order */, stringId);
             }
 
-            if (mSelectedAccessPoint.isSaved() && !mSelectedAccessPoint.isActive()) {
+            if (mSelectedAccessPoint.isSaved() &&  mSelectedAccessPoint.getConfig().canModify &&
+                    !mSelectedAccessPoint.isActive()) {
                 menu.add(Menu.NONE, MENU_ID_MODIFY, 0 /* order */, R.string.wifi_modify);
             }
         }
@@ -511,6 +540,14 @@ public class WifiSettings extends RestrictedSettingsFragment
             }
             case MENU_ID_MODIFY: {
                 showDialog(mSelectedAccessPoint, WifiConfigUiBase.MODE_MODIFY);
+                return true;
+            }
+            case MENU_ID_AUTO_JOIN: {
+                WifiConfiguration config = mSelectedAccessPoint.getConfig();
+                if (config != null && config.networkId != WifiConfiguration.INVALID_NETWORK_ID) {
+                    config.autoJoin = !item.isChecked();
+                    mWifiManager.save(config, null);
+                }
                 return true;
             }
         }
@@ -668,6 +705,7 @@ public class WifiSettings extends RestrictedSettingsFragment
                 break;
 
             case WifiManager.WIFI_STATE_ENABLING:
+                if (mSupportAppConnectPolicy) mAccessPointsPreferenceCategory.setVisible(false);
                 removeConnectedAccessPointPreference();
                 removeAccessPointPreference();
                 addMessagePreference(R.string.wifi_starting);
@@ -675,12 +713,14 @@ public class WifiSettings extends RestrictedSettingsFragment
                 break;
 
             case WifiManager.WIFI_STATE_DISABLING:
+                if (mSupportAppConnectPolicy) mAccessPointsPreferenceCategory.setVisible(false);
                 removeConnectedAccessPointPreference();
                 removeAccessPointPreference();
                 addMessagePreference(R.string.wifi_stopping);
                 break;
 
             case WifiManager.WIFI_STATE_DISABLED:
+                if (mSupportAppConnectPolicy) mAccessPointsPreferenceCategory.setVisible(false);
                 setOffMessage();
                 setAdditionalSettingsSummaries();
                 setProgressBarVisible(false);
@@ -714,6 +754,7 @@ public class WifiSettings extends RestrictedSettingsFragment
     private void updateAccessPointPreferences() {
         // in case state has changed
         if (!mWifiManager.isWifiEnabled()) {
+            if (mSupportAppConnectPolicy) mAccessPointsPreferenceCategory.setVisible(false);
             return;
         }
         // AccessPoints are sorted by the WifiTracker
@@ -727,11 +768,17 @@ public class WifiSettings extends RestrictedSettingsFragment
         mConnectedAccessPointPreferenceCategory.setVisible(true);
         mAccessPointsPreferenceCategory.setVisible(true);
 
-        cacheRemoveAllPrefs(mAccessPointsPreferenceCategory);
+        //mAccessPointsPreferenceCategory.removePreference(mStatusMessagePreference);
+        //cacheRemoveAllPrefs(mAccessPointsPreferenceCategory);
+        if (mSupportAppConnectPolicy) removeConnectedAccessPointPreference();
+        mAccessPointsPreferenceCategory.removeAll();
 
         int index =
                 configureConnectedAccessPointPreferenceCategory(accessPoints) ? 1 : 0;
         int numAccessPoints = accessPoints.size();
+        if (mSupportAppConnectPolicy && numAccessPoints > 0) mAccessPointsPreferenceCategory.setVisible(true);
+        boolean isConnectedPreferenceCategoryVisible = index > 0;
+        if (mSupportAppConnectPolicy && isConnectedPreferenceCategoryVisible) mConnectedAccessPointPreferenceCategory.setVisible(true);
         for (; index < numAccessPoints; index++) {
             AccessPoint accessPoint = accessPoints.get(index);
             // Ignore access points that are out of range.
@@ -757,12 +804,28 @@ public class WifiSettings extends RestrictedSettingsFragment
                         mOpenSsid = null;
                     }
                 }
-                mAccessPointsPreferenceCategory.addPreference(preference);
+                if (mSupportAppConnectPolicy) {
+                    if (accessPoint.isSaved()) {
+                        //mConnectedAccessPointPreferenceCategory.addPreference(preference);
+                        Log.d(TAG, "mConnectedAccessPointPreferenceCategory addPreference : " + accessPoint.getSsidStr() + "index=" +index);
+                        if(getTrustedPreferenceCount(accessPoint) == -1) {
+                            mConnectedAccessPointPreferenceCategory.addPreference(preference);
+                        }
+                        if (!isConnectedPreferenceCategoryVisible) {
+                            mConnectedAccessPointPreferenceCategory.setVisible(true);
+                            isConnectedPreferenceCategoryVisible = true;
+                        }
+                    } else {
+                        mAccessPointsPreferenceCategory.addPreference(preference);
+                    }
+                } else {
+                    mAccessPointsPreferenceCategory.addPreference(preference);
+                }
                 accessPoint.setListener(WifiSettings.this);
                 preference.refresh();
             }
         }
-        removeCachedPrefs(mAccessPointsPreferenceCategory);
+        //removeCachedPrefs(mAccessPointsPreferenceCategory);
         mAddWifiNetworkPreference.setOrder(index);
         mAccessPointsPreferenceCategory.addPreference(mAddWifiNetworkPreference);
         setAdditionalSettingsSummaries();
@@ -796,6 +859,52 @@ public class WifiSettings extends RestrictedSettingsFragment
                 R.drawable.ic_wifi_signal_0, false /* forSavedNetworks */, this);
     }
 
+    private void removeUntrustedAccesspoint (int preferenceNum) {
+        if (preferenceNum != -1) {
+            removeConnectedAccessPointPreference(((LongPressAccessPointPreference) mConnectedAccessPointPreferenceCategory.getPreference(preferenceNum)));
+        }
+    }
+
+    private int getTrustedPreferenceCount(AccessPoint accessPoint) {
+        int count = mConnectedAccessPointPreferenceCategory.getPreferenceCount();
+        if (count > 0) {
+            for (int i = 0; i < count; i++) {
+                if (((AccessPointPreference)
+                        mConnectedAccessPointPreferenceCategory.getPreference(i)).getAccessPoint().getSsidStr().equals
+                            (accessPoint.getSsidStr())) {
+                    return i;
+                }
+            }
+            return -1;
+        } else {
+            return -1;
+        }
+    }
+
+    private void updateTrustedPrefrence(List<AccessPoint> accessPoints) {
+        int size = accessPoints.size();
+        if (size > -1) {
+            for (int i = 0; i < size; i++) {
+                if (accessPoints.get(i).isSaved()) {
+                    if(getTrustedPreferenceCount(accessPoints.get(i)) != -1) {
+                        continue;
+                    } else {
+                        addConnectedAccessPointPreference(accessPoints.get(i));
+                    }
+                } else {
+                    removeUntrustedAccesspoint(getTrustedPreferenceCount(accessPoints.get(i)));
+                }
+            }
+        }
+    }
+
+    /** Removes preference */
+    private void removeConnectedAccessPointPreference(Preference preference) {
+        mConnectedAccessPointPreferenceCategory.removePreference(preference);
+        if (mConnectedAccessPointPreferenceCategory.getPreferenceCount() < 1) {
+            mConnectedAccessPointPreferenceCategory.setVisible(false);
+        }
+    }
     /**
      * Configure the ConnectedAccessPointPreferenceCategory and return true if the Category was
      * shown.
@@ -819,6 +928,7 @@ public class WifiSettings extends RestrictedSettingsFragment
             return true;
         }
 
+
         // Is the previous currently connected SSID different from the new one?
         ConnectedAccessPointPreference preference =
                 (ConnectedAccessPointPreference)
@@ -837,6 +947,7 @@ public class WifiSettings extends RestrictedSettingsFragment
         // Update any potential changes to the connected network and ensure that the callback is
         // registered after an onStop lifecycle event.
         registerCaptivePortalNetworkCallback(getCurrentWifiNetwork(), preference);
+
         return true;
     }
 
@@ -872,6 +983,7 @@ public class WifiSettings extends RestrictedSettingsFragment
         pref.refresh();
 
         mConnectedAccessPointPreferenceCategory.addPreference(pref);
+        pref.setOrder(0);
         mConnectedAccessPointPreferenceCategory.setVisible(true);
         if (mClickedConnect) {
             mClickedConnect = false;
@@ -1247,4 +1359,7 @@ public class WifiSettings extends RestrictedSettingsFragment
             return new SummaryProvider(activity, summaryLoader);
         }
     };
+
+    private boolean mSupportAppConnectPolicy = false;
+
 }

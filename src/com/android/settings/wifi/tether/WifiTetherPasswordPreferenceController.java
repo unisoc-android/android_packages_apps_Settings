@@ -65,7 +65,10 @@ public class WifiTetherPasswordPreferenceController extends WifiTetherBasePrefer
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         mPassword = (String) newValue;
         updatePasswordDisplay((EditTextPreference) mPreference);
-        mListener.onTetherConfigUpdated();
+        WifiConfiguration config = mWifiManager.getWifiApConfiguration();
+        if (!mPassword.equals(config.preSharedKey)) {
+            mListener.onTetherConfigUpdated();
+        }
         return true;
     }
 
@@ -89,7 +92,8 @@ public class WifiTetherPasswordPreferenceController extends WifiTetherBasePrefer
     }
 
     public void updateVisibility(int securityType) {
-        mPreference.setVisible(securityType != WifiConfiguration.KeyMgmt.NONE);
+        if (mPreference != null)
+            mPreference.setVisible(securityType != WifiConfiguration.KeyMgmt.NONE);
     }
 
     @Override

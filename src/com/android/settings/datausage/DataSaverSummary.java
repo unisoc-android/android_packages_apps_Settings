@@ -150,8 +150,8 @@ public class DataSaverSummary extends SettingsPreferenceFragment
             if (!ApplicationsState.FILTER_DOWNLOADED_AND_LAUNCHER.filterApp(entry)) {
                 continue;
             }
-            if (entry.extraInfo != null && ((AppStateDataUsageBridge.DataUsageState)
-                    entry.extraInfo).isDataSaverWhitelisted) {
+            if (entry.extraInfo != null && (entry.extraInfo instanceof AppStateDataUsageBridge.DataUsageState) &&
+                    ((AppStateDataUsageBridge.DataUsageState)entry.extraInfo).isDataSaverWhitelisted) {
                 count++;
             }
         }

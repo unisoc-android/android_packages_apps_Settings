@@ -22,6 +22,7 @@ import static androidx.lifecycle.Lifecycle.Event.ON_RESUME;
 import android.content.Context;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.widget.Toast;
 
 import com.android.settings.R;
 import com.android.settings.core.BasePreferenceController;
@@ -164,6 +165,11 @@ public abstract class DefaultSubscriptionController extends BasePreferenceContro
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         final int subscriptionId = Integer.parseInt((String) newValue);
+        // UNISOC: Add for Bug1173725
+        if (mManager.getActiveSubscriptionInfoCount() <= 1) {
+            Toast.makeText(mContext, R.string.invalid_subscription_preference_setting, Toast.LENGTH_SHORT).show();
+            return false;
+        }
         setDefaultSubscription(subscriptionId);
         refreshSummary(mPreference);
         return true;

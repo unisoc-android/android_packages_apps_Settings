@@ -21,17 +21,20 @@ import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
 import android.telephony.CellIdentityWcdma;
+import android.telephony.CellIdentityTdscdma;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoCdma;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
+import android.telephony.CellInfoTdscdma;
 import android.text.BidiFormatter;
 import android.text.TextDirectionHeuristics;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.internal.telephony.OperatorInfo;
+import com.android.internal.telephony.TeleUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,7 +44,13 @@ import java.util.stream.Collectors;
  * TODO: Modify {@link CellInfo} for simplify those functions
  */
 public final class CellInfoUtil {
-    private static final String TAG = "NetworkSelectSetting";
+    private static final String TAG = "CellInfoUtil";
+
+    // UNISOC: CellInfo types
+    private static final int CELL_INFO_TYPE_GSM = CellInfo.TYPE_GSM;
+    private static final int CELL_INFO_TYPE_WCDMA = CellInfo.TYPE_WCDMA;
+    private static final int CELL_INFO_TYPE_LTE = CellInfo.TYPE_LTE;
+    private static final int CELL_INFO_TYPE_TDSCDMA = CellInfo.TYPE_TDSCDMA;
 
     private CellInfoUtil() {
     }
@@ -66,6 +75,10 @@ public final class CellInfoUtil {
             CellInfoGsm cellInfo = new CellInfoGsm();
             cellInfo.setCellIdentity((CellIdentityGsm) cellIdentity);
             return cellInfo;
+        } else if (cellIdentity instanceof CellIdentityTdscdma) {
+            CellInfoTdscdma cellInfo = new CellInfoTdscdma();
+            cellInfo.setCellIdentity((CellIdentityTdscdma) cellIdentity);
+            return cellInfo;
         } else {
             Log.e(TAG, "Invalid CellInfo type");
             return null;
@@ -83,9 +96,11 @@ public final class CellInfoUtil {
         OperatorInfo oi = getOperatorInfoFromCellInfo(cellInfo);
 
         if (!TextUtils.isEmpty(oi.getOperatorAlphaLong())) {
-            return oi.getOperatorAlphaLong();
+//            return oi.getOperatorAlphaLong();
+            return TeleUtils.translateOperatorName(oi.getOperatorNumeric(), oi.getOperatorAlphaLong());
         } else if (!TextUtils.isEmpty(oi.getOperatorAlphaShort())) {
-            return oi.getOperatorAlphaShort();
+//            return oi.getOperatorAlphaShort();
+            return TeleUtils.translateOperatorName(oi.getOperatorNumeric(), oi.getOperatorAlphaShort());
         } else {
             BidiFormatter bidiFormatter = BidiFormatter.getInstance();
             return bidiFormatter.unicodeWrap(oi.getOperatorNumeric(), TextDirectionHeuristics.LTR);
@@ -127,6 +142,74 @@ public final class CellInfoUtil {
         }
         return oi;
     }
+
+    /** UNISOC: Wrap a cell info into an operator info, which contains alpha long name and rat @{ */
+    public static OperatorInfo getOperatorInfoFromCellInfoEx(CellInfo cellInfo) {
+        OperatorInfo oi;
+        if (cellInfo instanceof CellInfoLte) {
+            CellInfoLte lte = (CellInfoLte) cellInfo;
+
+            oi = new OperatorInfo(getOperatorAlphaLong(CELL_INFO_TYPE_LTE, lte),
+                    (String) lte.getCellIdentity().getOperatorAlphaShort(),
+                    lte.getCellIdentity().getMobileNetworkOperator() + " 7");
+        } else if (cellInfo instanceof CellInfoWcdma) {
+            CellInfoWcdma wcdma = (CellInfoWcdma) cellInfo;
+            oi = new OperatorInfo(getOperatorAlphaLong(CELL_INFO_TYPE_WCDMA, wcdma),
+                    (String) wcdma.getCellIdentity().getOperatorAlphaShort(),
+                    wcdma.getCellIdentity().getMobileNetworkOperator() + " 2");
+        } else if (cellInfo instanceof CellInfoGsm) {
+            CellInfoGsm gsm = (CellInfoGsm) cellInfo;
+            oi = new OperatorInfo(getOperatorAlphaLong(CELL_INFO_TYPE_GSM, gsm),
+                    (String) gsm.getCellIdentity().getOperatorAlphaShort(),
+                    gsm.getCellIdentity().getMobileNetworkOperator() + " 0");
+        } else if (cellInfo instanceof CellInfoCdma) {
+            CellInfoCdma cdma = (CellInfoCdma) cellInfo;
+            oi = new OperatorInfo(
+                    (String) cdma.getCellIdentity().getOperatorAlphaLong(),
+                    (String) cdma.getCellIdentity().getOperatorAlphaShort(),
+                    "" /* operator numeric */);
+        } else if (cellInfo instanceof CellInfoTdscdma) {
+            CellInfoTdscdma tdscdma = (CellInfoTdscdma) cellInfo;
+            oi = new OperatorInfo(getOperatorAlphaLong(CELL_INFO_TYPE_TDSCDMA, tdscdma),
+                    (String) tdscdma.getCellIdentity().getOperatorAlphaShort(),
+                    tdscdma.getCellIdentity().getMobileNetworkOperator() + " 2");
+        } else {
+            oi = new OperatorInfo("", "", "");
+        }
+        return oi;
+    }
+    /** @} */
+
+    /** UNISOC: Wrap a cell info into an operator info. @{ */
+    public static String getOperatorAlphaLong (int type, CellInfo cellInfo){
+        // If operator name is empty, show plmn numeric instead.
+        String operatorAlphaLong = (String) cellInfo.getCellIdentity().getOperatorAlphaLong();
+        String plmn = cellInfo.getCellIdentity().getMccString() +
+                cellInfo.getCellIdentity().getMncString();
+        if (operatorAlphaLong == null || operatorAlphaLong.equals("")) {
+            operatorAlphaLong = plmn;
+        }
+
+        operatorAlphaLong = TeleUtils.translateOperatorName(plmn, operatorAlphaLong);
+
+        // Only append RAT words when operator name not end with 2/3/4G
+        if (!operatorAlphaLong.matches(".*[234]G$")) {
+            switch(type){
+            case CELL_INFO_TYPE_GSM:
+                operatorAlphaLong += " 2G";
+                break;
+            case CELL_INFO_TYPE_WCDMA:
+            case CELL_INFO_TYPE_TDSCDMA:
+                operatorAlphaLong += " 3G";
+                break;
+            case CELL_INFO_TYPE_LTE:
+                operatorAlphaLong += " 4G";
+                break;
+            }
+        }
+        return operatorAlphaLong;
+    }
+    /** @} */
 
     /**
      * Creates a CellInfo object from OperatorInfo. GsmCellInfo is used here only because

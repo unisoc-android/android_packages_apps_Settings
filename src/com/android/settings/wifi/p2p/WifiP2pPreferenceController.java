@@ -21,12 +21,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.LocationManager;
+import android.net.wifi.WifiFeaturesUtils;
 import android.net.wifi.WifiManager;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
 
+import com.android.settings.R;
 import com.android.settings.core.PreferenceControllerMixin;
 import com.android.settingslib.core.AbstractPreferenceController;
 import com.android.settingslib.core.lifecycle.Lifecycle;
@@ -84,6 +86,11 @@ public class WifiP2pPreferenceController extends AbstractPreferenceController
     public void updateState(Preference preference) {
         super.updateState(preference);
         preference.setEnabled(mLocationManager.isLocationEnabled() && mWifiManager.isWifiEnabled());
+        if (mWifiManager.isWifiEnabled() && !mLocationManager.isLocationEnabled()) {
+            preference.setSummary(R.string.location_app_permission_summary_location_off);
+        } else {
+            preference.setSummary(null);
+        }
     }
 
     @Override
@@ -101,7 +108,8 @@ public class WifiP2pPreferenceController extends AbstractPreferenceController
     @Override
     public boolean isAvailable() {
         // Always show preference.
-        return true;
+        //return true;
+        return WifiFeaturesUtils.getInstance(mContext).isSupportP2pFeature();
     }
     @Override
     public String getPreferenceKey() {
@@ -113,6 +121,11 @@ public class WifiP2pPreferenceController extends AbstractPreferenceController
             mWifiDirectPref.setEnabled(
                     mWifiManager.isWifiEnabled()
                     && mLocationManager.isLocationEnabled());
+            if (mWifiManager.isWifiEnabled() && !mLocationManager.isLocationEnabled()) {
+                mWifiDirectPref.setSummary(R.string.location_app_permission_summary_location_off);
+            } else {
+                mWifiDirectPref.setSummary(null);
+            }
         }
     }
 }

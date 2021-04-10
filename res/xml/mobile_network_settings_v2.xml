@@ -21,6 +21,7 @@
 
     <com.android.settingslib.widget.LayoutPreference
         android:key="use_sim_switch"
+        android:title="@string/summary_placeholder"
         android:layout="@layout/styled_switch_bar"
         settings:controller="com.android.settings.network.telephony.MobileNetworkSwitchController"/>
 
@@ -69,10 +70,34 @@
             settings:userRestriction="no_data_roaming"
             settings:controller="com.android.settings.network.telephony.RoamingPreferenceController"/>
 
+        <!-- UNISOC: national data roaming -->
+        <ListPreference
+            android:key="preferred_data_roaming_key"
+            android:title="@string/preferred_data_roaming_title"
+            android:summary="@string/preferred_data_roaming_summary"
+            android:entries="@array/enabled_data_roaming_choices"
+            android:entryValues="@array/enabled_data_roaming_values"
+            android:dialogTitle="@string/preferred_data_roaming_dialogtitle"
+            settings:controller="com.android.settings.network.telephony.NationalRoamingPreferenceController"/>
+
         <Preference
             android:key="data_usage_summary"
             android:title="@string/mobile_data_usage_title"
             settings:controller="com.android.settings.network.telephony.DataUsagePreferenceController"/>
+
+        <!-- UNISOC: mobile data always online -->
+        <SwitchPreference
+            android:key="mobile_data_always_online"
+            android:title="@string/mobile_data_always_online_title"
+            android:summary="@string/mobile_data_always_online_summary"
+            settings:controller="com.android.settings.network.telephony.MobileDataAlwaysOnlinePreferenceController"/>
+
+        <!-- UNISOC: ps data off -->
+        <SwitchPreference
+            android:key="ps_data_off"
+            android:title="@string/ps_data_off_title"
+            android:summary="@string/ps_data_off_summary"
+            settings:controller="com.android.settings.network.telephony.PsDataOffPreferenceController"/>
 
         <com.android.settings.datausage.BillingCyclePreference
             android:key="billing_preference"
@@ -98,6 +123,20 @@
             android:summary="@string/enhanced_4g_lte_mode_summary"
             settings:controller="com.android.settings.network.telephony.Enhanced4gLtePreferenceController"/>
 
+        <SwitchPreference
+            android:key="4g_calling"
+            android:title="@string/enhanced_4g_lte_mode_title_4g_calling"
+            android:persistent="false"
+            android:summary="@string/enhanced_4g_lte_mode_summary_4g_calling"
+            settings:controller="com.android.settings.network.telephony.Enhanced4gCallingPreferenceController"/>
+
+        <SwitchPreference
+            android:key="advance_call"
+            android:title="@string/enhanced_4g_lte_mode_title_advanced_calling"
+            android:persistent="false"
+            android:summary="@string/enhanced_4g_lte_mode_summary"
+            settings:controller="com.android.settings.network.telephony.Enhanced4gAdvancedCallingPreferenceController"/>
+
         <ListPreference
             android:key="preferred_network_mode_key"
             android:title="@string/preferred_network_mode_title"
@@ -121,10 +160,18 @@
             android:title="@string/carrier_settings_version"
             settings:controller="com.android.settings.network.telephony.CarrierSettingsVersionPreferenceController"
             settings:enableCopying="true"/>
+        <!-- UNISOC: add for new featrue:Smart Dual SIM @{ -->
+        <Preference
+            android:key="smart_dual_sim"
+            android:summary="@string/smart_dual_sim_summary"
+            android:title="@string/smart_dual_sim_title"
+            settings:controller="com.android.settings.network.telephony.SmartDualSubscriptionController" />
+        <!-- @} -->
 
         <PreferenceCategory
             android:key="calling_category"
-            android:title="@string/call_category">
+            android:title="@string/call_category"
+            settings:controller="com.android.settings.network.telephony.CallingPreferenceCategoryController">
 
             <PreferenceScreen
                 android:key="wifi_calling_key"
@@ -143,7 +190,15 @@
                 android:title="@string/video_calling_settings_title"
                 android:persistent="true"
                 settings:controller="com.android.settings.network.telephony.VideoCallingPreferenceController"/>
-
+            <!-- UNISOC: FEATURE_RESOLUTION_SETTING @{ -->
+            <ListPreference
+                android:key="vt_resolution_set_key"
+                android:title="@string/vt_resolution_setting"
+                android:dialogTitle="@string/vt_resolution_setting"
+                android:entries="@array/vt_resolution_choices"
+                android:entryValues="@array/vt_resolution_choices_values"
+                settings:controller="com.android.settings.network.telephony.VideoResolutionPreferenceController"/>
+            <!-- @} -->
         </PreferenceCategory>
 
         <com.android.settings.network.telephony.cdma.CdmaListPreference
@@ -177,8 +232,13 @@
             <Preference
                 android:key="choose_network_key"
                 android:title="@string/choose_network_title"
-                android:fragment="com.android.phone.NetworkSelectSetting"
                 settings:controller="com.android.settings.network.telephony.gsm.OpenNetworkSelectPagePreferenceController"/>
+            <!-- UNISOC: FL0108090007 UPLMN Preference @{ -->
+            <Preference
+                android:key="uplmn_key"
+                android:title="@string/uplmn_preference_title"
+                settings:controller="com.android.settings.network.telephony.gsm.UplmnPreferenceController"/>
+            <!-- @} -->
         </PreferenceCategory>
 
         <!--We want separate APN setting from reset of settings because we want user to change it with caution-->
@@ -202,7 +262,8 @@
         android:persistent="false"
         android:title="@string/mobile_network_erase_sim"
         settings:controller="com.android.settings.network.telephony.DeleteSimProfilePreferenceController" />
-
+     <!--UNISOC:Remove the DisableSimFooter,prevent users from misunderstanding the disable SIM begin.-->
+<!--
     <PreferenceCategory
         android:key="footer_container"
         android:title="@string/summary_placeholder"
@@ -212,5 +273,6 @@
             android:key="disable_sim_explanation"
             android:title="@string/mobile_network_disable_sim_explanation" />
     </PreferenceCategory>
-
+-->
+    <!--UNISOC:Remove the DisableSimFooter,prevent users from misunderstanding the disable SIM end.-->
 </PreferenceScreen>

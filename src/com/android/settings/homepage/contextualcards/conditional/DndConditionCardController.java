@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.provider.Settings;
 import android.service.notification.ZenModeConfig;
+import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
 
@@ -109,6 +110,7 @@ public class DndConditionCardController implements ConditionalCardController {
         public void onReceive(Context context, Intent intent) {
             if (NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED_INTERNAL
                     .equals(intent.getAction())) {
+                Log.d(TAG, "Do not disturb changed");
                 mConditionManager.onConditionChanged();
             }
         }

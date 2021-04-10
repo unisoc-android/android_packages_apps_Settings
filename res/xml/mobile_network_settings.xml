@@ -52,6 +52,20 @@
         android:summary="@string/enhanced_4g_lte_mode_summary"
         settings:controller="com.android.settings.network.telephony.Enhanced4gLtePreferenceController"/>
 
+    <SwitchPreference
+        android:key="4g_calling"
+        android:title="@string/enhanced_4g_lte_mode_title_4g_calling"
+        android:persistent="false"
+        android:summary="@string/enhanced_4g_lte_mode_summary_4g_calling"
+        settings:controller="com.android.settings.network.telephony.Enhanced4gCallingPreferenceController"/>
+
+    <SwitchPreference
+        android:key="advance_call"
+        android:title="@string/enhanced_4g_lte_mode_title_advanced_calling"
+        android:persistent="false"
+        android:summary="@string/enhanced_4g_lte_mode_summary"
+        settings:controller="com.android.settings.network.telephony.Enhanced4gAdvancedCallingPreferenceController"/>
+
     <ListPreference
         android:key="preferred_network_mode_key"
         android:title="@string/preferred_network_mode_title"
@@ -74,10 +88,17 @@
         android:key="carrier_settings_euicc_key"
         android:title="@string/carrier_settings_euicc"
         settings:controller="com.android.settings.network.telephony.EuiccPreferenceController" />
-
+    <!-- UNISOC: add for new featrue:Smart Dual SIM @{ -->
+    <Preference
+        android:key="smart_dual_sim"
+        android:summary="@string/smart_dual_sim_summary"
+        android:title="@string/smart_dual_sim_title"
+        settings:controller="com.android.settings.network.telephony.SmartDualSubscriptionController" />
+    <!-- @} -->
     <PreferenceCategory
         android:key="calling_category"
         android:title="@string/call_category"
+        settings:controller="com.android.settings.network.telephony.CallingPreferenceCategoryController"
         settings:searchable="false">
 
         <PreferenceScreen
@@ -98,6 +119,13 @@
             android:persistent="true"
             settings:controller="com.android.settings.network.telephony.VideoCallingPreferenceController" />
 
+        <ListPreference
+            android:key="vt_resolution_set_key"
+            android:title="@string/vt_resolution_setting"
+            android:dialogTitle="@string/vt_resolution_setting"
+            android:entries="@array/vt_resolution_choices"
+            android:entryValues="@array/vt_resolution_choices_values"
+            settings:controller="com.android.settings.network.telephony.VideoResolutionPreferenceController"/>
     </PreferenceCategory>
 
     <com.android.settings.network.telephony.cdma.CdmaListPreference
